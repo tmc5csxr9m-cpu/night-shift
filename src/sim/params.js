@@ -16,7 +16,7 @@ export const DEFAULT_PARAMS = {
 
   doorLight: {
     heatOn: 7, coolOff: 4, coolBonusRelays: 1.25, warn: 75,
-    stuckTime: 20,
+    stuckTime: 10,
   },
 
   temp: { equipment: 2.0, lightPerLevel: 0.3, ventK: 0.22, fan: 1.0, tau: 40, fault: 32, shutdown: 36, rebootTime: 8 },
@@ -28,13 +28,17 @@ export const DEFAULT_PARAMS = {
 
   hearing: { offset: 6, slope: 3 },
 
-  emi: { door: 1.0, adjacent: 0.35, magnetRate: 0.012, degaussCooldown: 4 },
+  emi: { door: 1.0, adjacent: 0.35, magnetRate: 0.012, degaussCooldown: 4, pulse: 0.35,
+    strength: { sunny: 1.0, pip: 0.7, tootie: 0.85, back: 0.9, chef: 1.0, ribbon: 0.6 } },
 
   scan: { time: 2.0, cooldown: 6, accuracy: 0.8, accuracyCalibrated: 0.98 },
 
   seal: { maxTime: 20, cooldown: 10 },
 
-  lure: { duration: 8, range: 2, decayPerUse: 0.3 },
+  lure: { duration: 8, range: 2, decay: 0.7, minDuration: 1.5 },
+
+  // while an actor waits at a door it keeps making noise (greeting / knocking)
+  doorCueEvery: 2.5,
 
   maglock: { maxLock: 25, lockout: 15, giveUp: 4 },
 
@@ -42,7 +46,7 @@ export const DEFAULT_PARAMS = {
 
   actors: {
     sunny: { interval: 5.0, attackDelay: [9, 9, 8, 7, 7, 6], retreatLight: 2.5, rageRate: 1, rageDiv: 5, rageTime: 30, stageOn: -4, stageOff: 2 },
-    pip: { interval: 4.0, attackDelay: 6, impatienceDiv: 4, stageOn: -4, stageOff: 2 },
+    pip: { interval: 3.5, attackDelay: 5.5, litSlow: 0.2, impatienceDiv: 4, stageOn: -4, stageOff: 2 },
     tootie: { stepTime: 6.5, attackDelay: 4, returnStep: 2.5 },
   },
 

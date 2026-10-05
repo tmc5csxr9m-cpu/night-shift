@@ -44,23 +44,24 @@ export class Pip extends Actor {
     const d = dist(this.node, target);
     const range = atDoor ? w.P.lure.range + 1 : w.P.lure.range;
     if (d > range || d === 0) return false;
-    if (this.lastLure === room) {
-      w.log(`节点 ${room}: 目标对重复声源无反应`, 'dim');
-      return false;
-    }
     if (this.lureHour !== w.hour) {
       this.lureHour = w.hour;
       this.lureUses = {};
     }
-    const eff = Math.max(0, 1 - (this.lureUses[room] || 0) * w.P.lure.decayPerUse);
-    this.lureUses[room] = (this.lureUses[room] || 0) + 1;
+    // habituation: the same room works for less time each use this hour
+    const uses = this.lureUses[room] || 0;
     this.lastLure = room;
-    if (!w.rng.chance(eff)) return false;
+    const dur = w.P.lure.duration * Math.pow(w.P.lure.decay, uses);
+    if (dur < w.P.lure.minDuration) {
+      w.log(`节点 ${room}: 目标对该声源已无反应 (本小时)`, 'dim');
+      return false;
+    }
+    this.lureUses[room] = uses + 1;
     if (atDoor) {
       this.state = 'idle';
       w.onRepel(this, 'R');
     }
-    this.lure = { node: target, t: w.P.lure.duration };
+    this.lure = { node: target, t: dur };
     this.lureStep = 0.3;
     return true;
   }
@@ -72,7 +73,11 @@ export class Pip extends Actor {
       if (this.impT <= 0) this.impatience = 0;
     }
     if (this.state === 'door') {
-      this.attackT -= dt;
+      // caught in the light it stops to pose: the attack waits, but it stays
+      const lit = w.doorLit('R');
+      if (lit && !this.posing) w.telegraph(this, 'pose', 'R');
+      this.posing = lit;
+      this.attackT -= lit ? dt * this.p.litSlow : dt;
       if (this.attackT <= 0) w.kill(this);
       return;
     }
@@ -81,13 +86,21 @@ export class Pip extends Actor {
       this.lureStep -= dt;
       if (this.lureStep <= 0 && this.node !== this.lure.node) {
         this.lureStep = LURE_STEP;
-        const n = stepToward(this.node, this.lure.node, (m) => this.blocked(m));
+        // following a lure ignores shutters: they only stop the approach
+        const n = stepToward(this.node, this.lure.node, (m) => m.startsWith('DOOR'));
         if (n && n !== this.node && !n.startsWith('DOOR')) this.moveTo(n);
       }
       if (this.lure.t <= 0) {
         this.lure = null;
         this.timer = this.p.interval;
       }
+      return;
+    }
+    // left standing in the doorway (e.g. a lure it could not follow)
+    if (this.node === 'DOOR_R') {
+      this.state = 'door';
+      this.attackT = this.p.attackDelay;
+      w.onDoor(this, 'R');
       return;
     }
     this.timer -= dt;
@@ -109,7 +122,7 @@ export class Pip extends Actor {
     const roll = w.rng.d20();
     w.trace(this, roll, a);
     if (roll > a || !next) return;
-    this.moveTo(next);
+    if (next !== this.node) this.moveTo(next);
     if (next === 'DOOR_R') {
       this.state = 'door';
       this.attackT = this.p.attackDelay;

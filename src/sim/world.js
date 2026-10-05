@@ -29,7 +29,7 @@ export class World {
   constructor({ night = 1, seed = 1, params, debug } = {}) {
     this.P = mergeParams(DEFAULT_PARAMS, params);
     this.nightIndex = night;
-    this.night = NIGHTS[night];
+    this.night = mergeParams(NIGHTS[night], params?.nights?.[night]);
     this.seed = seed;
     this.rng = new Rng(seed);
     this.t = 0;
@@ -48,7 +48,7 @@ export class World {
     this.power = { reserve: n.reserve, max: n.reserve, load: 0, parts: {}, tripped: false, blackoutT: 0, out: false, outT: 0 };
     this.circuits = {};
     for (const c of CIRCUITS) this.circuits[c] = true;
-    this.office = { light: 2, fan: true, oscillate: true, vent: 1, maglock: false, coil: 0, coilLockout: 0 };
+    this.office = { light: 2, fan: true, oscillate: true, vent: 0, maglock: false, coil: 0, coilLockout: 0 };
     this.doors = {
       L: { on: false, heat: 0, broken: false, stuckT: 0 },
       R: { on: false, heat: 0, broken: false, stuckT: 0 },
@@ -173,8 +173,19 @@ export class World {
   }
 
   onDoor(actor, side) {
+    actor.doorCueT = this.P.doorCueEvery;
+    actor.doorCues = 0;
     this.cue(actor.id, actor.node, (this.P.cues[actor.id]?.[actor.node] || 48) + 2, 'greet');
     this.emit('door', { actor: actor.id, side });
+  }
+
+  // called by tick for actors standing at a door
+  doorNag(actor, dt) {
+    actor.doorCueT -= dt;
+    if (actor.doorCueT > 0) return;
+    actor.doorCueT = this.P.doorCueEvery;
+    actor.doorCues++;
+    this.cue(actor.id, actor.node, (this.P.cues[actor.id]?.[actor.node] || 48) + 2 + actor.doorCues * 2, 'greet');
   }
 
   onRepel(actor, side) {
@@ -431,7 +442,11 @@ export class World {
     this.tickNoise(dt);
     this.tickRooms(dt);
     if (!this.debug.freeze) {
-      for (const a of this.actors) if (!this.debug.disabled[a.id]) a.tick(dt);
+      for (const a of this.actors) {
+        if (this.debug.disabled[a.id]) continue;
+        a.tick(dt);
+        if (a.state === 'door' && !this.result) this.doorNag(a, dt);
+      }
     }
     this.tickEmi(dt);
     this.tickEvents(dt);
@@ -717,10 +732,12 @@ export class World {
     const em = this.emi;
     const s = { L: 0, R: 0, B: 0, T: 0 };
     for (const a of this.actors) {
+      // motors draw unevenly: interference pulses instead of a steady signal
+      const k = (E.strength[a.id] ?? 1) * (1 - E.pulse * (0.5 + 0.5 * Math.sin(this.t * (2.1 + a.id.length * 0.37) + a.id.length)));
       const door = DOOR_NODES[a.node];
-      if (door) s[door] = Math.max(s[door], E.door);
+      if (door) s[door] = Math.max(s[door], E.door * k);
       const near = NEAR_DOOR[a.node];
-      if (near) s[near] = Math.max(s[near], E.adjacent);
+      if (near) s[near] = Math.max(s[near], E.adjacent * k);
     }
     // smooth so it ramps visibly
     for (const k of ['L', 'R', 'B', 'T']) em[k] += (s[k] - em[k]) * Math.min(1, dt * 3);
@@ -752,9 +769,12 @@ export class World {
     if (kind === 'relayStuck') {
       if (this.calibrated.relays) return;
       const side = this.rng.chance(0.5) ? 'L' : 'R';
+      // never strand the player: only when nothing is close to that door
+      const close = side === 'L' ? ['07N', 'DOOR_L'] : ['08N', 'DOOR_R'];
+      if (this.actors.some((a) => close.includes(a.node))) return;
       this.doors[side].stuckT = this.P.doorLight.stuckTime;
       this.doors[side].on = false;
-      this.log(`${side === 'L' ? '左' : '右'}门灯继电器卡死 (约 20 秒).`, 'warn');
+      this.log(`${side === 'L' ? '左' : '右'}门灯继电器卡死 (约 10 秒).`, 'warn');
       this.emit('relayStuck', { side });
     } else if (kind === 'drift') {
       if (this.calibrated.sensors) return;

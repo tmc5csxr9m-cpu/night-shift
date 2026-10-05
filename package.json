@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "audio": "python3 tools/gen_audio.py"
+    "audio": "python3 tools/gen_audio.py",
+    "balance": "node balance/run.js",
+    "balance:quick": "node balance/run.js --runs 300"
   },
   "dependencies": {
     "three": "^0.186.1"

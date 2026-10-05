@@ -13,10 +13,10 @@ export const NIGHTS = {
     outside: 27, spares: 0, bulbsBurn: false, autoWind: true, events: false, call: 1,
   },
   2: {
-    name: '第 2 夜', reserve: 80,
+    name: '第 2 夜', reserve: 66,
     actors: ['sunny', 'pip', 'tootie'],
     tasks: ['T-02', 'T-01'],
-    A: { sunny: [2, 3, 4, 5, 6, 7], pip: [0, 2, 3, 5, 6, 7] },
+    A: { sunny: [2, 3, 4, 5, 6, 7], pip: [1, 4, 6, 8, 10, 12] },
     outside: 27, spares: 3, bulbsBurn: true, autoWind: true, events: true, call: 2,
     lureNeedsT02: true,
   },
