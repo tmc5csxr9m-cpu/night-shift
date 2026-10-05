@@ -292,6 +292,11 @@ export class ActorViews {
       v.pose = 0;
       v.hold = 0;            // keep showing the old spot (bow) for a moment
       v.lunge = 0;
+      // debug ghost: wireframe marker wherever the sim says the actor is
+      v.ghost = new THREE.Mesh(new THREE.BoxGeometry(0.6, v.height, 0.6), new THREE.MeshBasicMaterial({ color: 0xff40ff, wireframe: true, depthTest: false, transparent: true, opacity: 0.8, fog: false }));
+      v.ghost.renderOrder = 10;
+      v.ghost.visible = false;
+      scene.add(v.ghost);
       scene.add(v.group);
       this.views[id] = v;
     }
@@ -322,8 +327,11 @@ export class ActorViews {
         node = v.node;
       }
       const st = node && STAGE[node];
+      const gp = a && NODE_POS[a.node];
+      v.ghost.visible = !!(this.ghosts && gp);
+      if (v.ghost.visible) v.ghost.position.set(gp[0], v.height / 2, gp[2]);
       if (!st) {
-        v.group.visible = this.ghosts && !!a;
+        v.group.visible = false;
         v.node = node;
         continue;
       }
@@ -425,6 +433,7 @@ export class ActorViews {
 
   clearJumpscare() {
     this.scareLight.intensity = 0;
+    for (const v of Object.values(this.views)) v.ghost.visible = false;
     for (const v of Object.values(this.views)) {
       v.group.traverse((o) => {
         if (o.isMesh && o.material === v.pupilMat) o.scale.setScalar(1);

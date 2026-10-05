@@ -680,4 +680,4 @@ startEl.addEventListener('click', () => {
 
 boot();
 
-if (import.meta.env.DEV) window.__game = { game, term, view, enterFocus, exitFocus, director, room, camera, save, startNight, showMenu };
+if (import.meta.env.DEV) window.__game = { game, term, view, enterFocus, exitFocus, director, room, camera, save, startNight, showMenu, grade, bloom, actors, renderer, scene };
