@@ -114,6 +114,29 @@
         z-index: 4;
         white-space: nowrap;
       }
+      #subtitle {
+        position: fixed;
+        left: 50%;
+        bottom: 64px;
+        transform: translateX(-50%);
+        max-width: 80vw;
+        font-size: 22px;
+        color: #f2f4ff;
+        background: rgba(0, 0, 8, 0.6);
+        padding: 4px 14px;
+        text-align: center;
+        opacity: 0;
+        transition: opacity 0.25s;
+        pointer-events: none;
+        z-index: 6;
+      }
+      #subtitle::before {
+        content: '☎ ';
+        color: #ffe56b;
+      }
+      #subtitle.show {
+        opacity: 1;
+      }
       #hint.hidden {
         opacity: 0;
       }
@@ -137,9 +160,10 @@
       <h1>NIGHT SHIFT</h1>
       <h2>星光披萨乐园 · 夜班保安</h2>
       <div id="load">载入字体...</div>
-      <small>建议佩戴耳机 · 关灯游玩<br />同人作品 · 氛围测试 DEMO</small>
+      <small>建议佩戴耳机 · 关灯游玩<br />FNAF 同人作品</small>
     </div>
     <div id="intro"><div class="t">12:00 AM</div><div class="n">第 1 夜</div></div>
+    <div id="subtitle"></div>
     <div id="hint" class="hidden">鼠标移到屏幕两侧转头 · 点击终端进行操作 · 右键 / ESC 离开终端</div>
     <script type="module" src="/src/main.js"></script>
   </body>

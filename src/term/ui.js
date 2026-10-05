@@ -166,7 +166,7 @@ export class UI {
     let fg = opts.active ? C.ink : C.hi;
     if (opts.danger) bg = opts.active ? C.yel : C.bg3;
     if (hov) {
-      bg = C.hi;
+      bg = '#a9bcf5';
       fg = C.ink;
     }
     if (opts.disabled) {

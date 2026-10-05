@@ -1,22 +1,19 @@
 import { C, fit } from '../screen.js';
-import { state, log, emit, powered } from '../../state.js';
-import { roomState } from './map.js';
+import { game } from '../../game.js';
 
 const W = 18;
 const H = 12;
 const COLX = [2, 21, 40, 59];
 const ROWY = [3, 16];
-
-function changed() {
-  emit('facility');
-}
+let bulbHold = { L: 0, R: 0 };
+const BULB_TIME = 4;
 
 function card(ui, x, y, title, en, opts = {}) {
   const hov = ui.inside(x, y, W, H);
-  const bg = hov ? C.bg3 : C.bg;
+  const bg = opts.alert ? '#3a0a3a' : hov ? C.bg3 : C.bg;
   ui.box(x, y, W, H, {
     style: hov ? 'double' : 'single',
-    fg: opts.unpowered ? C.dim2 : hov ? C.hi : C.fg,
+    fg: opts.unpowered ? C.dim2 : opts.alert ? C.red : hov ? C.hi : C.fg,
     bg,
     shadow: true,
     title,
@@ -35,32 +32,59 @@ function icon(ui, x, y, lines, fg, bg) {
 }
 
 function doorCard(term, ui, side, x, y) {
+  const w = term.world;
+  const d = w.doors[side];
   const cid = side === 'L' ? 'C2' : 'C3';
-  const pw = powered(cid);
-  const on = state.doorLight[side] && pw;
+  const pw = w.powered(cid);
+  const lit = w.doorLit(side);
   const bg = card(ui, x, y, side === 'L' ? '左门灯' : '右门灯', side === 'L' ? 'WEST DOOR LIGHT' : 'EAST DOOR LIGHT', {
-    unpowered: !pw,
-    circuit: cid,
+    unpowered: !pw && !d.broken, circuit: cid, alert: d.broken,
   });
-  const flick = on && Math.random() < 0.04;
-  icon(ui, x, y, on && !flick ? ['\\ │ /', '─(☼)─', '/ │ \\'] : ['  ·  ', ' (○) ', '  ·  '], on ? C.yel : C.dim, bg);
-  if (!pw) return;
-  ui.text(x + 2, y + 5, '状态', C.dim, bg);
-  ui.text(x + 7, y + 5, on ? '照明中' : '熄灭', on ? C.yel : C.fg, bg);
-  ui.text(x + 2, y + 6, 'COM1:' + (side === 'L' ? '04' : '05'), C.dim2, bg);
-  ui.text(x + 11, y + 6, on ? '0.65kW' : '0.00kW', C.dim, bg);
-  ui.pushButton('dl-' + side, x + 2, y + 8, 13, on ? '■ 关闭' : '□ 开启', () => {
-    state.doorLight[side] = !state.doorLight[side];
-    state.doorLight[side] ? term.sfx.on() : term.sfx.off();
-    log(`${side === 'L' ? '左' : '右'}门灯${state.doorLight[side] ? '开启' : '关闭'}.`);
-    changed();
-  }, { active: on });
+  const hot = d.heat > w.P.doorLight.warn;
+  const flick = lit && hot && Math.random() < 0.25;
+  icon(ui, x, y, d.broken ? [' ╲ ╱ ', '─(×)─', ' ╱ ╲ '] : lit && !flick ? ['\\ │ /', '─(☼)─', '/ │ \\'] : ['  ·  ', ' (○) ', '  ·  '], d.broken ? C.red : lit ? (hot ? '#ffb050' : C.yel) : C.dim, bg);
+  if (!pw && !d.broken) return;
+  ui.text(x + 2, y + 5, '灯管', C.dim, bg);
+  ui.bar(x + 7, y + 5, 9, d.heat / 100, { fg: d.heat > 75 ? C.red : d.heat > 50 ? C.yel : C.cy });
+  ui.text(x + 2, y + 6, d.broken ? '已烧坏' : d.stuckT > 0 ? '继电器卡死' : lit ? '照明中' : '熄灭', d.broken || d.stuckT > 0 ? C.red : lit ? C.yel : C.fg, bg);
+  ui.text(x + 11, y + 6, `备件${w.spares}`, w.spares ? C.dim : C.red, bg);
+  if (d.broken) {
+    const can = w.spares > 0;
+    const p = bulbHold[side] / BULB_TIME;
+    const hov = ui.pushButton('bulb-' + side, x + 2, y + 8, 13, can ? (p > 0 ? `更换中 ${Math.round(p * 100)}%` : '更换灯管(按住)') : '无备件', null, {
+      disabled: !can,
+      danger: true,
+      onHold: (dt) => {
+        bulbHold[side] += dt;
+        if (Math.floor(bulbHold[side] * 3) !== Math.floor((bulbHold[side] - dt) * 3)) term.sfx.tick();
+        if (bulbHold[side] >= BULB_TIME) {
+          bulbHold[side] = 0;
+          term.cmd('replaceBulb', { side }, 'ok');
+        }
+      },
+    });
+    if (!(hov && ui.down)) bulbHold[side] = Math.max(0, bulbHold[side] - 0.02);
+    if (p > 0) ui.bar(x + 2, y + 10, 14, p, { fg: C.yel });
+    return;
+  }
+  ui.pushButton('dl-' + side, x + 2, y + 8, 13, lit ? '■ 关闭' : '□ 开启', () => {
+    const r = game.cmd('doorLight', { side });
+    if (r.ok === false) {
+      term.sfx.error();
+      term.toast(r.msg || '无法开启', 'err');
+    } else (w.doors[side].on ? term.sfx.on() : term.sfx.off());
+  }, { active: lit });
 }
 
 export const facilityPage = {
   path: 'C:\\SEC\\SYSCTL>',
 
+  reset() {
+    bulbHold = { L: 0, R: 0 };
+  },
+
   draw(term, ui) {
+    const w = term.world;
     doorCard(term, ui, 'L', COLX[0], ROWY[0]);
     doorCard(term, ui, 'R', COLX[1], ROWY[0]);
 
@@ -68,21 +92,16 @@ export const facilityPage = {
     {
       const x = COLX[2];
       const y = ROWY[0];
-      const pw = powered('C1');
+      const pw = w.powered('C1');
       const bg = card(ui, x, y, '办公室照明', 'OFFICE LIGHTING', { unpowered: !pw, circuit: 'C1' });
-      const lv = pw ? state.officeLight : 0;
+      const lv = pw ? w.office.light : 0;
       icon(ui, x, y, ['──┬──', ' ▄█▄ ', lv === 2 ? '╱ ▀ ╲' : lv === 1 ? '  ▀  ' : '  ·  '], [C.dim, C.fg, C.yel][lv], bg);
       if (pw) {
         ui.text(x + 2, y + 5, '亮度', C.dim, bg);
         ui.segments(x + 7, y + 5, 6, lv * 3, C.yel);
-        const lvls = ['关', '暗', '亮'];
-        lvls.forEach((l, i) => {
-          ui.pushButton('ol-' + i, x + 2 + i * 5, y + 8, 3, l, () => {
-            state.officeLight = i;
-            i ? term.sfx.on() : term.sfx.off();
-            log(`办公室照明: ${['关闭', '调暗', '正常'][i]}.`);
-            changed();
-          }, { active: state.officeLight === i });
+        ui.text(x + 2, y + 6, `${w.P.power.officeLight[lv].toFixed(2)}kW`, C.dim, bg);
+        ['关', '暗', '亮'].forEach((l, i) => {
+          ui.pushButton('ol-' + i, x + 2 + i * 5, y + 8, 3, l, () => term.cmd('officeLight', { level: i }, i ? 'on' : 'off'), { active: w.office.light === i });
         });
       }
     }
@@ -91,27 +110,17 @@ export const facilityPage = {
     {
       const x = COLX[3];
       const y = ROWY[0];
-      const pw = powered('C5');
+      const pw = w.powered('C5');
       const bg = card(ui, x, y, '桌面风扇', 'DESK FAN', { unpowered: !pw, circuit: 'C5' });
-      const run = pw && state.fan.on;
+      const run = pw && w.office.fan;
       const f = run ? Math.floor(term.time * 12) % 4 : 0;
       const blade = ['│', '╱', '─', '╲'][f];
       const blade2 = ['─', '╲', '│', '╱'][f];
       icon(ui, x, y, [` ${blade} `, `${blade2}●${blade2}`, ` ${blade} `], run ? C.cy : C.dim, bg);
       if (pw) {
-        ui.text(x + 2, y + 5, '状态', C.dim, bg);
-        ui.text(x + 7, y + 5, run ? '运转' : '停止', run ? C.cy : C.fg, bg);
-        ui.toggle('fan-osc', x + 2, y + 6, state.fan.oscillate, '摆头', () => {
-          state.fan.oscillate = !state.fan.oscillate;
-          term.sfx.select();
-          changed();
-        });
-        ui.pushButton('fan', x + 2, y + 8, 13, run ? '■ 停止' : '□ 启动', () => {
-          state.fan.on = !state.fan.on;
-          state.fan.on ? term.sfx.on() : term.sfx.off();
-          log(`桌面风扇${state.fan.on ? '启动' : '停止'}.`);
-          changed();
-        }, { active: run });
+        ui.text(x + 2, y + 5, run ? '运转 +8dB' : '停止', run ? C.cy : C.fg, bg);
+        ui.toggle('fan-osc', x + 2, y + 6, w.office.oscillate, '摆头', () => term.cmd('oscillate', {}, 'select'));
+        ui.pushButton('fan', x + 2, y + 8, 13, run ? '■ 停止' : '□ 启动', () => term.cmd('fan', {}, run ? 'off' : 'on'), { active: run });
       }
     }
 
@@ -119,30 +128,18 @@ export const facilityPage = {
     {
       const x = COLX[0];
       const y = ROWY[1];
-      const pw = powered('C4');
+      const pw = w.powered('C4');
       const bg = card(ui, x, y, '通风系统', 'VENTILATION', { unpowered: !pw, circuit: 'C4' });
-      const sp = pw ? state.vent : 0;
+      const sp = pw ? w.office.vent : 0;
       const ph = Math.floor(term.time * (2 + sp * 3));
-      const wave = (o) => (sp ? '≈∼~∼'.repeat(4).slice((ph + o) % 4, ((ph + o) % 4) + 7) : '───────');
-      icon(ui, x, y, ['╔═════╗', '║' + wave(0).slice(0, 5) + '║', '╚═════╝'], sp ? C.cy : C.dim, bg);
+      const wave = sp ? '≈∼~∼'.repeat(4).slice(ph % 4, (ph % 4) + 5) : '─────';
+      icon(ui, x, y, ['╔═════╗', '║' + wave + '║', '╚═════╝'], sp ? C.cy : C.dim, bg);
       if (pw) {
         ui.text(x + 2, y + 5, '风速', C.dim, bg);
         ui.segments(x + 7, y + 5, 6, sp * 2, C.cy);
-        ui.text(x + 2, y + 6, `${sp}档  ${(sp * 0.36).toFixed(2)}kW`, C.fg, bg);
-        ui.pushButton('vent-', x + 2, y + 8, 5, '－', () => {
-          if (state.vent > 0) {
-            state.vent--;
-            term.sfx.off();
-            changed();
-          } else term.sfx.error();
-        });
-        ui.pushButton('vent+', x + 9, y + 8, 5, '＋', () => {
-          if (state.vent < 3) {
-            state.vent++;
-            term.sfx.on();
-            changed();
-          } else term.sfx.error();
-        });
+        ui.text(x + 2, y + 6, `${sp}档 ${(sp * w.P.power.vent).toFixed(2)}kW`, C.fg, bg);
+        ui.pushButton('vent-', x + 2, y + 8, 5, '－', () => (w.office.vent > 0 ? term.cmd('vent', { level: w.office.vent - 1 }, 'off') : term.sfx.error()));
+        ui.pushButton('vent+', x + 9, y + 8, 5, '＋', () => (w.office.vent < 3 ? term.cmd('vent', { level: w.office.vent + 1 }, 'on') : term.sfx.error()));
       }
     }
 
@@ -150,31 +147,33 @@ export const facilityPage = {
     {
       const x = COLX[1];
       const y = ROWY[1];
-      const pw = powered('C7');
-      const bg = card(ui, x, y, '音乐盒广播', 'MUSIC BOX / PA', { unpowered: !pw, circuit: 'C7' });
-      const mb = state.musicBox;
-      const play = pw && mb.playing && mb.wind > 0;
+      const pw = w.powered('C7');
+      const mb = w.musicBox;
+      const play = w.musicPlaying();
+      const low = mb.wind < 0.25;
+      const bg = card(ui, x, y, '音乐盒', 'MUSIC BOX / PA', { unpowered: !pw, circuit: 'C7', alert: !play });
       const note = play && Math.floor(term.time * 2) % 2 ? '♪' : ' ';
-      icon(ui, x, y, [`┌───┐${note}`, '│≡≡≡│ ', '└─┬─┘ '], play ? C.cy : C.dim, bg);
+      icon(ui, x, y, [`┌───┐${note}`, '│≡≡≡│ ', '└─┬─┘ '], play ? C.cy : C.red, bg);
       if (pw) {
         ui.text(x + 2, y + 5, '发条', C.dim, bg);
-        ui.bar(x + 7, y + 5, 8, mb.wind, { fg: mb.wind < 0.25 ? C.yel : C.cy });
-        ui.toggle('mb-play', x + 2, y + 6, mb.playing, '播放', () => {
-          mb.playing = !mb.playing;
-          term.sfx.select();
-          changed();
-        });
-        const hov = ui.pushButton('mb-wind', x + 2, y + 8, 13, '↻上发条(按住)', null, {
-          onHold: (dt) => {
-            mb.wind = Math.min(1, mb.wind + dt * 0.25);
-            mb._tick = (mb._tick || 0) + dt;
-            if (mb._tick > 0.12) {
-              mb._tick = 0;
-              term.sfx.tick();
-            }
-          },
-        });
-        if (hov && ui.down) ui.text(x + 2, y + 10, '咔哒 咔哒...', C.dim, bg);
+        ui.bar(x + 7, y + 5, 9, mb.wind, { fg: low ? C.red : C.cy });
+        if (mb.auto) {
+          ui.text(x + 2, y + 6, '自动上发条', C.ok, bg);
+          ui.text(x + 2, y + 8, fit('别断开 C7!', W - 3), C.dim, bg);
+        } else {
+          ui.text(x + 2, y + 6, play ? `${Math.round(mb.wind * 100)}% 播放中` : '已停止!', play ? C.fg : C.red, bg);
+          const hov = ui.pushButton('mb-wind', x + 2, y + 8, 13, '↻上发条(按住)', null, {
+            onHold: (dt) => {
+              game.cmd('wind', { dt });
+              this._t = (this._t || 0) + dt;
+              if (this._t > 0.12) {
+                this._t = 0;
+                term.sfx.tick();
+              }
+            },
+          });
+          if (hov && ui.down) ui.text(x + 2, y + 10, '咔哒 咔哒...', C.dim, bg);
+        }
       }
     }
 
@@ -182,41 +181,36 @@ export const facilityPage = {
     {
       const x = COLX[2];
       const y = ROWY[1];
-      const pw = powered('C8');
-      const bg = card(ui, x, y, '后门', 'BACK DOOR / 12', { unpowered: false });
-      const locked = pw && state.backLock;
-      icon(ui, x, y, ['▐▀▀▀▌', locked ? '▐ ■ ▌' : '▐ ░ ▌', '▐▄▄▄▌'], locked ? C.cy : C.red, bg);
-      const n = roomState('12').noise;
-      ui.text(x + 2, y + 5, '磁锁', C.dim, bg);
-      ui.text(x + 7, y + 5, !pw ? '无供电' : locked ? '锁定' : '未锁', locked ? C.cy : C.red, bg);
-      ui.text(x + 2, y + 6, '声学', C.dim, bg);
-      ui.text(x + 7, y + 6, `${n.toFixed(0)}dB`, n > 45 ? C.yel : C.fg, bg);
-      ui.text(x + 12, y + 6, n > 45 ? '!!' : '  ', C.yel, bg);
-      ui.pushButton('backlock', x + 2, y + 8, 13, state.backLock ? '■ 解锁' : '□ 上锁', () => {
-        state.backLock = !state.backLock;
-        state.backLock ? term.sfx.on() : term.sfx.off();
-        log(`后门磁锁${state.backLock ? '已锁定' : '已解锁'}.`, state.backLock ? 'info' : 'warn');
-        changed();
-      }, { disabled: !pw, active: locked });
-      ui.text(x + 1, y + 10, fit('你看不到它.', W - 2, 'center'), C.dim2, bg);
+      const pw = w.powered('C8');
+      const o = w.office;
+      const bg = card(ui, x, y, '后门磁锁', 'BACK DOOR / 12', { alert: o.coilLockout > 0 });
+      const locked = o.maglock;
+      icon(ui, x, y, ['▐▀▀▀▌', locked ? '▐ ■ ▌' : '▐ ░ ▌', '▐▄▄▄▌'], locked ? C.cy : C.dim, bg);
+      ui.text(x + 2, y + 5, '线圈', C.dim, bg);
+      ui.bar(x + 7, y + 5, 9, o.coil / w.P.maglock.maxLock, { fg: o.coil / w.P.maglock.maxLock > 0.7 ? C.red : C.cy });
+      ui.text(x + 2, y + 6, !pw ? '无供电' : o.coilLockout > 0 ? `过热 ${o.coilLockout.toFixed(0)}s` : locked ? '锁定' : '未锁', locked ? C.cy : o.coilLockout > 0 ? C.red : C.fg, bg);
+      ui.text(x + 11, y + 6, `${w.rooms['12'].noise.toFixed(0)}dB`, w.rooms['12'].noise > 45 ? C.yel : C.dim, bg);
+      ui.pushButton('backlock', x + 2, y + 8, 13, locked ? '■ 解锁' : '□ 上锁', () => term.cmd('maglock', {}, locked ? 'off' : 'on'), { disabled: !pw || o.coilLockout > 0, active: locked });
     }
 
-    // ---------------------------------------------------- thermostat
+    // ---------------------------------------------------- environment
     {
       const x = COLX[3];
       const y = ROWY[1];
-      const bg = card(ui, x, y, '温控', 'THERMOSTAT');
-      const t = state.temp;
-      ui.text(x + 4, y + 2, `${t.toFixed(1)}°C`, t > 30 ? C.red : t > 27 ? C.yel : C.hi, bg);
-      ui.bar(x + 2, y + 3, 14, (t - 15) / 25, { fg: t > 30 ? C.red : t > 27 ? C.yel : C.cy, blocky: true });
-      ui.text(x + 2, y + 5, '15°', C.dim2, bg);
-      ui.text(x + 13, y + 5, '40°', C.dim2, bg);
-      ui.text(x + 2, y + 6, state.heater ? '暖气 1.50kW' : '暖气 待机', state.heater ? C.yel : C.fg, bg);
-      ui.pushButton('heat', x + 2, y + 8, 13, state.heater ? '■ 关暖气' : '□ 开暖气', () => {
-        state.heater = !state.heater;
-        state.heater ? term.sfx.on() : term.sfx.off();
-        changed();
-      }, { active: state.heater });
+      const t = w.temp;
+      const hot = t.eff >= w.P.temp.fault;
+      const bg = card(ui, x, y, '环境', 'TEMP / NOISE', { alert: hot });
+      ui.text(x + 3, y + 1, `室温 ${t.room.toFixed(1)}°C`, hot ? C.red : C.hi, bg);
+      ui.text(x + 3, y + 2, `有效 ${t.eff.toFixed(1)}°C`, hot ? C.red : C.fg, bg);
+      ui.bar(x + 2, y + 3, 14, (t.eff - 20) / 18, { fg: hot ? C.red : t.eff > 30 ? C.yel : C.cy, blocky: true });
+      ui.text(x + 2, y + 5, `室外 ${t.out.toFixed(0)}°C  空调:停`, C.dim, bg);
+      ui.text(x + 2, y + 6, '噪音', C.dim, bg);
+      ui.bar(x + 7, y + 6, 9, (w.noise.db - 30) / 18, { fg: w.noise.db > 38 ? C.yel : C.cy });
+      ui.text(x + 2, y + 7, `${w.noise.db.toFixed(1)}dB`, C.fg, bg);
+      const parts = Object.keys(w.noise.parts).filter((k) => k !== 'base');
+      const names = { fan: '扇', vent: '风', phone: '铃', degauss: '磁', musicBox: '乐', generator: '机' };
+      ui.text(x + 9, y + 7, fit(parts.map((k) => names[k] || k).join(''), 7), C.dim, bg);
+      ui.text(x + 2, y + 9, fit(hot ? '!! 终端过热 !!' : '32°C 以上终端出错', W - 3), hot ? C.red : C.dim2, bg);
     }
   },
 };

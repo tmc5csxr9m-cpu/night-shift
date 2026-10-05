@@ -21,6 +21,11 @@ export function crtMaterial(texture) {
       power: { value: 0 },
       glitch: { value: 0 },
       bright: { value: 0.88 },
+      emi: { value: new THREE.Vector4() },   // L R B(back) T(vent)
+      magnet: { value: 0 },
+      degauss: { value: 0 },
+      heat: { value: 0 },
+      tint: { value: new THREE.Vector3(1, 1, 1) },
     },
     vertexShader: /* glsl */ `
       varying vec2 vUv;
@@ -35,6 +40,9 @@ export function crtMaterial(texture) {
       uniform float power;
       uniform float glitch;
       uniform float bright;
+      uniform vec4 emi;
+      uniform float magnet, degauss, heat;
+      uniform vec3 tint;
       varying vec2 vUv;
 
       vec2 curve(vec2 uv) {
@@ -47,6 +55,24 @@ export function crtMaterial(texture) {
 
       void main() {
         vec2 uv = curve(vUv);
+        // electromagnetic interference from motors near each door bends that edge
+        float eL = emi.x * pow(clamp(1.0 - uv.x, 0.0, 1.0), 5.0);
+        float eR = emi.y * pow(clamp(uv.x, 0.0, 1.0), 5.0);
+        float eB = emi.z * pow(clamp(1.0 - uv.y, 0.0, 1.0), 5.0);
+        float eT = emi.w * pow(clamp(uv.y, 0.0, 1.0), 5.0);
+        float wy = sin(uv.y * 47.0 + time * 31.0) * 0.6 + sin(uv.y * 9.0 - time * 7.0) * 0.4;
+        float wx = sin(uv.x * 43.0 + time * 29.0) * 0.6 + sin(uv.x * 11.0 - time * 5.0) * 0.4;
+        uv.x += (eL + eR) * 0.035 * wy;
+        uv.y += (eB + eT) * 0.035 * wx;
+        // heat shimmer
+        uv.x += heat * 0.004 * sin(uv.y * 30.0 + time * 6.0);
+        // degauss ripple
+        if (degauss > 0.0) {
+          vec2 dc = uv - 0.5;
+          float rr = length(dc);
+          uv += dc / max(rr, 1e-3) * sin(rr * 55.0 - degauss * 30.0) * 0.012 * degauss;
+        }
+        float eSum = eL + eR + eB + eT;
         // warm-up: picture collapses to a line, then opens
         float open = clamp(power * 1.4 - 0.2, 0.0, 1.0);
         float ys = mix(0.004, 1.0, open);
@@ -89,6 +115,15 @@ export function crtMaterial(texture) {
         float m = mod(floor(gx), 3.0);
         vec3 mask = m < 1.0 ? vec3(1.0, 0.8, 0.8) : m < 2.0 ? vec3(0.8, 1.0, 0.8) : vec3(0.8, 0.8, 1.0);
         col *= mix(vec3(1.0), mask, clamp(1.0 - gw * 1.2, 0.0, 1.0) * 0.6);
+
+        // EMI colour fringing + magnetised purity blotches
+        col += vec3(0.35, -0.1, 0.4) * eSum * (0.6 + 0.4 * sin(time * 50.0));
+        vec3 blot = vec3(1.0 + 0.5 * sin(uv.x * 6.0 + 1.3) * cos(uv.y * 4.0),
+                         1.0 + 0.45 * sin(uv.y * 5.0 + 2.1) * cos(uv.x * 3.0 + 0.5),
+                         1.0 + 0.5 * cos(uv.x * 4.5 - uv.y * 3.5));
+        col *= mix(vec3(1.0), blot, magnet);
+        col *= tint;
+        if (degauss > 0.0) col += vec3(0.5, 0.2, 0.6) * degauss * 0.25 * sin(length(uv - 0.5) * 40.0 - degauss * 25.0);
 
         // rolling refresh band + mains flicker
         float band = fract(uv.y * 0.6 - time * 0.11);

@@ -1,14 +1,12 @@
-// Ambient director: nothing is hunting you yet, but the building is not
-// quiet. Random distant sounds (some of them behind you, where you can't
-// look), light flickers and terminal interference. Sounds near a sensor
-// node show up on the map and in the syslog, tying audio to the terminal.
+// Ambient director: purely cosmetic distant sounds, light flickers and
+// terminal interference. It never touches the simulation (which owns all
+// gameplay-relevant sounds), so it uses Math.random freely.
 import * as THREE from 'three';
-import { ROOMS, roomWorldPos } from './rooms.js';
-import { state, log, on } from './state.js';
+import { roomWorldPos } from './rooms.js';
+import { on } from './bus.js';
 
 const EVENTS = [
   { kind: 'clank', w: 3 },
-  { kind: 'creak', w: 2 },
   { kind: 'thud', w: 1.5 },
   { kind: 'drip', w: 2 },
   { kind: 'flicker', w: 2 },
@@ -25,21 +23,6 @@ function pick() {
   return EVENTS[0].kind;
 }
 
-function nearestRoom(p) {
-  let best = null;
-  let bd = Infinity;
-  for (const r of ROOMS) {
-    if (r.id === 'OF') continue;
-    const w = roomWorldPos(r);
-    const d = Math.hypot(w.x - p.x, w.z - p.z);
-    if (d < bd) {
-      bd = d;
-      best = r;
-    }
-  }
-  return best;
-}
-
 export class Director {
   constructor({ audio, scene, room, term }) {
     this.audio = audio;
@@ -48,18 +31,11 @@ export class Director {
     this.term = term;
     this.timer = 7 + Math.random() * 5;
     this.flicker = 0;
-    on('lure', (r) => {
-      const w = roomWorldPos(r);
+    this.active = true;
+    on('sim:lure', (e) => {
+      const w = roomWorldPos({ x: 0, y: 0, w: 0, h: 0, ...ROOM_POS[e.room] });
       this.audio.shot('chime', new THREE.Vector3(w.x, 2.2, w.z), { scene, volume: 1.4, ref: 3, lowpass: 1800 });
     });
-  }
-
-  sensor(p, db) {
-    const r = nearestRoom(p);
-    if (!r) return;
-    const s = state.rooms[r.id];
-    if (s) s.spike = db;
-    if (db > 18) log(`节点 ${r.id} ${r.name}: 声学异常 ${Math.round(30 + db)}dB`, 'warn');
   }
 
   fire(kind = pick()) {
@@ -67,63 +43,53 @@ export class Director {
     const scene = this.scene;
     switch (kind) {
       case 'clank': {
-        const a = Math.random() * Math.PI * 2;
-        const d = 7 + Math.random() * 8;
-        const p = new THREE.Vector3(Math.sin(a) * d, 1.5, Math.cos(a) * d);
-        A.shot('clank', p, { scene, volume: 1.6, ref: 3, lowpass: 900, rate: 0.85 + Math.random() * 0.3 });
-        this.sensor(p, 22);
-        break;
-      }
-      case 'creak': {
-        // behind the player: the back door you cannot turn to see
-        const p = new THREE.Vector3((Math.random() - 0.5) * 1.5, 1.2, 3.2 + Math.random() * 2);
-        A.shot('creak', p, { scene, volume: 1.2, ref: 1.5, lowpass: 2200, rate: 0.8 + Math.random() * 0.3 });
-        const s = state.rooms['12'];
-        if (s) s.spike = 26;
-        log('节点 12 后廊: 声学异常 ' + Math.round(52 + Math.random() * 8) + 'dB', 'warn');
+        // front half only: sounds from behind belong to real threats
+        const a = (Math.random() - 0.5) * Math.PI * 1.2;
+        const d = 9 + Math.random() * 8;
+        A.shot('clank', new THREE.Vector3(Math.sin(a) * d, 1.5, -Math.cos(a) * d), { scene, volume: 1.4, ref: 3, lowpass: 800, rate: 0.85 + Math.random() * 0.3 });
         break;
       }
       case 'thud': {
-        const a = Math.random() * Math.PI * 2;
-        const p = new THREE.Vector3(Math.sin(a) * 12, 1, Math.cos(a) * 12);
-        A.shot('thud', p, { scene, volume: 2.0, ref: 4, lowpass: 500 });
-        this.sensor(p, 15);
+        const a = (Math.random() - 0.5) * Math.PI;
+        A.shot('thud', new THREE.Vector3(Math.sin(a) * 13, 1, -Math.cos(a) * 13), { scene, volume: 1.8, ref: 4, lowpass: 450 });
         break;
       }
       case 'drip': {
         const side = Math.random() < 0.5 ? -1 : 1;
-        const p = new THREE.Vector3(side * (3 + Math.random() * 4), 0.3, 0.3);
-        A.shot('drip', p, { scene, volume: 0.7, ref: 1.2, rate: 0.9 + Math.random() * 0.25 });
+        A.shot('drip', new THREE.Vector3(side * (3 + Math.random() * 4), 0.3, 0.3), { scene, volume: 0.6, ref: 1.2, rate: 0.9 + Math.random() * 0.25 });
         break;
       }
-      case 'flicker': {
-        this.flicker = 0.5 + Math.random() * 0.9;
+      case 'flicker':
+        this.flicker = 0.4 + Math.random() * 0.7;
         A.shot('zap', this.room.anchors.lamp.position, { scene, volume: 0.5, ref: 1 });
-        if (Math.random() < 0.5) this.term.triggerGlitch(0.15);
+        if (Math.random() < 0.4) this.term.triggerGlitch(0.12);
         break;
-      }
-      case 'glitch': {
-        this.term.triggerGlitch(0.12 + Math.random() * 0.2);
+      case 'glitch':
+        this.term.triggerGlitch(0.1 + Math.random() * 0.15);
         break;
-      }
     }
   }
 
   update(dt) {
+    if (!this.active) return;
     this.timer -= dt;
     if (this.timer <= 0) {
       this.fire();
-      this.timer = 9 + Math.random() * 16;
+      this.timer = 12 + Math.random() * 20;
     }
     if (this.flicker > 0) this.flicker -= dt;
   }
 
-  // multiplier for the office lamp, 0..1
   lampFlicker(time) {
-    if (this.flicker <= 0) return 1 - 0.03 * Math.random() * (Math.sin(time * 0.7) > 0.95 ? 1 : 0);
+    if (this.flicker <= 0) return 1;
     const k = Math.floor(time * 18);
     const r = Math.sin(k * 91.7) * 43758.5;
     const f = r - Math.floor(r);
     return f < 0.4 ? 0.05 : f < 0.6 ? 0.4 : 1;
   }
 }
+
+// map positions of rooms (cells) for lure sound placement
+import { ROOMS } from './rooms.js';
+const ROOM_POS = {};
+for (const r of ROOMS) ROOM_POS[r.id] = r;

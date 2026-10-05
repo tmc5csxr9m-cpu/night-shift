@@ -425,6 +425,11 @@ export function buildRoom(scene) {
     phone.rotation.y = -0.4;
     root.add(shadowed(phone));
     refs.phoneLed = pled;
+    refs.phone = phone;
+    const pAnchor = new THREE.Object3D();
+    pAnchor.position.set(0, 0.08, 0);
+    phone.add(pAnchor);
+    refs.anchors.phone = pAnchor;
     // party hat
     const hat = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.16, 16, 1, true), std({ map: stripeTex('#2a6cff', '#ffd23a'), side: THREE.DoubleSide }));
     hat.position.set(-1.0, TOP + 0.04, -0.52);

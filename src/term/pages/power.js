@@ -1,129 +1,120 @@
 import { C, fit } from '../screen.js';
-import { state, currentLoad, log, emit } from '../../state.js';
+import { CIRCUITS } from '../../sim/index.js';
 
 const SPARK = ' ▁▂▃▄▅▆▇█';
-const history = [];
+let history = [];
 let acc = 0;
-const gen = { state: 'idle', t: 0, fuel: 0.64 };
 
-// flavour text logged when a circuit changes
-const NOTES = {
-  C9: ['舞台电路已断开. 表演者切换为内置电池.', '舞台电路已恢复.'],
-  C0: ['冷库断电. 后厨温度将逐渐升高.', '冷库供电恢复.'],
-  C6: ['传感网络离线. 地图将无法更新.', '传感网络重新上线 (12/12).'],
-  C8: ['后门磁锁失去供电!', '后门磁锁供电恢复.'],
+const INFO = {
+  C1: ['办公室照明', 'OFFICE LT'],
+  C2: ['左门灯', 'L-DOOR LT'],
+  C3: ['右门灯', 'R-DOOR LT'],
+  C4: ['通风系统', 'HVAC'],
+  C5: ['桌面风扇', 'DESK FAN'],
+  C6: ['传感网络', 'SENSOR NET'],
+  C7: ['公共广播', 'PA / MUSIC'],
+  C8: ['后门磁锁', 'MAGLOCK'],
+  C9: ['舞台电路', 'STAGE'],
+  C0: ['后厨冷库', 'FREEZER'],
 };
 
-function maxLoad() {
-  return state.circuits.reduce((a, c) => a + c.load, 0.6) + 1.5;
-}
+const PART_NAMES = {
+  base: '终端/主机', sensors: '传感网', pa: '广播', maglock: '磁锁', stage: '舞台', freezer: '冷库',
+  officeLight: '办公室灯', doorL: '左门灯', doorR: '右门灯', vent: '通风', fan: '风扇', roomLights: '区域照明', seals: '卷帘',
+};
 
 export const powerPage = {
   path: 'C:\\SEC\\POWER>',
+
+  reset() {
+    history = [];
+    acc = 0;
+  },
 
   tick(term, dt) {
     acc += dt;
     if (acc > 0.5) {
       acc = 0;
-      history.push(currentLoad() * (0.97 + Math.random() * 0.06));
+      history.push(term.world.power.load);
       if (history.length > 34) history.shift();
-    }
-    if (gen.state === 'cranking') {
-      gen.t += dt;
-      if (Math.floor(gen.t * 4) !== Math.floor((gen.t - dt) * 4)) term.sfx.tick();
-      if (gen.t > 2.5) {
-        gen.state = 'running';
-        term.sfx.ok();
-        log('备用发电机已启动 (演示: 不消耗燃料).');
-      }
     }
   },
 
   draw(term, ui) {
-    const load = currentLoad();
+    const w = term.world;
+    const pw = w.power;
+    const pct = w.powerPct();
     // ------------------------------------------------- reserve
-    ui.box(2, 3, 36, 8, { title: '主电源储备 RESERVE', titleAlign: 'left' });
-    ui.bigText(5, 5, '100%', C.hi);
-    ui.text(23, 5, '∞', C.yel);
-    ui.text(25, 5, '无限模式', C.yel);
-    ui.text(23, 6, 'DEMO BUILD', C.dim);
+    ui.box(2, 3, 36, 8, { title: '用电储备 RESERVE', titleAlign: 'left' });
+    const col = pct < 15 ? C.red : pct < 35 ? C.yel : C.hi;
+    ui.bigText(5, 5, `${Math.floor(pct)}%`, col);
+    const rate = (pw.load / 60) / pw.max * 100; // % per real second
+    ui.text(24, 5, `-${rate.toFixed(2)}%/s`, C.fg);
+    const eta = rate > 0 ? pct / rate : Infinity;
+    ui.text(24, 6, eta === Infinity ? '可用 ∞' : `可用 ${Math.floor(eta / 60)}:${String(Math.floor(eta % 60)).padStart(2, '0')}`, C.dim);
     ui.text(4, 8, '┌' + '─'.repeat(28) + '┐', C.fg);
     ui.text(4, 9, '│', C.fg);
-    ui.bar(5, 9, 28, 1, { fg: C.cy });
+    ui.bar(5, 9, 28, pct / 100, { fg: col === C.hi ? C.cy : col });
     ui.text(33, 9, '│▌', C.fg);
 
     // ------------------------------------------------- load graph
-    ui.box(2, 12, 36, 10, { title: '负载曲线 LOAD/kW', titleAlign: 'left' });
-    const top = maxLoad();
-    const gh = 6;
+    ui.box(2, 12, 36, 9, { title: '负载曲线 LOAD/kW', titleAlign: 'left' });
+    const top = w.P.power.tripLimit;
+    const gh = 5;
     for (let i = 0; i < history.length; i++) {
       const v = (history[i] / top) * gh;
       for (let r = 0; r < gh; r++) {
         const k = Math.max(0, Math.min(1, v - r));
-        const ch = SPARK[Math.round(k * 8)];
-        ui.s.set(3 + i, 12 + gh - r, ch, i === history.length - 1 ? C.hi : C.cy);
+        ui.s.set(3 + i, 12 + gh - r, SPARK[Math.round(k * 8)], i === history.length - 1 ? C.hi : history[i] > top * 0.85 ? C.yel : C.cy);
       }
     }
-    ui.text(3, 19, '─'.repeat(34), C.dim2);
-    ui.text(3, 20, `当前 ${load.toFixed(2)}kW`, C.hi);
-    ui.text(20, 20, `峰值 ${top.toFixed(1)}kW`, C.dim);
+    ui.text(3, 18, '─'.repeat(34), C.dim2);
+    ui.text(3, 19, `当前 ${pw.load.toFixed(2)}kW`, C.hi);
+    ui.text(20, 19, `跳闸 ${top.toFixed(1)}kW`, pw.load > top * 0.85 ? C.yel : C.dim);
 
-    // ------------------------------------------------- generator
-    ui.box(2, 23, 36, 6, { title: '备用发电机 GENERATOR', titleAlign: 'left' });
-    const gs = { idle: ['待机', C.dim], cranking: ['启动中...', C.yel], running: ['运行中', C.ok] }[gen.state];
-    ui.text(4, 24, '状态', C.dim);
-    ui.text(9, 24, gs[0], gs[1]);
-    ui.text(4, 25, '燃料', C.dim);
-    ui.bar(9, 25, 14, gen.fuel, { fg: C.yel, blocky: true });
-    ui.text(24, 25, `${Math.round(gen.fuel * 100)}%`, C.fg);
-    if (gen.state === 'idle') {
-      ui.pushButton('gen-start', 26, 26, 9, '启动', () => {
-        gen.state = 'cranking';
-        gen.t = 0;
-        log('正在启动备用发电机...');
-      });
-    } else if (gen.state === 'running') {
-      ui.pushButton('gen-stop', 26, 26, 9, '停机', () => {
-        gen.state = 'idle';
-        term.sfx.off();
-        log('备用发电机已停机.');
-      });
-    } else {
-      ui.text(4, 26, '▒'.repeat(Math.floor((gen.t / 2.5) * 20)), C.yel);
-    }
+    // ------------------------------------------------- breakdown
+    ui.box(2, 22, 36, 7, { title: '负载分项', titleAlign: 'left' });
+    const parts = Object.entries(pw.parts).sort((a, b) => b[1] - a[1]).slice(0, 8);
+    parts.forEach(([k, v], i) => {
+      const x = 4 + (i % 2) * 17;
+      const y = 23 + Math.floor(i / 2);
+      ui.text(x, y, fit(PART_NAMES[k] || k, 9), C.dim);
+      ui.text(x + 9, y, v.toFixed(2), C.fg);
+    });
 
     // ------------------------------------------------- breaker panel
     ui.box(40, 3, 38, 26, { title: '配电盘 BREAKER PANEL', titleAlign: 'left', style: 'double' });
-    ui.text(42, 4, '回路  名称          负载      开关', C.dim);
-    state.circuits.forEach((c, i) => {
+    if (pw.tripped) {
+      const blink = Math.floor(term.time * 3) % 2;
+      ui.fill(41, 4, 36, 1, blink ? '#8a0c0c' : C.bg2);
+      ui.text(42, 4, pw.blackoutT > 0 ? `主闸跳闸 · 冷却 ${pw.blackoutT.toFixed(1)}s` : '主闸跳闸 · 可以复位', C.hi, blink ? '#8a0c0c' : C.bg2);
+    } else ui.text(42, 4, '回路  名称          负载      开关', C.dim);
+    CIRCUITS.forEach((id, i) => {
       const y = 5 + i * 2;
-      const hov = ui.hit('cb-' + c.id, 41, y, 36, 2, () => {
-        c.on = !c.on;
-        c.on ? term.sfx.on() : term.sfx.off();
-        const note = NOTES[c.id];
-        if (note) log(c.on ? note[1] : note[0], c.on ? 'info' : 'warn');
-        else log(`${c.id} ${c.name} ${c.on ? '闭合' : '断开'}.`);
-        emit('facility');
-      });
+      const on = w.circuits[id];
+      const [name, en] = INFO[id];
+      const hov = ui.hit('cb-' + id, 41, y, 36, 2, () => term.cmd('breaker', { id }, on ? 'off' : 'on'));
       const bg = hov ? C.bg3 : undefined;
       if (hov) ui.fill(41, y, 36, 2, C.bg3);
-      ui.text(42, y, c.id, c.on ? C.cy : C.dim, bg);
-      ui.text(46, y, fit(c.name, 10), c.on ? C.hi : C.dim, bg);
-      ui.text(46, y + 1, fit(c.en, 10), C.dim2, bg);
-      ui.text(57, y, `${c.load.toFixed(2)}kW`, C.fg, bg);
-      ui.segments(57, y + 1, 6, c.on ? Math.ceil((c.load / 2.4) * 6) : 0, C.cy, C.dim2);
-      // breaker switch
-      if (c.on) ui.text(68, y, '▐ON ▌', C.ink, C.cy);
+      ui.text(42, y, id, on ? C.cy : C.dim, bg);
+      ui.text(46, y, fit(name, 10), on ? C.hi : C.dim, bg);
+      ui.text(46, y + 1, fit(en, 10), C.dim2, bg);
+      const load = { C1: 0.42, C2: 0.65, C3: 0.65, C4: 1.08, C5: 0.08, C6: 0.55, C7: 0.3, C8: 0.35, C9: 2.4, C0: 1.3 }[id];
+      ui.text(57, y, `${load.toFixed(2)}kW`, C.fg, bg);
+      ui.segments(57, y + 1, 6, on ? Math.ceil((load / 2.4) * 6) : 0, C.cy, C.dim2);
+      if (on) ui.text(68, y, '▐ON ▌', C.ink, pw.tripped ? C.dim : C.cy);
       else ui.text(68, y, '▐OFF▌', C.dim, C.bg2);
-      ui.text(68, y + 1, c.on ? ' ▀▀  ' : '  ▄▄ ', c.on ? C.cy : C.dim2, bg);
+      ui.text(68, y + 1, on ? ' ▀▀  ' : '  ▄▄ ', on ? C.cy : C.dim2, bg);
     });
     ui.text(42, 25, '─'.repeat(34), C.dim2);
-    ui.pushButton('cb-all', 42, 26, 14, '全部闭合', () => {
-      state.circuits.forEach((c) => (c.on = true));
-      term.sfx.on();
-      log('所有回路已闭合.');
-      emit('facility');
-    });
-    ui.text(60, 26, `闭合 ${state.circuits.filter((c) => c.on).length}/10`, C.fg);
+    if (pw.tripped) {
+      ui.pushButton('reset-main', 42, 26, 16, '■ 主闸复位', () => term.cmd('resetMain', {}, 'on'), { disabled: pw.blackoutT > 0, danger: true, active: true });
+    } else {
+      ui.pushButton('cb-all', 42, 26, 14, '全部闭合', () => {
+        for (const id of CIRCUITS) if (!w.circuits[id]) term.cmd('breaker', { id, on: true });
+        term.sfx.on();
+      });
+    }
+    ui.text(61, 26, `闭合 ${CIRCUITS.filter((c) => w.circuits[c]).length}/10`, C.fg);
   },
 };
