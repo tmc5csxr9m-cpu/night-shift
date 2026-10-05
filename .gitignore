@@ -1,0 +1,4 @@
+node_modules
+dist
+.audio_tmp
+.playwright-mcp

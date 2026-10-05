@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="data:," />
+    <title>Night Shift — Starlight Pizza</title>
+    <style>
+      @font-face {
+        font-family: 'Unifont';
+        src: url('fonts/unifont.otf') format('opentype');
+      }
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        background: #000;
+        overflow: hidden;
+        font-family: 'Unifont', monospace;
+        color: #c3d1ff;
+        user-select: none;
+      }
+      #app canvas {
+        display: block;
+      }
+      #start {
+        position: fixed;
+        inset: 0;
+        background: #000;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 18px;
+        z-index: 10;
+        transition: opacity 1.6s ease;
+        cursor: default;
+      }
+      #start.ready {
+        cursor: pointer;
+      }
+      #start.gone {
+        opacity: 0;
+        pointer-events: none;
+      }
+      #start h1 {
+        font-weight: normal;
+        font-size: 48px;
+        letter-spacing: 6px;
+        margin: 0;
+        color: #e8ecff;
+        text-shadow: 0 0 12px rgba(120, 150, 255, 0.6), 3px 0 rgba(255, 40, 40, 0.35), -3px 0 rgba(40, 120, 255, 0.35);
+        animation: jitter 6s infinite steps(1);
+      }
+      #start h2 {
+        font-weight: normal;
+        font-size: 16px;
+        margin: 0;
+        letter-spacing: 4px;
+        color: #6b7fd6;
+      }
+      #load {
+        margin-top: 40px;
+        font-size: 16px;
+        color: #7fe3ff;
+      }
+      #start.ready #load {
+        animation: blink 1.2s infinite steps(2);
+      }
+      #start small {
+        position: absolute;
+        bottom: 28px;
+        font-size: 16px;
+        color: #3d52b0;
+        line-height: 1.6;
+        text-align: center;
+      }
+      #intro {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 1.2s;
+        z-index: 5;
+        color: #fff;
+        text-shadow: 0 0 10px #000;
+      }
+      #intro.show {
+        opacity: 1;
+      }
+      #intro .t {
+        font-size: 64px;
+        letter-spacing: 4px;
+      }
+      #intro .n {
+        font-size: 32px;
+        color: #c3d1ff;
+      }
+      #hint {
+        position: fixed;
+        left: 50%;
+        bottom: 26px;
+        transform: translateX(-50%);
+        font-size: 16px;
+        color: rgba(195, 209, 255, 0.75);
+        background: rgba(0, 0, 10, 0.55);
+        padding: 6px 14px;
+        transition: opacity 1s;
+        pointer-events: none;
+        z-index: 4;
+        white-space: nowrap;
+      }
+      #hint.hidden {
+        opacity: 0;
+      }
+      @keyframes blink {
+        50% {
+          opacity: 0;
+        }
+      }
+      @keyframes jitter {
+        0%, 100% { transform: none; }
+        41% { transform: translate(2px, -1px) skewX(4deg); }
+        42% { transform: none; }
+        77% { transform: translate(-3px, 1px); opacity: 0.6; }
+        78% { transform: none; opacity: 1; }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app"></div>
+    <div id="start">
+      <h1>NIGHT SHIFT</h1>
+      <h2>星光披萨乐园 · 夜班保安</h2>
+      <div id="load">载入字体...</div>
+      <small>建议佩戴耳机 · 关灯游玩<br />同人作品 · 氛围测试 DEMO</small>
+    </div>
+    <div id="intro"><div class="t">12:00 AM</div><div class="n">第 1 夜</div></div>
+    <div id="hint" class="hidden">鼠标移到屏幕两侧转头 · 点击终端进行操作 · 右键 / ESC 离开终端</div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
