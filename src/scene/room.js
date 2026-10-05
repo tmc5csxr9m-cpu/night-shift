@@ -206,13 +206,22 @@ export function buildRoom(scene) {
     spot.shadow.camera.near = 0.1;
     scene.add(spot, spot.target);
     // a dim spill so the doorway edge catches light
-    const spill = new THREE.PointLight(0xd8e4ff, 0, 2.2, 2);
-    spill.position.set(side * (X + 0.6), 1.6, 0.05);
+    // inside the doorway, so whatever stands in the door is lit from the front
+    const spill = new THREE.PointLight(0xd8e4ff, 0, 3.2, 1.8);
+    spill.position.set(side * (X - 0.35), 2.0, 0.05);
     scene.add(spill);
     const anchor = new THREE.Object3D();
     anchor.position.copy(g.position);
     scene.add(anchor);
-    refs.doorLights[key] = { spot, spill, bulbMat, anchor, level: 0 };
+    // volumetric dust in the beam
+    const dust = new THREE.Mesh(new THREE.ConeGeometry(2.4, 6.5, 32, 1, true), dustMaterial());
+    dust.geometry.translate(0, -3.25, 0);
+    dust.geometry.rotateX(-Math.PI / 2);
+    dust.position.copy(spot.position);
+    dust.lookAt(spot.target.position);
+    dust.renderOrder = 2;
+    scene.add(dust);
+    refs.doorLights[key] = { spot, spill, bulbMat, anchor, dust, level: 0 };
   }
 
   // ---------------------------------------------------------------- corridor props
@@ -604,6 +613,21 @@ export function buildRoom(scene) {
     root.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 30, 0.008, 5), black));
   }
 
+  // ---------------------------------------------------------------- wingback chair (you are sitting in it)
+  {
+    const chair = new THREE.Group();
+    const leather = std({ color: 0x2a1a14, roughness: 0.55 });
+    chair.add(box(0.72, 1.15, 0.12, leather, 0, 1.05, 0.82));
+    for (const s of [-1, 1]) {
+      const wing = box(0.08, 0.62, 0.3, leather, s * 0.36, 1.18, 0.66);
+      wing.rotation.y = s * -0.25;
+      chair.add(wing);
+      chair.add(box(0.1, 0.12, 0.5, leather, s * 0.36, 0.66, 0.55));
+    }
+    chair.add(box(0.7, 0.14, 0.55, leather, 0, 0.5, 0.55));
+    root.add(shadowed(chair, false, true));
+  }
+
   // ---------------------------------------------------------------- ambient
   const hemi = new THREE.HemisphereLight(0x2a3550, 0x080604, 0.16);
   scene.add(hemi);
@@ -613,6 +637,40 @@ export function buildRoom(scene) {
 }
 
 // ---------------------------------------------------------------- helpers
+function dustMaterial() {
+  return new THREE.ShaderMaterial({
+    transparent: true,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending,
+    side: THREE.DoubleSide,
+    uniforms: { level: { value: 0 }, time: { value: 0 }, tint: { value: new THREE.Color(0xd8e4ff) } },
+    vertexShader: `
+      varying vec3 vPos; varying vec3 vN; varying vec3 vView;
+      void main() {
+        vPos = position;
+        vec4 wp = modelMatrix * vec4(position, 1.0);
+        vN = normalize(mat3(modelMatrix) * normal);
+        vView = normalize(cameraPosition - wp.xyz);
+        gl_Position = projectionMatrix * viewMatrix * wp;
+      }`,
+    fragmentShader: `
+      uniform float level, time; uniform vec3 tint;
+      varying vec3 vPos; varying vec3 vN; varying vec3 vView;
+      float h(vec3 p){ return fract(sin(dot(p, vec3(12.9898,78.233,37.719))) * 43758.5453); }
+      float n3(vec3 p){ vec3 i=floor(p); vec3 f=fract(p); f=f*f*(3.0-2.0*f);
+        return mix(mix(mix(h(i),h(i+vec3(1,0,0)),f.x),mix(h(i+vec3(0,1,0)),h(i+vec3(1,1,0)),f.x),f.y),
+                   mix(mix(h(i+vec3(0,0,1)),h(i+vec3(1,0,1)),f.x),mix(h(i+vec3(0,1,1)),h(i+vec3(1,1,1)),f.x),f.y),f.z); }
+      void main() {
+        float along = clamp(-vPos.z / 6.5, 0.0, 1.0);
+        float edge = pow(abs(dot(vN, vView)), 1.5);
+        float dust = 0.55 + 0.45 * n3(vPos * 3.0 + vec3(0.0, time * 0.15, time * 0.05));
+        float specks = step(0.985, n3(vPos * 22.0 + vec3(time * 0.3, time * 0.2, 0.0)));
+        float a = level * edge * (1.0 - along) * (1.0 - along) * (0.05 * dust + 0.25 * specks);
+        gl_FragColor = vec4(tint * a, 1.0);
+      }`,
+  });
+}
+
 function stripeTex(a = '#d42020', b = '#f4f0e6') {
   const c = document.createElement('canvas');
   c.width = 128;

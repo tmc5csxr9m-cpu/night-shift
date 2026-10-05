@@ -11,6 +11,8 @@ import { save } from './save.js';
 import { on } from './bus.js';
 import { debugPanel } from './debug/panel.js';
 import { CALLS } from './data/calls.js';
+import { ActorViews, NODE_POS } from './scene/actors.js';
+import { ROOMS, roomWorldPos } from './rooms.js';
 
 // ------------------------------------------------------------------ renderer
 const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
@@ -52,6 +54,7 @@ termTex.minFilter = THREE.LinearMipmapLinearFilter;
 room.makeScreen(termTex);
 const crt = room.crtMat;
 const director = new Director({ audio, scene, room, term });
+const actors = new ActorViews(scene);
 debugPanel.init();
 
 // ------------------------------------------------------------------ view control
@@ -155,7 +158,11 @@ function updateCamera(dt, t) {
   const target = view.focused ? 1 : 0;
   view.focus += (target - view.focus) * Math.min(1, dt * 5.5);
   if (Math.abs(target - view.focus) < 0.001) view.focus = target;
-  if (!view.focused && view.focus < 0.5 && view.hasMouse) {
+  if (view.cinematic) {
+    view.yaw += (view.cinematic.yaw - view.yaw) * Math.min(1, dt * 14);
+    view.pitch += (0.02 - view.pitch) * Math.min(1, dt * 14);
+    view.yawVel = 0;
+  } else if (!view.focused && view.focus < 0.5 && view.hasMouse) {
     const mx = view.mouse.x;
     const dead = 0.32;
     let want = 0;
@@ -165,7 +172,7 @@ function updateCamera(dt, t) {
     view.pitch += (-0.1 + view.mouse.y * 0.28 - view.pitch) * Math.min(1, dt * 3);
   } else view.yawVel *= Math.max(0, 1 - dt * 8);
   view.yaw += view.yawVel * dt;
-  if (Math.abs(view.yaw) > YAW_MAX) {
+  if (!view.cinematic && Math.abs(view.yaw) > YAW_MAX) {
     view.yaw = Math.sign(view.yaw) * YAW_MAX;
     view.yawVel = 0;
   }
@@ -213,6 +220,9 @@ function lockFocus() {
 }
 
 function showMenu() {
+  view.cinematic = null;
+  actors.clearJumpscare();
+  scare = null;
   game.toMenu();
   lockFocus();
   phone.stop();
@@ -222,6 +232,22 @@ function showMenu() {
 }
 
 let ending = null; // { kind, t }
+let scare = null;
+
+// a short ringing in the ears after a scare
+function tinnitus() {
+  const ctx = audio.ctx;
+  const o = ctx.createOscillator();
+  o.frequency.value = 6200;
+  const g = ctx.createGain();
+  g.gain.setValueAtTime(0, ctx.currentTime + 0.5);
+  g.gain.linearRampToValueAtTime(0.03, ctx.currentTime + 0.7);
+  g.gain.linearRampToValueAtTime(0, ctx.currentTime + 3.2);
+  o.connect(g);
+  g.connect(audio.listener.getInput());
+  o.start();
+  o.stop(ctx.currentTime + 3.3);
+}
 
 function startNight(n, debug) {
   phone.stop();
@@ -233,6 +259,9 @@ function startNight(n, debug) {
   view.focused = false;
   term.focused = false;
   view.yaw = 0;
+  view.cinematic = null;
+  actors.clearJumpscare();
+  scare = null;
   term.startNight();
   intro.querySelector('.t').textContent = n === 0 ? 'TEST' : '12:00 AM';
   intro.querySelector('.n').textContent = game.nightName(n);
@@ -313,6 +342,40 @@ on('sim:overtime', () => {
   buzzer.error();
   shake.amp = 0.2;
 });
+// --- animatronic sounds, positioned where the sim says they are
+const CUE_SOUND = {
+  sunny: { step: ['step_heavy', 1], greet: ['greet_sunny', 1] },
+  pip: { step: ['step_light', 1], greet: ['greet_pip', 1] },
+  tootie: { step: ['step_light', 1.35], greet: ['horn', 1] },
+};
+on('sim:cue', (e) => {
+  actors.event(e);
+  const def = CUE_SOUND[e.source]?.[e.kind];
+  const pos = NODE_POS[e.node];
+  if (!def || !pos) return;
+  const v = new THREE.Vector3(...pos);
+  const far = v.length() > 6;
+  const vol = Math.min(2.5, Math.pow(10, (e.db - 44) / 20));
+  audio.shot(def[0], v, { scene, volume: vol, ref: 2, lowpass: far ? 1400 : 0, rate: def[1] * (0.95 + Math.random() * 0.1) });
+});
+on('sim:repel', (e) => {
+  actors.event(e);
+  const side = e.side === 'L' ? NODE_POS.DOOR_L : NODE_POS.DOOR_R;
+  audio.shot('servo', new THREE.Vector3(...side), { scene, volume: 0.8, ref: 1.5, rate: 0.8 });
+  if (e.actor === 'sunny') setTimeout(() => audio.shot('step_heavy', new THREE.Vector3(-6, 1, 0), { scene, volume: 0.8, ref: 2 }), 900);
+});
+on('sim:telegraph', (e) => {
+  if (e.kind === 'pose') audio.shot('servo', new THREE.Vector3(...NODE_POS.DOOR_R), { scene, volume: 0.7, ref: 1.5, rate: 1.3 });
+  if (e.kind === 'wake') audio.shot('horn', new THREE.Vector3(...NODE_POS['13']), { scene, volume: 1.6, ref: 3, lowpass: 1600, rate: 0.85 });
+});
+const ROOM_BY_ID = Object.fromEntries(ROOMS.map((r) => [r.id, r]));
+on('sim:seal', (e) => {
+  const r = ROOM_BY_ID[e.room];
+  if (!r) return;
+  const p = roomWorldPos(r);
+  audio.shot('shutter', new THREE.Vector3(p.x, 1.5, p.z), { scene, volume: 1.4, ref: 3, lowpass: 1500, rate: e.on ? 1 : 1.3 });
+});
+
 on('sim:powerOut', () => {
   audio.shot('thud', room.anchors.lamp.position, { scene, volume: 1.2, ref: 2, rate: 0.7 });
 });
@@ -322,23 +385,42 @@ on('nightEnd', ({ result }) => {
   subtitle.classList.remove('show');
   ending = { kind: result.outcome, t: 0 };
   if (result.outcome === 'death') {
-    shake.amp = 1.5;
-    audio.shot('clank', camera.position, { scene, volume: 2.0, ref: 1, rate: 0.6 });
-    audio.shot('zap', camera.position, { scene, volume: 1.5, ref: 1, rate: 0.5 });
+    const who = actors.views[result.cause] ? result.cause : 'sunny';
+    const side = who === 'sunny' ? 'L' : 'R';
+    // snap the view to the door it came from, then it lunges
+    view.locked = false;
+    view.focused = false;
+    term.focused = false;
+    view.cinematic = { yaw: side === 'L' ? 1.5 : -1.5 };
+    ending.scareAt = 0.35;
+    ending.who = who;
   } else if (result.outcome === 'win') {
-    for (let i = 0; i < 6; i++) setTimeout(() => audio.shot('chime', room.anchors.monitor.position, { scene, volume: 0.9, ref: 2, rate: 0.5 }), i * 900);
+    for (let i = 0; i < 6; i++) setTimeout(() => audio.shot('bell6', room.anchors.monitor.position, { scene, volume: 1.0, ref: 2 }), 300 + i * 950);
   } else {
     buzzer.error();
   }
 });
 
 function updateEnding(dt) {
-  if (!ending) return;
+  if (!ending || ending.done) return;
   ending.t += dt;
   const k = ending.kind;
-  if (k === 'death') grade.uniforms.dark.value = Math.min(1, ending.t * 1.5);
-  if (ending.t > (k === 'death' ? 2.4 : k === 'win' ? 4.5 : 1.5) && term.mode !== 'result') {
+  if (k === 'death') {
+    if (ending.scareAt !== undefined && ending.t >= ending.scareAt && !scare) {
+      scare = actors.jumpscare(ending.who, camera);
+      audio.shot('scream', camera.position, { scene, volume: 1.6, ref: 1 });
+      shake.amp = 2.5;
+      tinnitus();
+    }
+    actors.updateJumpscare(dt, scare);
+    grade.uniforms.dark.value = ending.t > 1.4 ? Math.min(1, (ending.t - 1.4) * 4) : 0;
+  }
+  if (ending.t > (k === 'death' ? 2.6 : k === 'win' ? 5.5 : 1.5) && term.mode !== 'result') {
     grade.uniforms.dark.value = 0;
+    ending.done = true;
+    view.cinematic = null;
+    actors.clearJumpscare();
+    scare = null;
     lockFocus();
     term.showResult();
   }
@@ -358,6 +440,8 @@ function startAudio() {
   loops.lamp = audio.loop('buzz', { parent: room.anchors.lamp, volume: 0.05, ref: 0.8 });
   loops.doorL = audio.loop('buzz', { parent: room.doorLights.L.anchor, volume: 0, ref: 1, rate: 0.98 });
   loops.doorR = audio.loop('buzz', { parent: room.doorLights.R.anchor, volume: 0, ref: 1, rate: 1.02 });
+  loops.tension = audio.loop('tension', { volume: 0 });
+  loops.heart = audio.loop('heartbeat', { volume: 0 });
   loops.emi = audio.loop('buzz', { parent: room.anchors.monitor, volume: 0, ref: 0.5, rate: 1.5 });
   const mbAnchor = new THREE.Object3D();
   mbAnchor.position.set(11, 1.4, 5);
@@ -419,7 +503,7 @@ function updateWorld(dt, t) {
     const warm = Math.min(1, Math.max(0, (st.heat[k] - 50) / 50));
     D.spot.color.setRGB(0.85 + warm * 0.15, 0.89 - warm * 0.15, 1.0 - warm * 0.45);
     D.spot.intensity = 32 * lvl;
-    D.spill.intensity = 0.5 * lvl;
+    D.spill.intensity = 2.2 * lvl;
     D.bulbMat.emissiveIntensity = 4 * lvl;
     if (sparks[k] > 0) {
       sparks[k] -= dt;
@@ -432,11 +516,41 @@ function updateWorld(dt, t) {
     if (lp) lp.setVolume(st.doors[k] ? 0.3 * Math.max(0.3, lvl) : 0);
   }
 
+  // animatronics in the corridors; dust in the beams
+  const lightLevel = { L: room.doorLights.L.spot.intensity / 32, R: room.doorLights.R.spot.intensity / 32 };
+  for (const k of ['L', 'R']) {
+    const du = room.doorLights[k].dust.material.uniforms;
+    du.level.value = lightLevel[k];
+    du.time.value = t;
+  }
+  actors.ghosts = game.debug && debugPanel.ghosts;
+  if (!scare) actors.update(dt, t, w && !w.result ? w : null, lightLevel);
+
+  // tension: how close is anything?
+  let tension = 0;
+  let atDoor = 0;
+  if (w && !w.result) {
+    for (const a of w.actors) {
+      const n = a.node;
+      const v = n.startsWith('DOOR') || n === 'VENT' ? 1 : /N$|^12$|^D2$/.test(n) ? 0.6 : /F$|^11$|^BACKP$|^D1$/.test(n) ? 0.3 : a.state === 'rush' ? 0.7 : 0;
+      tension = Math.max(tension, v);
+      if (v === 1) atDoor = 1;
+    }
+  }
+  view.tension = (view.tension || 0) + (tension - (view.tension || 0)) * Math.min(1, dt * 0.8);
+  if (loops.tension) loops.tension.setVolume(view.tension * 0.45);
+  if (loops.heart) {
+    const hv = loops.heart.getVolume();
+    loops.heart.setVolume(hv + (atDoor * 0.55 - hv) * Math.min(1, dt * 2));
+    loops.heart.setPlaybackRate(1 + view.tension * 0.5);
+  }
+  grade.uniforms.vignette.value = 1.15 + view.tension * 0.6;
+
   // CRT: power, EMI, magnetisation, degauss, heat
   const termOn = started && (!w || !w.power.out) && term.mode !== 'dead';
   const pu = crt.uniforms.power;
   pu.value = termOn ? Math.min(1, pu.value + dt * 0.8) : Math.max(0, pu.value - dt * 1.6);
-  if (w) {
+  if (w && !w.result) {
     crt.uniforms.emi.value.set(w.emi.L, w.emi.R, w.emi.B, w.emi.T);
     crt.uniforms.magnet.value = w.emi.magnet * 0.8;
     crt.uniforms.heat.value = Math.max(0, w.temp.eff - 30) / 6;

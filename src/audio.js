@@ -3,7 +3,8 @@
 // band-limited "speaker"), emitted from the monitor's position.
 import * as THREE from 'three';
 
-const FILES = ['musicbox', 'ambience', 'fan', 'buzz', 'roomtone', 'clank', 'creak', 'thud', 'drip', 'zap', 'relay', 'chime'];
+const FILES = ['musicbox', 'ambience', 'fan', 'buzz', 'roomtone', 'clank', 'creak', 'thud', 'drip', 'zap', 'relay', 'chime',
+  'step_heavy', 'step_light', 'greet_sunny', 'greet_pip', 'horn', 'servo', 'scream', 'heartbeat', 'tension', 'bell6', 'shutter'];
 
 export class AudioSys {
   constructor(camera) {

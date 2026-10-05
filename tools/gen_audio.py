@@ -501,6 +501,163 @@ def chime():
     write("chime", stereo(s) * 0.4 + convolve(s, ir)[:, :len(t)], 0.7)
 
 
+# ---------------------------------------------------------------- animatronics
+def formant_voice(syll, f0=110, dur=0.18, crush=8, ring=0, gap=0.05, glide=0.0):
+    """Robotic sing-song voice: sawtooth through vowel formants, bit-crushed."""
+    VOW = {'a': (730, 1090, 2440), 'e': (530, 1840, 2480), 'i': (270, 2290, 3010),
+           'o': (570, 840, 2410), 'u': (300, 870, 2240)}
+    out = []
+    for k, v in enumerate(syll):
+        t = t_axis(dur)
+        f = f0 * (1 + glide * k) * (1 + 0.04 * np.sin(2 * np.pi * 5 * t))
+        ph = 2 * np.pi * np.cumsum(f) / SR
+        saw = 2 * ((ph / (2 * np.pi)) % 1) - 1
+        sig = np.zeros(len(t))
+        for fm, a in zip(VOW[v], (1, 0.6, 0.25)):
+            sig += a * bandpass(saw, fm, 8)
+        env = np.minimum(1, t / 0.01) * np.minimum(1, (dur - t) / 0.04)
+        out.append(sig * env)
+        out.append(np.zeros(int(gap * SR)))
+    x = np.concatenate(out)
+    if ring:
+        x *= np.sin(2 * np.pi * ring * np.arange(len(x)) / SR)
+    # bit crush + sample-and-hold for a cheap speaker chip
+    q = 2 ** crush
+    x = np.round(norm(x, 1) * q) / q
+    hold = 3
+    x = np.repeat(x[::hold], hold)[:len(x)]
+    return x
+
+
+def speaker(x, lo=350, hi=3800):
+    x = highpass(x, lo)
+    x = lowpass(x, hi)
+    return np.tanh(2.0 * x)
+
+
+def step_heavy():
+    sec = 0.9
+    t = t_axis(sec)
+    thump = np.sin(2 * np.pi * (60 + 40 * np.exp(-t / 0.03)) * t) * np.exp(-t / 0.12)
+    clank = sum(a * np.sin(2 * np.pi * f * t) * np.exp(-t / d) for f, a, d in [(420, 0.4, 0.15), (1130, 0.25, 0.08), (2710, 0.12, 0.05)])
+    whirr = bandpass(white(sec), 1800, 6) * np.exp(-((t - 0.25) / 0.12) ** 2) * 0.5
+    s = thump + 0.6 * clank + whirr
+    ir = make_ir(1.2, 1.0, damp_hz=2500, seed=21)
+    write("step_heavy", stereo(s) * 0.7 + 0.5 * convolve(s, ir)[:, :len(t)], 0.8)
+
+
+def step_light():
+    sec = 0.6
+    t = t_axis(sec)
+    s = np.zeros(len(t))
+    for off in (0.0, 0.11):
+        i = int(off * SR)
+        tt = t[: len(t) - i]
+        s[i:] += (np.sin(2 * np.pi * 180 * tt) * np.exp(-tt / 0.04) + 0.5 * bandpass(white(len(tt) / SR), 2500, 3) * np.exp(-tt / 0.015))
+    ir = make_ir(1.0, 0.8, damp_hz=3000, seed=22)
+    write("step_light", stereo(s) * 0.7 + 0.4 * convolve(s, ir)[:, :len(t)], 0.7)
+
+
+def greet_sunny():
+    v = formant_voice('aeo', f0=92, dur=0.26, crush=6, gap=0.04, glide=-0.06)
+    v = np.concatenate([np.zeros(int(0.05 * SR)), v, np.zeros(int(0.8 * SR))])
+    v = speaker(v, 250, 3200)
+    ir = make_ir(1.5, 1.2, damp_hz=2200, seed=23)
+    write("greet_sunny", stereo(v) * 0.7 + 0.5 * convolve(v, ir)[:, :len(v)], 0.8)
+
+
+def greet_pip():
+    v = formant_voice('eieie', f0=210, dur=0.09, crush=5, gap=0.06, glide=0.05)
+    v = np.concatenate([v, np.zeros(int(0.6 * SR))])
+    v = speaker(v, 500, 4500)
+    ir = make_ir(1.2, 1.0, damp_hz=3000, seed=24)
+    write("greet_pip", stereo(v) * 0.7 + 0.5 * convolve(v, ir)[:, :len(v)], 0.8)
+
+
+def horn():
+    """Out-of-tune party horn (Tootie)."""
+    sec = 1.4
+    t = t_axis(sec)
+    f = 520 + 60 * np.sin(2 * np.pi * 3 * t) - 120 * t
+    ph = 2 * np.pi * np.cumsum(f) / SR
+    s = np.sign(np.sin(ph)) * 0.6 + np.sin(ph * 2.01) * 0.3
+    s += 0.3 * np.sign(np.sin(ph * 1.06))
+    env = np.minimum(1, t / 0.03) * np.exp(-t / 0.9)
+    s = speaker(s * env, 400, 3000)
+    ir = make_ir(1.8, 1.5, damp_hz=2500, seed=25)
+    write("horn", stereo(s) * 0.6 + 0.5 * convolve(s, ir)[:, :len(t)], 0.75)
+
+
+def servo():
+    sec = 0.7
+    t = t_axis(sec)
+    f = 900 + 500 * np.sin(np.pi * t / sec)
+    ph = 2 * np.pi * np.cumsum(f) / SR
+    s = (np.sign(np.sin(ph)) * 0.3 + np.sin(ph * 3) * 0.2) * np.sin(np.pi * t / sec) ** 0.5
+    s += 0.2 * bandpass(white(sec), 3000, 4) * np.sin(np.pi * t / sec)
+    write("servo", lowpass(s, 6000), 0.5)
+
+
+def scream():
+    """Jumpscare: detuned square cluster + servo screech + noise burst."""
+    sec = 1.5
+    t = t_axis(sec)
+    s = np.zeros(len(t))
+    for f in (311, 330, 466, 622, 659):
+        f_t = f * (1 + 0.06 * np.sin(2 * np.pi * 7 * t)) * (1 + 0.15 * t)
+        s += np.sign(np.sin(2 * np.pi * np.cumsum(f_t) / SR)) * 0.2
+    sc = 2400 + 1600 * np.sin(2 * np.pi * 2.3 * t)
+    s += 0.4 * np.sin(2 * np.pi * np.cumsum(sc) / SR)
+    s += 0.6 * white(sec) * np.exp(-t / 0.4)
+    env = np.minimum(1, t / 0.005) * np.exp(-t / 0.7)
+    s = np.tanh(3 * s * env)
+    write("scream", s, 0.89)
+
+
+def heartbeat():
+    L = 1.2   # 50 bpm loop, one lub-dub
+    t = t_axis(L)
+    s = np.zeros(len(t))
+    for off, a in ((0.0, 1.0), (0.24, 0.7)):
+        i = int(off * SR)
+        tt = t[: len(t) - i]
+        s[i:] += a * np.sin(2 * np.pi * (55 + 20 * np.exp(-tt / 0.02)) * tt) * np.exp(-tt / 0.09)
+    write("heartbeat", lowpass(s, 200), 0.9)
+
+
+def tension():
+    """Tension layer: pulsing low cluster + slow metallic scrape (loop)."""
+    L = 16.0
+    fade = 1.0
+    t = t_axis(L + fade)
+    pulse = 0.5 + 0.5 * np.sin(2 * np.pi * t / 2.0) ** 8
+    low = sum(np.sin(2 * np.pi * f * t) for f in (49.0, 51.9, 73.4)) * pulse
+    scrape = bandpass(pink(L + fade), 2200, 3) * (0.5 + 0.5 * np.sin(2 * np.pi * t / 8.0)) ** 3
+    s = norm(low, 1) * 0.8 + norm(scrape, 1) * 0.35
+    ir = make_ir(3.0, 2.5, damp_hz=1500, seed=26)
+    out = stereo(s) * 0.6 + convolve(s * 0.6, ir)[:, :len(t)] * 0.6
+    write("tension", loopify(out, fade), 0.8)
+
+
+def bell6():
+    sec = 3.0
+    t = t_axis(sec)
+    s = sum(a * np.sin(2 * np.pi * 523.25 * r * t) * np.exp(-t / d) for r, a, d in [(1, 1, 1.6), (2.0, 0.5, 0.9), (2.76, 0.4, 0.6), (5.4, 0.2, 0.3), (0.5, 0.3, 2.0)])
+    ir = make_ir(2.5, 2.2, damp_hz=4000, seed=27)
+    write("bell6", stereo(s) * 0.5 + convolve(s, ir)[:, :len(t)] * 0.6, 0.7)
+
+
+def shutter():
+    sec = 2.2
+    t = t_axis(sec)
+    rattle = bandpass(white(sec), 900, 1.5) * (0.6 + 0.4 * np.sign(np.sin(2 * np.pi * 22 * t)))
+    env = np.minimum(1, t / 0.1) * np.where(t < 1.6, 1.0, np.exp(-(t - 1.6) / 0.08))
+    s = rattle * env
+    s[int(1.6 * SR):int(1.6 * SR) + 3000] += np.sin(2 * np.pi * 70 * t[:3000]) * np.exp(-t[:3000] / 0.05) * 3
+    ir = make_ir(2.0, 1.8, damp_hz=1200, seed=28)
+    write("shutter", stereo(s) * 0.4 + convolve(s, ir)[:, :len(t)] * 0.6, 0.7)
+
+
 if __name__ == "__main__":
     print("synthesising audio ->", os.path.abspath(OUT))
     music_box()
@@ -515,6 +672,8 @@ if __name__ == "__main__":
     zap()
     relay()
     chime()
+    for fn in (step_heavy, step_light, greet_sunny, greet_pip, horn, servo, scream, heartbeat, tension, bell6, shutter):
+        fn()
     import shutil
     shutil.rmtree(TMP, ignore_errors=True)
     print("done")
