@@ -143,6 +143,7 @@ export class Agent {
       obs.offline = Object.entries(w.rooms).filter(([, r]) => r.offline).map(([id]) => id);
       obs.temp = w.temp.eff;
       obs.pageLock = w.pageLock && w.pageLock.t > 0 ? w.pageLock.page : null;
+      obs.paJam = w.paJam > 0;
       const boss = w.actor('starlight');
       if (boss) {
         obs.bossPending = boss.pending ? boss.pending.id : null;

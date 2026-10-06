@@ -19,8 +19,9 @@ const INFO = {
 };
 
 const PART_NAMES = {
-  base: '终端/主机', sensors: '传感网', pa: '广播', maglock: '磁锁', stage: '舞台', freezer: '冷库',
+  base: '主机', sensors: '传感网', pa: '广播', maglock: '磁锁', stage: '舞台', freezer: '冷库',
   officeLight: '办公室灯', doorL: '左门灯', doorR: '右门灯', vent: '通风', fan: '风扇', roomLights: '区域照明', seals: '卷帘',
+  generator: '发电机', boss: '劫持负载',
 };
 
 export const powerPage = {
@@ -94,7 +95,7 @@ export const powerPage = {
       const x = 4 + (i % 2) * 17;
       const y = 23 + Math.floor(i / 2);
       ui.text(x, y, fit(PART_NAMES[k] || k, 9), C.dim);
-      ui.text(x + 9, y, v.toFixed(2), C.fg);
+      ui.text(x + 9, y, v.toFixed(2).padStart(5), k === 'boss' ? C.red : v < 0 ? C.ok : C.fg);
     });
 
     // ------------------------------------------------- breaker panel

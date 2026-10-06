@@ -233,6 +233,22 @@ function showMenu() {
 
 let ending = null; // { kind, t }
 let blackout = false; // force the office lamp off (back-door death)
+let powerOutT = 0;
+// two eyes in the left doorway when the power is gone
+const outEyes = (() => {
+  const g = new THREE.SphereGeometry(0.022, 10, 8);
+  const m = new THREE.MeshBasicMaterial({ color: 0xffe2a0, transparent: true, opacity: 0, fog: false, depthWrite: false });
+  const grp = new THREE.Group();
+  for (const dz of [-0.08, 0.08]) {
+    const e = new THREE.Mesh(g, m);
+    e.position.set(0, 0, dz);
+    grp.add(e);
+  }
+  grp.position.set(-3.1, 1.72, 0.1);
+  grp.visible = false;
+  scene.add(grp);
+  return { material: m, set visible(v) { grp.visible = v; } };
+})();
 let scare = null;
 
 // a short ringing in the ears after a scare
@@ -415,6 +431,12 @@ on('sim:bossTelegraph', (e) => {
     audio.shot('horn', new THREE.Vector3(...p), { scene, volume: 1.4, ref: 2, rate: 0.55 });
   }
 });
+on('sim:paJam', () => {
+  // the PA squeals as it is taken over
+  for (const id of ['08', '07', '02']) audio.shot('horn', new THREE.Vector3(...NODE_POS[id === '07' ? '07F' : id === '08' ? '08F' : id]), { scene, volume: 0.7, ref: 3, rate: 0.35 + Math.random() * 0.1, lowpass: 1400 });
+  buzzer.tone(880, 0.25, 0.4, 1320);
+  term.triggerGlitch(0.3);
+});
 on('sim:pageLock', () => {
   term.triggerGlitch(0.5);
   buzzer.error();
@@ -503,6 +525,11 @@ function startAudio() {
   scene.add(genAnchor);
   loops.gen = audio.loop('generator', { parent: genAnchor, volume: 0, ref: 3, lowpass: 900 });
   loops.heart = audio.loop('heartbeat', { volume: 0 });
+  // power-out: a slow tune outside the left door
+  const outAnchor = new THREE.Object3D();
+  outAnchor.position.set(-3.6, 1.6, 0.1);
+  scene.add(outAnchor);
+  loops.outTune = audio.loop('musicbox', { parent: outAnchor, volume: 0, ref: 2, lowpass: 1600, rate: 0.66 });
   loops.emi = audio.loop('buzz', { parent: room.anchors.monitor, volume: 0, ref: 0.5, rate: 1.5 });
   const mbAnchor = new THREE.Object3D();
   mbAnchor.position.set(11, 1.4, 5);
@@ -585,6 +612,8 @@ function updateWorld(dt, t) {
     du.time.value = t;
   }
   actors.ghosts = game.debug && debugPanel.ghosts;
+  // debug ghosts draw through walls: keep them off the CRT while it is in use
+  actors.ghostsHidden = view.focused;
   if (!scare) actors.update(dt, t, w && !w.result ? w : null, lightLevel);
 
   // tension: how close is anything?
@@ -651,7 +680,26 @@ function updateWorld(dt, t) {
     room.head.rotation.y += (want - room.head.rotation.y) * Math.min(1, dt * 2);
   }
 
+  // power out: the tune, then eyes in the left doorway
+  const outNow = !!(w && w.power.out && !w.result);
+  powerOutT = outNow ? powerOutT + dt : 0;
+  if (loops.outTune) {
+    const want = outNow && powerOutT > 1.5 ? 0.9 : 0;
+    const cur = loops.outTune.getVolume();
+    loops.outTune.setVolume(cur + (want - cur) * Math.min(1, dt * (want ? 0.8 : 6)));
+    loops.outTune.setPlaybackRate(0.64 + Math.sin(t * 0.7) * 0.02);
+  }
+  outEyes.material.opacity = outNow && powerOutT > 3 ? (Math.sin(t * 1.3) > -0.85 ? 0.9 : 0) * Math.min(1, (powerOutT - 3) * 0.6) : 0;
+  outEyes.visible = outEyes.material.opacity > 0.01;
+
   // music box
+  if (room.musicBox) {
+    const mb = room.musicBox;
+    const speed = st.music ? 0.82 + 0.18 * Math.min(1, st.wind * 3) : 0;
+    mb.dancer.rotation.y += dt * 2.2 * speed;
+    // the key turns with the spring: winding spins it one way, playing lets it creep back
+    mb.key.rotation.x = (st.wind ?? 1) * 40;
+  }
   if (loops.music) {
     const vol = st.music ? 0.55 : 0;
     const cur = loops.music.getVolume();

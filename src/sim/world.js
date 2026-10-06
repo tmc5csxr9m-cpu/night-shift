@@ -66,7 +66,7 @@ export class World {
       R: { on: false, heat: 0, broken: false, stuckT: 0 },
     };
     this.spares = n.spares;
-    this.temp = { out: n.outside, room: n.outside + 1.5, eff: 0, rebootT: 0 };
+    this.temp = { out: n.outside, room: n.outside + 1.5, eff: 0, rebootT: 0, fanCool: this.P.temp.fan };
     this.noise = { db: 30, parts: {}, degaussT: 0 };
     this.emi = { L: 0, R: 0, B: 0, T: 0, magnet: 0, cooldown: 0 };
     this.musicBox = { wind: 1, auto: n.autoWind };
@@ -86,6 +86,7 @@ export class World {
     this.bossLoad = 0;
     this.pageLock = null;
     this.ventHijack = 0;
+    this.paJam = 0;          // N6 P3: STARLIGHT holds the PA zone selector
     this.emergencies = [];
     this.lureCooldown = 0;
     this.eventT = this.P.events.meanGap * (0.6 + this.rng.float());
@@ -220,6 +221,7 @@ export class World {
     }
     if (this.pageLock && this.pageLock.t > 0) this.pageLock.t -= dt;
     if (this.ventHijack > 0) this.ventHijack -= dt;
+    if (this.paJam > 0) this.paJam -= dt;
     // boss-forced attacks: appear at the door after the warning
     for (const a of this.actors) {
       if (!(a.forcedT > 0)) continue;
@@ -451,7 +453,9 @@ export class World {
     if (!this.powered('C7')) return { ok: false, msg: '广播回路无供电' };
     if (!this.calibrated.lure) return { ok: false, msg: '分区放音模块故障 (T-02)' };
     if (this.lureCooldown > 0) return { ok: false, msg: '放音模块忙' };
+    if (this.paJam > 0) return { ok: false, msg: `分区放音被劫持 (${Math.ceil(this.paJam)}s)` };
     if (!this.rooms[room] || room === 'OF') return { ok: false };
+    if (this.rooms[room].offline) return { ok: false, msg: `节点 ${room} 离线 — 无法放音` };
     this.lureCooldown = 3;
     this.lastLureRoom = room;
     this.stats.lures++;
@@ -469,6 +473,7 @@ export class World {
   c_roomLight({ room, on }) {
     const r = this.rooms[room];
     if (!r || room === 'OF') return { ok: false };
+    if (on && r.offline) return { ok: false, msg: `节点 ${room} 离线` };
     r.light = on === undefined ? !r.light : !!on;
   }
 
@@ -479,6 +484,7 @@ export class World {
     if (want) {
       if (['10', '12', '09', '13'].includes(room)) return { ok: false, msg: '该区域没有卷帘' };
       if (!this.calibrated.seal) return { ok: false, msg: '卷帘液压泵故障 (T-02)' };
+      if (r.offline) return { ok: false, msg: `节点 ${room} 离线` };
       if (!this.powered('C6')) return { ok: false, msg: '传感网络离线' };
       // one hydraulic pump drives every shutter: one at a time
       if (Object.values(this.rooms).some((x) => x.sealed)) return { ok: false, msg: '另一道卷帘仍在落下' };
@@ -595,7 +601,8 @@ export class World {
         a.state = 'idle';
         if (args.node.startsWith('DOOR') || args.node === 'VENT') {
           a.state = 'door';
-          a.attackT = a.id === 'sunny' ? 8 : a.p.attackDelay || 6;
+          const d = a.p.attackDelay;
+          a.attackT = Array.isArray(d) ? d[Math.min(5, this.nightIndex - 1)] : d || 6;
           this.onDoor(a, DOOR_NODES[args.node]);
         }
         break;
@@ -838,7 +845,11 @@ export class World {
     let target = tp.out + T.equipment + T.lightPerLevel * light;
     target -= Math.max(0, target - tp.out) * Math.min(0.9, T.ventK * vent);
     tp.room += (target - tp.room) * (dt / T.tau);
-    tp.eff = tp.room - (this.powered('C5') && this.office.fan ? T.fan : 0);
+    // the fan's cooling builds up and fades over ~20s: switching it off buys a
+    // short quiet window before the terminal heats past the fault line
+    const fanOn = this.powered('C5') && this.office.fan ? T.fan : 0;
+    tp.fanCool += (fanOn - tp.fanCool) * Math.min(1, dt / T.fanTau);
+    tp.eff = tp.room - tp.fanCool;
     if (tp.rebootT > 0) tp.rebootT -= dt;
     else if (tp.eff >= T.shutdown) {
       tp.rebootT = T.rebootTime;
@@ -992,6 +1003,7 @@ export class World {
       const room = this.rng.pick(['02', '06', '07', '08', '11', '12', '13']);
       if (this.rooms[room].offline) return;
       this.rooms[room].offline = true;
+      this.rooms[room].light = false;
       this.log(`节点 ${room} 离线 (E-2: 到地图重启节点).`, 'warn');
       this.addEmergency('E-2', room);
       return;

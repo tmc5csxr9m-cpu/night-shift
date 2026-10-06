@@ -23,6 +23,7 @@ export class Starlight extends Actor {
     this.lureHijacked = false;
     this.pageT = 25;
     this.ventT = 30;
+    this.paT = 12;
     this.attackT2 = 10;
     this.otLevel = 0;
   }
@@ -116,6 +117,15 @@ export class Starlight extends Actor {
         w.pageLock = { page: w.rng.pick(PAGES), t: P.pageLock };
         w.log(`>> ACCESS DENIED: ${w.pageLock.page.toUpperCase()}`, 'err');
         w.emit('pageLock', { page: w.pageLock.page });
+      }
+      // it takes the PA zone selector: no lures for a while — hold them
+      // with light and shutters instead
+      this.paT -= dt;
+      if (this.paT <= 0) {
+        this.paT = w.rng.range(P.paGap[0], P.paGap[1]);
+        w.paJam = P.paJam;
+        w.log('>> STARLIGHT 占用了分区广播 — 诱饵不可用.', 'err');
+        w.emit('paJam', { t: P.paJam });
       }
       this.ventT -= dt;
       if (this.ventT <= 0) {

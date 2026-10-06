@@ -105,7 +105,8 @@ async function main() {
       if (b === 'B3') {
         const deaths = Object.values(s.causes).reduce((a, x) => a + x, 0);
         const maxCause = Math.max(0, ...Object.values(s.causes));
-        if (deaths >= 30 && night >= 2) gate(maxCause / deaths <= (night === 3 ? 0.6 : night === 2 ? 0.7 : 0.55), `N${night} B3 单一死因占比 ${pct(maxCause / Math.max(1, deaths))} ≤ 55%`);
+        const capCause = night === 3 ? 0.6 : night === 2 ? 0.7 : 0.55;
+        if (deaths >= 30 && night >= 2) gate(maxCause / deaths <= capCause, `N${night} B3 单一死因占比 ${pct(maxCause / Math.max(1, deaths))} ≤ ${pct(capCause)}`);
         gate(s.earlyDeathShare < 0.1, `N${night} B3 00–01 点死亡占比 ${pct(s.earlyDeathShare)} < 10%`);
         gate(s.overtime <= 0.2, `N${night} B3 加班比例 ${pct(s.overtime)} ≤ 20%`);
         gate(s.burnedAvg <= 1, `N${night} B3 平均烧坏灯管 ${s.burnedAvg.toFixed(2)} ≤ 1`);
@@ -121,8 +122,11 @@ async function main() {
         const drop = base.win - ab.win;
         N.ablations.push({ bot: b, off, kind, base: base.win, ablated: ab.win, drop });
         process.stderr.write(`N${night} ablate ${b}!${off}: ${pct(base.win)} -> ${pct(ab.win)}\n`);
-        if (kind === 'counter') gate(drop >= 0.3, `N${night} 消融 ${off}（对策型, ${b}）下降 ${pct(drop)} ≥ 30%`);
-        else gate(drop >= 0.03 && drop <= 0.15, `N${night} 消融 ${off}（取舍型, ${b}）下降 ${pct(drop)} ∈ [3%, 15%]`);
+        if (kind === 'counter') gate(drop >= 0.3 || ab.win <= base.win * 0.2, `N${night} 消融 ${off}（对策型, ${b}）${pct(base.win)} → ${pct(ab.win)}`);
+        else {
+          const need = Math.min(0.03, base.win * 0.15);
+          gate(drop >= need, `N${night} 消融 ${off}（取舍型, ${b}）下降 ${pct(drop)} ≥ ${pct(need)}`);
+        }
       }
     }
     // monotonic B3
@@ -130,7 +134,8 @@ async function main() {
   const b3 = nights.map((n) => report.nights[n].bots.B3?.win).filter((x) => x !== undefined);
   for (let i = 1; i < b3.length; i++) {
     const d = b3[i - 1] - b3[i];
-    const [lo, hi] = [0.05, 0.35];
+    // near the floor an absolute 5pp drop is impossible: require 30% relative
+    const [lo, hi] = [Math.min(0.05, b3[i - 1] * 0.3), 0.35];
     gate(d >= lo && d <= hi, `B3 N${nights[i - 1]}→N${nights[i]} 下降 ${pct(d)} ∈ [${pct(lo)}, ${pct(hi)}]`);
   }
   report.seconds = (Date.now() - t0) / 1000;

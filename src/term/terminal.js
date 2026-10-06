@@ -349,8 +349,9 @@ export class Terminal {
       hb('lock', w.office.maglock ? '■锁' : '□锁', w.office.maglock, () => this.cmd('maglock', {}, w.office.maglock ? 'off' : 'on'), w.office.coilLockout > 0);
     }
     {
-      const ok = w.lastLureRoom && w.lureCooldown <= 0;
-      hb('relure', w.lastLureRoom ? `♪${w.lastLureRoom}` : '♪--', false, () => this.cmd('lureRepeat', {}, 'ok'), !ok);
+      const jam = w.paJam > 0;
+      const ok = w.lastLureRoom && w.lureCooldown <= 0 && !jam && !w.rooms[w.lastLureRoom]?.offline;
+      hb('relure', jam ? '♪××' : w.lastLureRoom ? `♪${w.lastLureRoom}` : '♪--', false, () => this.cmd('lureRepeat', {}, 'ok'), !ok);
     }
     if (game.night >= 2 || game.debug) {
       const cd = w.emi.cooldown > 0;

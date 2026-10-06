@@ -19,7 +19,7 @@ export const DEFAULT_PARAMS = {
     stuckTime: 10,
   },
 
-  temp: { equipment: 2.0, lightPerLevel: 0.15, ventK: 0.22, fan: 1.0, tau: 40, fault: 32, shutdown: 36, rebootTime: 8 },
+  temp: { equipment: 2.0, lightPerLevel: 0.15, ventK: 0.22, fan: 1.0, fanTau: 20, tau: 40, fault: 32, shutdown: 36, rebootTime: 8 },
 
   noise: {
     base: 30, fan: 38, ventPerLevel: 4, generator: 42, phone: 40, degauss: 45, degaussTime: 1.0, musicBox: 32,
@@ -50,12 +50,12 @@ export const DEFAULT_PARAMS = {
   musicBox: { windRate: 0.25, resumeAt: 0.3 },
 
   actors: {
-    sunny: { interval: 5.0, attackDelay: [6.5, 6.5, 6, 6.2, 6, 6], retreatLight: 2.5, rageRate: 1, rageDiv: 4, rageTime: 30, freezeMax: 15, stageOn: -4, stageOff: 2 },
-    pip: { interval: 3.5, attackDelay: [4.8, 4.8, 4.4, 4.5, 4.3, 4.2], litSlow: 0.2, lureHesitate: 0.8, impatienceDiv: 10, stageOn: -4, stageOff: 2 },
+    sunny: { interval: 5.0, attackDelay: [6.5, 5.8, 6, 5.8, 6, 6], retreatLight: 2.5, rageRate: 1, rageDiv: 4, rageTime: 30, freezeMax: 15, stageOn: -4, stageOff: 2 },
+    pip: { interval: 3.5, attackDelay: [4.6, 4.8, 4.4, 4.3, 4.7, 4.2], litSlow: 0.2, poseMax: 10, lureHesitate: 0.8, impatienceDiv: 10, stageOn: -4, stageOff: 2 },
     tootie: { stepTime: 6.5, attackDelay: 4, returnStep: 2.5 },
-    back: { interval: 6, attackDelay: [7, 7, 5.5, 6, 5.5, 5], generator: 4 },
+    back: { interval: 6, attackDelay: [7, 7, 5.5, 6, 6, 5], generator: 2, noiseFrom: 32, noisePerDb: 3, noiseMax: 3 },
     ribbon: { interval: 5, attackDelay: [7, 7, 7, 7, 7, 6.5], ventMod: -4, brightMod: -2, blowTime: 3 },
-    starlight: { breakerGap: [25, 40], breakerWarn: 3, extraLoad: 2.5, pageLock: 20, ventHijack: 15, attackGap: 16, telegraph: 3 },
+    starlight: { breakerGap: [25, 40], breakerWarn: 3, extraLoad: 2.5, pageLock: 20, ventHijack: 15, paJam: 12, paGap: [35, 50], attackGap: 14, telegraph: 3 },
     chef: { interval: 8, moveChance: 0.55, attackDelay: 10, thawRate: 1.0, refreeze: 0.5, dormantAt: 60, returnStep: 4 },
   },
 

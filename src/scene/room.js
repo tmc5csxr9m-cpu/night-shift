@@ -606,7 +606,45 @@ export function buildRoom(scene) {
     root.add(shadowed(shelf));
     const boxMat = std({ color: 0x8a6a40, roughness: 0.9 });
     root.add(shadowed(box(0.3, 0.2, 0.22, boxMat, 1.3, 2.17, ROOM.zf + 0.13)));
-    root.add(shadowed(box(0.22, 0.14, 0.2, boxMat, 1.62, 2.14, ROOM.zf + 0.13)));
+    // the music box: a little dancer turns while it plays; the key unwinds
+    {
+      const mb = new THREE.Group();
+      mb.position.set(1.6, 2.065, ROOM.zf + 0.15);
+      mb.rotation.y = -0.25;
+      const lacquer = std({ color: 0x5a1820, roughness: 0.35, metalness: 0.1 });
+      const gold = std({ color: 0xb08a3a, roughness: 0.35, metalness: 0.8 });
+      const porcelain = std({ color: 0xe8e0d4, roughness: 0.4 });
+      mb.add(shadowed(box(0.18, 0.09, 0.13, lacquer, 0, 0.045, 0)));
+      mb.add(box(0.186, 0.012, 0.136, gold, 0, 0.09, 0));
+      const hinge = new THREE.Group();
+      hinge.position.set(0, 0.096, -0.065);
+      hinge.rotation.x = -1.9;
+      const lid = box(0.18, 0.012, 0.13, lacquer, 0, 0, 0.065);
+      hinge.add(shadowed(lid));
+      const mirror = box(0.15, 0.002, 0.1, std({ color: 0x9aa4ac, roughness: 0.08, metalness: 1 }), 0, -0.007, 0.065);
+      hinge.add(mirror);
+      mb.add(hinge);
+      const dancer = new THREE.Group();
+      dancer.position.set(0, 0.096, 0.01);
+      dancer.add(cyl(0.003, 0.003, 0.03, gold, 10, 0, 0.015, 0));
+      dancer.add(cyl(0.002, 0.02, 0.035, porcelain, 12, 0, 0.045, 0));
+      const dh = new THREE.Mesh(new THREE.SphereGeometry(0.008, 10, 8), porcelain);
+      dh.position.y = 0.07;
+      dancer.add(dh);
+      const arm = box(0.04, 0.003, 0.003, porcelain, 0, 0.06, 0);
+      arm.rotation.z = 0.5;
+      dancer.add(arm);
+      mb.add(dancer);
+      const key = new THREE.Group();
+      key.position.set(0.098, 0.045, 0);
+      const shaft = cyl(0.003, 0.003, 0.02, gold, 8, 0.008, 0, 0);
+      shaft.rotation.z = Math.PI / 2;
+      key.add(shaft);
+      key.add(box(0.004, 0.03, 0.012, gold, 0.018, 0, 0));
+      mb.add(key);
+      root.add(mb);
+      refs.musicBox = { dancer, key };
+    }
     const head = plushHead(std, 1.85, 2.07, ROOM.zf + 0.14);
     refs.head = head;
     refs.headPupil = head.userData.pupil;

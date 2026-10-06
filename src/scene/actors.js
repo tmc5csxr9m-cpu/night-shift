@@ -457,8 +457,13 @@ export class ActorViews {
       }
       const st = node && STAGE[node];
       const gp = a && NODE_POS[a.node];
-      v.ghost.visible = !!(this.ghosts && gp);
-      if (v.ghost.visible) v.ghost.position.set(gp[0], v.height / 2, gp[2]);
+      v.ghost.visible = !!(this.ghosts && gp && !this.ghostsHidden);
+      if (v.ghost.visible) {
+        // duct nodes sit up in the ceiling: a small marker at the node itself
+        const duct = ['D1', 'D2', 'VENT'].includes(a.node);
+        v.ghost.scale.setScalar(duct ? 0.35 : 1);
+        v.ghost.position.set(gp[0], duct ? gp[1] : v.height / 2, gp[2]);
+      }
       if (!st) {
         v.group.visible = false;
         v.node = node;

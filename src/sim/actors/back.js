@@ -16,6 +16,13 @@ export class Back extends Actor {
 
   modifiers(mods) {
     if (this.w.generatorRunning?.()) mods.generator = this.p.generator;
+    // it hunts by sound: a humming office (fan, vent, music box) draws it in
+    // (the generator is counted separately above)
+    let e = 0;
+    for (const [k, db] of Object.entries(this.w.noise.parts)) if (k !== 'generator') e += Math.pow(10, db / 10);
+    const db = e ? 10 * Math.log10(e) : 0;
+    const nb = Math.min(this.p.noiseMax, Math.max(0, Math.floor((db - this.p.noiseFrom) / this.p.noisePerDb)));
+    if (nb) mods.noise = nb;
   }
 
   tick(dt) {

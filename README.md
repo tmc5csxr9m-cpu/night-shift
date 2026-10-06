@@ -18,13 +18,17 @@ npm run dev        # http://localhost:5199   (加 ?debug 直接打开调试模�
 | M0 确定性模拟核心 `src/sim` | ✅ |
 | M1 CRT 主菜单 / 存档 / 调试模式 | ✅ |
 | M2 平衡模型与机器人 | ✅ |
-| M3 Night 1–2（桑尼熊、皮普兔、嘟嘟鸟条件触发，完整表现） | ✅ N1–N2 全部平衡门槛通过 |
-| M4 Night 3–4 · M5 Night 5 · M6 Night 6 Boss · M7 打磨 | 待开发（N3–N6 目前可进入，但只有前两夜的威胁） |
+| M3 Night 1–2（桑尼熊、皮普兔、嘟嘟鸟、大厨，完整表现） | ✅ |
+| M4 Night 3–4（后门之物、磁锁、手动发条、冷库压缩机） | ✅ |
+| M5 Night 5（丝带 / 通风、雷暴停电、发电机） | ✅ |
+| M6 Night 6 Boss STARLIGHT（夺取配电、伪造感知、夺取终端、捉迷藏） | ✅ |
+| v3 策略审查与全面加难（GAME_PLAN 11.5c） | ✅ N1–N6 全部门槛 + 套路探针 + 机制消融 |
+| M7 打磨（音乐盒实物、断电演出、Boss 演出细节） | 进行中 |
 
 ## 操作
 
 - 鼠标移到屏幕左右边缘：转头；点击终端：聚焦（字符光标）；右键 / ESC：离开终端
-- 菜单栏右侧快捷栏：左右门灯、消磁（任何页面都能用）
+- 菜单栏右侧快捷栏：左右门灯、磁锁（N3 起）、♪ 重放上一次诱饵、消磁（任何页面都能用）
 - 点击桌上的电话：接听 / 挂断留言
 
 ## 调试模式
@@ -36,7 +40,8 @@ npm run dev        # http://localhost:5199   (加 ?debug 直接打开调试模�
 ## 平衡
 
 ```bash
-npm run balance -- --nights 1-2 --bots B0,B1,B2,B3,B4,B5 --runs 2000 --ablate --exploits
+npm run balance -- --nights 1-6 --bots B0,B2,B3,B4,B5 --runs 1000 --ablate --exploits --tricks
+node balance/run.js --nights 6 --bots B4,B4!seal,B4!generator --runs 1000     # 单个机制消融
 node balance/sweep.js --night 2 --bots B2,B3,B4 --runs 500 '{"actors":{"pip":{"attackDelay":5}}}'
 ```
 

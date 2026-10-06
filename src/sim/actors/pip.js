@@ -1,5 +1,7 @@
-// Pip Rabbit — right door. Ignores light. Follows sound lures, is blocked
-// by sealed rooms (and gets impatient), and likes a noisy office.
+// Pip Rabbit — right door. Follows sound lures, is blocked by sealed rooms
+// (and gets impatient), and likes a noisy office. Caught in light it stops
+// to pose: in the doorway that slows its attack, in a lit corridor room it
+// holds still — for a while, and it remembers being made to wait.
 import { Actor } from './base.js';
 import { dist, stepToward, sensorRoom } from '../graph.js';
 
@@ -115,6 +117,26 @@ export class Pip extends Actor {
       }
       return;
     }
+    // a lit room: it poses instead of moving, getting impatient; after
+    // poseMax seconds it ignores that light until it is switched off
+    const lr = w.rooms[sensorRoom(this.node)];
+    if (lr && lr.light && !this.poseBroke && this.node !== 'DOOR_R') {
+      this.poseT = (this.poseT || 0) + dt;
+      this.impatience += dt;
+      this.posingRoom = true;
+      if (this.poseT >= this.p.poseMax) {
+        this.poseBroke = true;
+        this.impT = 20;
+        w.log(`节点 ${sensorRoom(this.node)}: 目标不再理会照明.`, 'warn');
+      }
+      return;
+    }
+    if (lr && !lr.light) this.poseBroke = false;
+    if (this.posingRoom) {
+      this.posingRoom = false;
+      this.poseT = 0;
+      this.impT = 20;
+    }
     // left standing in the doorway (e.g. a lure it could not follow)
     if (this.node === 'DOOR_R') {
       this.state = 'door';
@@ -154,6 +176,7 @@ export class Pip extends Actor {
       lure: this.lure ? `${this.lure.node} ${this.lure.t.toFixed(1)}s` : '-',
       impatience: this.impatience,
       waiting: !!this.waiting,
+      pose: this.posingRoom ? `${(this.poseT || 0).toFixed(1)}s` : this.poseBroke ? 'broke' : '-',
       lastLure: this.lastLure || '-',
     };
   }
