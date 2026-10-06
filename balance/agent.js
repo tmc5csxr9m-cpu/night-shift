@@ -85,7 +85,8 @@ export class Agent {
       // a distortion above the skill threshold is noticed at a hazard rate
       // (attention is on the task, not the screen edge); magnetisation hides it
       const e = w.emi;
-      const thr = this.S.emiThreshold + e.magnet * 0.3;
+      // blotches hide the edges; a hot tube shimmers
+      const thr = this.S.emiThreshold + e.magnet * 0.5 + (w.faulty() ? 0.15 : 0);
       this.emiSeen = this.emiSeen || { L: 0, R: 0, B: 0, T: 0 };
       const pNotice = 1 - Math.exp(-this.S.emiNotice * w.P.tick);
       const out = { magnet: e.magnet };
@@ -113,16 +114,21 @@ export class Agent {
       musicPlaying: w.musicPlaying(),     // audible anywhere
       tripped: w.power.tripped, powerOut: w.power.out,
       phone: w.phone.state,
-      tasks: w.tasks.map((x) => ({ id: x.id, done: x.done, progress: this.taskProgress[x.id], need: this.taskNeed[x.id] })),
+      tasks: w.tasks.map((x) => ({ id: x.id, done: x.done, open: w.taskOpen(x), progress: this.taskProgress[x.id], need: this.taskNeed[x.id] })),
       circuits: { ...w.circuits },        // known: player sets them (and the log reports trips)
       calibrated: { ...w.calibrated },
       office: { light: w.office.light, fan: w.office.fan, vent: w.office.vent, maglock: w.office.maglock, coilLockout: w.office.coilLockout > 0 },
+      shutterBusy: Object.values(w.rooms).some((r) => r.sealed) || w.shutterCd > 0,
     };
     if (this.focused) {
       obs.power = { pct: w.powerPct(), load: w.power.load };
       obs.emergencies = w.emergencies.map((e) => ({ ...e }));
       obs.wind = w.musicBox.wind;
       obs.temp = w.temp.eff;
+      obs.faulty = w.faulty();
+      obs.magnet = w.emi.magnet;
+      const chef = w.actor('chef');
+      if (chef) obs.freezerThaw = chef.thaw;   // shown on the power page
       if (this.page === 'map' && w.powered('C6')) {
         obs.rooms = {};
         for (const [id, r] of Object.entries(w.rooms)) obs.rooms[id] = { noise: r.noise, result: r.result, light: r.light, sealed: r.sealed, scanning: r.scanT > 0, scanCd: r.scanCd };
@@ -148,7 +154,7 @@ export class Agent {
 
   clickCost() {
     let c = this.S.click;
-    if (this.rng.chance(this.S.misclick)) c += this.S.click;
+    if (this.rng.chance(this.S.misclick + (this.w.faulty() ? 0.1 : 0))) c += this.S.click;
     return c;
   }
 
@@ -207,7 +213,9 @@ export class Agent {
         cost += this.positionCost(true, 'tasks') + a.dur;
         after = () => {
           this.enter('tasks');
-          this.taskProgress[a.id] += a.dur;
+          // a hot or magnetised terminal makes the work slower
+          const slow = (this.w.faulty() ? 1.6 : 1) * (1 + this.w.emi.magnet);
+          this.taskProgress[a.id] += a.dur / slow;
           if (this.taskProgress[a.id] >= this.taskNeed[a.id]) this.w.cmd('taskComplete', { id: a.id });
         };
         break;
@@ -215,6 +223,8 @@ export class Agent {
       default:
         return;
     }
+    // a hot terminal garbles rows: re-reading the screen costs time
+    if (this.w.faulty() && (a.type === 'cmd' || a.type === 'hold') && this.rng.chance(0.45)) cost += this.rng.range(0.4, 1.2);
     // position changes happen at the start (you turn first, then act)
     if (a.type === 'cmd' || a.type === 'hold' || a.type === 'task' || a.type === 'focus') this.preEnter(a);
     this.busy = cost;
@@ -271,7 +281,10 @@ export function playNight(World, { night, seed, bot, skill, oracle, params, maxT
   bot.reset?.(agent);
   let firstWarn = {};
   w.on((ev) => {
-    if (ev.type === 'cue' && ev.p >= 0.5 && firstWarn[ev.source] === undefined) firstWarn[ev.source] = ev.t;
+    // fairness: a warning counts if it is audible in a quiet office (the
+    // player chose any extra noise); deaths after that are avoidable
+    const pQuiet = 1 / (1 + Math.exp(-(ev.db - w.P.noise.base - w.P.hearing.offset) / w.P.hearing.slope));
+    if (ev.type === 'cue' && pQuiet >= 0.5 && firstWarn[ev.source] === undefined) firstWarn[ev.source] = ev.t;
     if (ev.type === 'repel' || (ev.type === 'move' && ev.to === '01')) delete firstWarn[ev.actor];
   });
   while (!w.result && w.t < maxT) {

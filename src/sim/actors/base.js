@@ -33,6 +33,7 @@ export class Actor {
     const mods = (this.mods = {});
     let a = this.baseA();
     this.modifiers(mods);
+    if (a > 0 && this.w.officeDark() && this.w.P.darkBonus[this.id]) mods.dark = this.w.P.darkBonus[this.id];
     for (const k in mods) a += mods[k];
     return Math.max(0, a);
   }

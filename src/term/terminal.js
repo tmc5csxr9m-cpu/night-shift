@@ -125,7 +125,7 @@ export class Terminal {
     if (this.revealing()) return;
     // overheated terminal: clicks sometimes land on a neighbouring cell
     const w = this.world;
-    if (w && this.mode === 'ui' && w.temp.eff >= w.P.temp.fault && Math.random() < 0.05) {
+    if (w && this.mode === 'ui' && w.temp.eff >= w.P.temp.fault && Math.random() < 0.1) {
       cell = { x: cell.x + (Math.random() < 0.5 ? -1 : 1), y: cell.y };
     }
     if (this.ui.click(cell)) this.sfx.click();

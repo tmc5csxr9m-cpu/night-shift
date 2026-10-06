@@ -295,7 +295,11 @@ on('sim:phone', (e) => {
     phone.speak(lines, (i, text) => {
       subtitle.textContent = text;
       subtitle.classList.add('show');
-    }, () => subtitle.classList.remove('show'), voice);
+    }, () => {
+      subtitle.classList.remove('show');
+      // message finished by itself: close the line so the [挂断] button goes away
+      if (game.world && game.world.phone.state === 'call') game.cmd('hangUp');
+    }, voice);
     if (!save.data.seen.calls.includes(e.night)) {
       save.data.seen.calls.push(e.night);
       save.write();
@@ -347,6 +351,7 @@ const CUE_SOUND = {
   sunny: { step: ['step_heavy', 1], greet: ['greet_sunny', 1] },
   pip: { step: ['step_light', 1], greet: ['greet_pip', 1] },
   tootie: { step: ['step_light', 1.35], greet: ['horn', 1] },
+  chef: { step: ['step_heavy', 0.7], greet: ['greet_sunny', 0.7], wake: ['clank', 0.8] },
 };
 on('sim:cue', (e) => {
   actors.event(e);
@@ -386,7 +391,7 @@ on('nightEnd', ({ result }) => {
   ending = { kind: result.outcome, t: 0 };
   if (result.outcome === 'death') {
     const who = actors.views[result.cause] ? result.cause : 'sunny';
-    const side = who === 'sunny' ? 'L' : 'R';
+    const side = result.side || (who === 'sunny' ? 'L' : 'R');
     // snap the view to the door it came from, then it lunges
     view.locked = false;
     view.focused = false;

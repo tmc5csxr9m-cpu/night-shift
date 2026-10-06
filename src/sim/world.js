@@ -8,15 +8,16 @@ import { sensorRoom, nodesInRoom, DOOR_NODES, NEAR_DOOR, NODE_SIDE } from './gra
 import { Sunny } from './actors/sunny.js';
 import { Pip } from './actors/pip.js';
 import { Tootie } from './actors/tootie.js';
+import { Chef } from './actors/chef.js';
 
-const ACTORS = { sunny: Sunny, pip: Pip, tootie: Tootie };
+const ACTORS = { sunny: Sunny, pip: Pip, tootie: Tootie, chef: Chef };
 
 export const ROOM_IDS = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', '13', 'OF'];
 export const CIRCUITS = ['C1', 'C2', 'C3', 'C4', 'C5', 'C6', 'C7', 'C8', 'C9', 'C0'];
-export const ACTOR_NAMES = { sunny: '桑尼熊', pip: '皮普兔', tootie: '嘟嘟鸟', power: '断电' };
+export const ACTOR_NAMES = { sunny: '桑尼熊', pip: '皮普兔', tootie: '嘟嘟鸟', chef: '高迪大厨', back: '后门之物', ribbon: '丝带', starlight: 'STARLIGHT', power: '断电' };
 
 // tonight's brand-new threats are held back while the tutorial call plays
-const NEW_TONIGHT = { 1: ['sunny'], 2: ['pip'] };
+const NEW_TONIGHT = { 1: ['sunny', 'pip'] };
 
 const BREAKER_NOTES = {
   C9: ['舞台电路断开. 台上的表演者切换为内置电池.', '舞台电路恢复.'],
@@ -61,7 +62,13 @@ export class World {
     this.phone = { state: 'idle', t: 0, kind: null };
     this.player = { look: 'F', focused: false, page: null };
     this.calibrated = { sensors: false, lure: !n.lureNeedsT02, radio: false, relays: false };
-    this.tasks = n.tasks.map((id) => ({ id, done: false, doneAt: null }));
+    // tasks: 'T-01' or ['T-01', openHour]
+    this.tasks = n.tasks.map((x) => {
+      const [id, open] = Array.isArray(x) ? x : [x, 0];
+      return { id, open, done: false, doneAt: null };
+    });
+    this.shutterCd = 0;
+    this.compressor = { fault: false, t: 0 };
     this.emergencies = [];
     this.lureCooldown = 0;
     this.eventT = this.P.events.meanGap * (0.6 + this.rng.float());
@@ -131,6 +138,29 @@ export class World {
     return !d.broken && d.stuckT <= 0 && this.powered(side === 'L' ? 'C2' : 'C3');
   }
 
+  // an unlit office makes everything bolder
+  officeDark() {
+    return !this.powered('C1') || this.office.light === 0;
+  }
+
+  // hot terminal: misclicks, garbled rows, slower work
+  faulty() {
+    return this.temp.eff >= this.P.temp.fault;
+  }
+
+  compressorFault() {
+    return this.compressor.fault;
+  }
+
+  fixCompressor() {
+    if (!this.compressor.fault) return;
+    this.compressor.fault = false;
+    this.resolveEmergency('E-3');
+    const chef = this.actor('chef');
+    if (chef && chef.node === '05') chef.thaw = Math.max(0, chef.thaw - 40);
+    this.log('压缩机已重启, 冷库恢复制冷.');
+  }
+
   doorLit(side) {
     return this.doors[side].on && this.doorWorking(side);
   }
@@ -180,6 +210,11 @@ export class World {
   }
 
   // called by tick for actors standing at a door
+  // doors: in a dark office the attack timer runs faster
+  attackRate() {
+    return this.officeDark() ? 1 / this.P.darkAttack : 1;
+  }
+
   doorNag(actor, dt) {
     actor.doorCueT -= dt;
     if (actor.doorCueT > 0) return;
@@ -209,8 +244,9 @@ export class World {
       return;
     }
     if (this.result) return;
-    this.result = { outcome: 'death', cause, t: this.t, clock: this.clock() };
-    this.emit('death', { cause, side: actor.node ? DOOR_NODES[actor.node] : null });
+    const side = actor.node ? DOOR_NODES[actor.node] : null;
+    this.result = { outcome: 'death', cause, side, t: this.t, clock: this.clock() };
+    this.emit('death', { cause, side });
   }
 
   // ------------------------------------------------------------ commands
@@ -320,12 +356,14 @@ export class World {
     const want = on === undefined ? !r.sealed : !!on;
     if (want) {
       if (!this.powered('C6')) return { ok: false, msg: '传感网络离线' };
-      if (r.sealCd > 0) return { ok: false, msg: '卷帘复位中' };
+      // one hydraulic pump drives every shutter: one at a time
+      if (Object.values(this.rooms).some((x) => x.sealed)) return { ok: false, msg: '另一道卷帘仍在落下' };
+      if (this.shutterCd > 0) return { ok: false, msg: '卷帘液压复位中' };
       r.sealed = true;
       r.sealT = this.P.seal.maxTime;
     } else if (r.sealed) {
       r.sealed = false;
-      r.sealCd = this.P.seal.cooldown;
+      this.shutterCd = this.P.seal.cooldown;
     }
     this.emit('seal', { room, on: r.sealed });
   }
@@ -361,9 +399,14 @@ export class World {
     }
   }
 
+  taskOpen(task) {
+    return this.t >= task.open * this.P.hourSeconds;
+  }
+
   c_taskComplete({ id }) {
     const task = this.tasks.find((x) => x.id === id);
     if (!task || task.done) return { ok: false };
+    if (!this.taskOpen(task)) return { ok: false, msg: `任务 ${id} 尚未开放` };
     task.done = true;
     task.doneAt = this.t;
     if (id === 'T-01') {
@@ -372,6 +415,7 @@ export class World {
     }
     if (id === 'T-02') this.calibrated.lure = true;
     if (id === 'T-03') this.calibrated.radio = true;
+    if (id === 'T-07') this.fixCompressor();
     if (id === 'T-04') {
       this.calibrated.relays = true;
       for (const d of Object.values(this.doors)) d.stuckT = 0;
@@ -684,7 +728,7 @@ export class World {
         r.sealT -= dt;
         if (r.sealT <= 0 || !this.powered('C6')) {
           r.sealed = false;
-          r.sealCd = this.P.seal.cooldown;
+          this.shutterCd = this.P.seal.cooldown;
           this.emit('seal', { room: id, on: false, auto: true });
         }
       } else if (r.sealCd > 0) r.sealCd -= dt;
@@ -704,6 +748,7 @@ export class World {
       }
     }
     if (this.lureCooldown > 0) this.lureCooldown -= dt;
+    if (this.shutterCd > 0) this.shutterCd -= dt;
   }
 
   scanResult(room) {

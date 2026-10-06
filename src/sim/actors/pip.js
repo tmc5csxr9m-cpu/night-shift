@@ -26,6 +26,11 @@ export class Pip extends Actor {
     if (this.impT > 0) mods.impatience = Math.floor(this.impatience / this.p.impatienceDiv);
   }
 
+  delay() {
+    const d = this.p.attackDelay;
+    return Array.isArray(d) ? d[Math.min(5, this.w.nightIndex - 1)] ?? d[0] : d;
+  }
+
   blocked(node) {
     const r = this.w.rooms[sensorRoom(node)];
     return !!(r && r.sealed);
@@ -58,8 +63,11 @@ export class Pip extends Actor {
     }
     this.lureUses[room] = uses + 1;
     if (atDoor) {
-      this.state = 'idle';
-      w.onRepel(this, 'R');
+      // it cocks its head and listens before it goes: the attack keeps
+      // running for a moment
+      this.leaveT = this.p.lureHesitate;
+      this.pendingLure = { node: target, t: dur };
+      return true;
     }
     this.lure = { node: target, t: dur };
     this.lureStep = 0.3;
@@ -72,12 +80,23 @@ export class Pip extends Actor {
       this.impT -= dt;
       if (this.impT <= 0) this.impatience = 0;
     }
+    if (this.state === 'door' && this.pendingLure) {
+      this.leaveT -= dt;
+      if (this.leaveT <= 0) {
+        this.state = 'idle';
+        this.lure = this.pendingLure;
+        this.pendingLure = null;
+        this.lureStep = 0.3;
+        w.onRepel(this, 'R');
+        return;
+      }
+    }
     if (this.state === 'door') {
       // caught in the light it stops to pose: the attack waits, but it stays
       const lit = w.doorLit('R');
       if (lit && !this.posing) w.telegraph(this, 'pose', 'R');
       this.posing = lit;
-      this.attackT -= lit ? dt * this.p.litSlow : dt;
+      this.attackT -= (lit ? dt * this.p.litSlow : dt) * w.attackRate();
       if (this.attackT <= 0) w.kill(this);
       return;
     }
@@ -99,7 +118,7 @@ export class Pip extends Actor {
     // left standing in the doorway (e.g. a lure it could not follow)
     if (this.node === 'DOOR_R') {
       this.state = 'door';
-      this.attackT = this.p.attackDelay;
+      this.attackT = this.delay();
       w.onDoor(this, 'R');
       return;
     }
@@ -125,7 +144,7 @@ export class Pip extends Actor {
     if (next !== this.node) this.moveTo(next);
     if (next === 'DOOR_R') {
       this.state = 'door';
-      this.attackT = this.p.attackDelay;
+      this.attackT = this.delay();
       w.onDoor(this, 'R');
     }
   }

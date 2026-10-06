@@ -58,7 +58,8 @@ export const tasksPage = {
       ui.text(3, y, t.id, sel ? C.yel : C.cy, bg);
       ui.text(9, y, fit(g.name, 14), C.hi, bg);
       ui.text(3, y + 1, fit(g.en, 15), C.dim, bg);
-      ui.text(19, y + 1, t.done ? '[完成]' : '[待办]', t.done ? C.ok : C.yel, bg);
+      const open = w.taskOpen(t);
+      ui.text(19, y + 1, t.done ? '[完成]' : open ? '[待办]' : `[${String(t.open).padStart(2, '0')}:00]`, t.done ? C.ok : open ? C.yel : C.dim, bg);
       if (sel) ui.text(25, y, '►', C.yel, bg);
     });
     const done = tasks.filter((t) => t.done).length;
@@ -75,6 +76,12 @@ export const tasksPage = {
     ui.box(28, 2, 51, 27, { title: `${t.id} ${g.name}`, titleAlign: 'left' });
     ui.text(30, 3, fit(`${g.desc}  完成后: ${BENEFIT[t.id]}`, 47), C.dim);
     ui.hline(29, 4, 49, '─', C.dim2);
+    if (!w.taskOpen(t) && !t.done) {
+      ui.box(36, 10, 35, 7, { style: 'double', fg: C.dim, shadow: true });
+      ui.center(12, `${t.id} 将于 ${String(t.open).padStart(2, '0')}:00 开放`, C.fg, null, 36, 35);
+      ui.center(14, '先处理其他任务, 或者守好门.', C.dim, null, 36, 35);
+      return;
+    }
     g.draw(term, ui, () => this.complete(term, t.id));
     if (t.done) {
       ui.box(41, 24, 25, 4, { style: 'double', fg: C.ok, shadow: true });

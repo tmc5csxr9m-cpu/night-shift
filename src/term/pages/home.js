@@ -3,7 +3,7 @@ import { game } from '../../game.js';
 
 const ICONS = {
   power: ['     ▄██▀ ', '    ██▀   ', '   ██████▀', '     ▄█▀  ', '    ▄▀    '],
-  map: ['┌──┬────┬─┐', '│01│ 02 │ │', '├──┴─┬──┤ │', '│ 03 │★ │ │', '└────┴──┴─┘'],
+  map: ['┌──┬────┬─┐', '│01│ 02 │ │', '├──┴─┬──┤ │', '│ 03 │◉ │ │', '└────┴──┴─┘'],
   facility: ['  ▄ ▄█▄ ▄ ', '  ▀█████▀ ', ' ▄██▀ ▀██▄', '  ▀██▄██▀ ', '  ▀ ▀█▀ ▀ '],
   tasks: ['┌────────┐', '│√ ════  │', '│√ ═════ │', '│▫ ═══   │', '└────────┘'],
 };
@@ -33,7 +33,8 @@ function status(key, w) {
     }
     case 'tasks': {
       const done = w.tasks.filter((t) => t.done).length;
-      return [`进度 ${done}/${w.tasks.length} 已完成`, w.overtime ? '!! 加班中 !!' : '截止 06:00 AM'];
+      const next = w.tasks.find((t) => !t.done && !w.taskOpen(t));
+      return [`进度 ${done}/${w.tasks.length} 已完成`, w.overtime ? '!! 加班中 !!' : next ? `${next.id} ${String(next.open).padStart(2, '0')}:00 开放` : '截止 06:00 AM'];
     }
   }
   return ['', ''];

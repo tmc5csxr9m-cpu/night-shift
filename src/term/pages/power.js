@@ -74,6 +74,12 @@ export const powerPage = {
 
     // ------------------------------------------------- breakdown
     ui.box(2, 22, 36, 7, { title: '负载分项', titleAlign: 'left' });
+    const chef = w.actor('chef');
+    if (chef) {
+      const temp = -18 + chef.thaw * 0.2;
+      const bad = !w.powered('C0') || w.compressorFault();
+      ui.text(20, 22, ` 冷库${temp.toFixed(0).padStart(3)}°C `, chef.thaw > 60 ? C.red : bad ? C.yel : C.dim);
+    }
     const parts = Object.entries(pw.parts).sort((a, b) => b[1] - a[1]).slice(0, 8);
     parts.forEach(([k, v], i) => {
       const x = 4 + (i % 2) * 17;

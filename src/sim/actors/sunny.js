@@ -21,7 +21,7 @@ export class Sunny extends Actor {
   tick(dt) {
     const w = this.w;
     if (this.state === 'door') {
-      this.attackT -= dt;
+      this.attackT -= dt * this.w.attackRate();
       if (w.doorLit('L')) {
         this.litT += dt;
         if (this.litT >= this.p.retreatLight) {
@@ -36,13 +36,22 @@ export class Sunny extends Actor {
       this.rageT -= dt;
       if (this.rageT <= 0) this.rage = 0;
     }
-    // frozen by a lit room
+    // frozen by a lit room — but only for so long: then it tears free,
+    // angry, and the light no longer holds it until it is switched off
     const r = w.rooms[this.room()];
-    if (r && r.light) {
+    if (r && r.light && !this.broke) {
       this.rage += this.p.rageRate * dt;
       this.frozen = true;
+      if (this.rage >= this.p.freezeMax) {
+        this.broke = true;
+        this.frozen = false;
+        this.rageT = this.p.rageTime;
+        w.log(`节点 ${this.room()}: 照明下的目标挣脱了!`, 'warn');
+        w.cue('sunny', this.node, (w.P.cues.sunny[this.node] || 34) + 6, 'rage');
+      }
       return;
     }
+    if (r && !r.light) this.broke = false;
     if (this.frozen) {
       this.frozen = false;
       if (this.rage > 0) this.rageT = this.p.rageTime;

@@ -19,23 +19,28 @@ export const DEFAULT_PARAMS = {
     stuckTime: 10,
   },
 
-  temp: { equipment: 2.0, lightPerLevel: 0.3, ventK: 0.22, fan: 1.0, tau: 40, fault: 32, shutdown: 36, rebootTime: 8 },
+  temp: { equipment: 2.0, lightPerLevel: 0.15, ventK: 0.22, fan: 1.0, tau: 40, fault: 32, shutdown: 36, rebootTime: 8 },
 
   noise: {
     base: 30, fan: 38, ventPerLevel: 4, generator: 45, phone: 40, degauss: 45, degaussTime: 1.0, musicBox: 32,
-    pipPerDb: 6, pipMax: 3,
+    pipPerDb: 7, pipMax: 3,
   },
 
   hearing: { offset: 6, slope: 3 },
 
-  emi: { door: 1.0, adjacent: 0.35, magnetRate: 0.012, degaussCooldown: 4, pulse: 0.35,
+  emi: { door: 1.0, adjacent: 0.35, magnetRate: 0.04, degaussCooldown: 4, pulse: 0.35,
     strength: { sunny: 1.0, pip: 0.7, tootie: 0.85, back: 0.9, chef: 1.0, ribbon: 0.6 } },
 
   scan: { time: 2.0, cooldown: 6, accuracy: 0.8, accuracyCalibrated: 0.98 },
 
-  seal: { maxTime: 20, cooldown: 10 },
+  seal: { maxTime: 20, cooldown: 15 },
 
-  lure: { duration: 8, range: 2, decay: 0.7, minDuration: 1.5 },
+  // an unlit office emboldens these actors (+A)
+  darkBonus: { sunny: 2, pip: 2, chef: 2, ribbon: 3 },
+  // ...and quicker at the door
+  darkAttack: 0.75,
+
+  lure: { duration: 7, range: 2, decay: 0.5, minDuration: 1.5 },
 
   // while an actor waits at a door it keeps making noise (greeting / knocking)
   doorCueEvery: 2.5,
@@ -45,9 +50,10 @@ export const DEFAULT_PARAMS = {
   musicBox: { windRate: 0.25, resumeAt: 0.3 },
 
   actors: {
-    sunny: { interval: 5.0, attackDelay: [9, 9, 8, 7, 7, 6], retreatLight: 2.5, rageRate: 1, rageDiv: 5, rageTime: 30, stageOn: -4, stageOff: 2 },
-    pip: { interval: 3.5, attackDelay: 5.5, litSlow: 0.2, impatienceDiv: 4, stageOn: -4, stageOff: 2 },
+    sunny: { interval: 5.0, attackDelay: [6.5, 6.5, 7, 7, 6.5, 6.5], retreatLight: 2.5, rageRate: 1, rageDiv: 4, rageTime: 30, freezeMax: 15, stageOn: -4, stageOff: 2 },
+    pip: { interval: 3.5, attackDelay: [4.8, 4.8, 5, 4.8, 4.6, 4.5], litSlow: 0.2, lureHesitate: 0.8, impatienceDiv: 10, stageOn: -4, stageOff: 2 },
     tootie: { stepTime: 6.5, attackDelay: 4, returnStep: 2.5 },
+    chef: { interval: 8, moveChance: 0.55, attackDelay: 10, thawRate: 1.0, refreeze: 0.5, dormantAt: 60, returnStep: 4 },
   },
 
   // footsteps / greeting loudness at the player's ears, by actor node
@@ -55,6 +61,7 @@ export const DEFAULT_PARAMS = {
     sunny: { '02': 32, '07F': 38, '07N': 44, DOOR_L: 50 },
     pip: { '02': 30, '06': 30, '11': 33, '08F': 37, '08N': 43, DOOR_R: 48 },
     tootie: { '11': 36, '08F': 42, '08N': 47, DOOR_R: 52 },
+    chef: { '06': 34, '02': 36, '11': 36, '07F': 40, '07N': 46, DOOR_L: 50, '08F': 40, '08N': 46, DOOR_R: 50 },
   },
 
   events: { meanGap: 70, relayStuck: 1, drift: 1, aging: 1 },

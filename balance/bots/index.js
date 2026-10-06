@@ -12,8 +12,7 @@ export function randomBot() {
     name: 'B1',
     decide(o, agent) {
       const r = agent.rng;
-      const pick = r.int(9);
-      switch (pick) {
+      switch (r.int(9)) {
         case 0: return { type: 'cmd', name: 'doorLight', args: { side: r.chance(0.5) ? 'L' : 'R' } };
         case 1: return { type: 'look', dir: r.pick(['L', 'R', 'F']) };
         case 2: return { type: 'cmd', name: 'lure', args: { room: r.pick(ROOMS) } };
@@ -22,7 +21,7 @@ export function randomBot() {
         case 5: return { type: 'cmd', name: 'seal', args: { room: r.pick(ROOMS) } };
         case 6: return { type: 'cmd', name: 'breaker', args: { id: r.pick(['C1', 'C4', 'C5', 'C6', 'C7', 'C9', 'C0']) } };
         case 7: {
-          const t = o.tasks.find((x) => !x.done);
+          const t = o.tasks.find((x) => !x.done && x.open);
           return t ? { type: 'task', id: t.id, dur: 4 } : { type: 'wait', dur: 1 };
         }
         default: return { type: 'wait', dur: r.range(0.5, 3) };
@@ -31,43 +30,100 @@ export function randomBot() {
   };
 }
 
-// single-strategy exploit probes
+const task = (o, dur = 5) => {
+  const t = o.tasks.find((x) => !x.done && x.open);
+  return t ? { type: 'task', id: t.id, dur } : { type: 'wait', dur: 1 };
+};
+
+// X-*: one strategy and nothing else. Must lose.
 export function exploitBot(kind) {
   const base = heuristicBot('average');
   return {
     name: 'X-' + kind,
     reset: base.reset,
     decide(o, agent) {
-      if (kind === 'lightsOn') {
-        for (const s of ['L', 'R']) if (!o.doors[s].on && !o.doors[s].broken) return { type: 'cmd', name: 'doorLight', args: { side: s, on: true } };
-        const e = o.emergencies?.find((x) => x.id === 'E-1');
-        if (e && o.spares > 0) return { type: 'hold', name: 'replaceBulb', args: { side: e.side }, dur: 4 };
-        const t = o.tasks.find((x) => !x.done);
-        return t ? { type: 'task', id: t.id, dur: 5 } : { type: 'wait', dur: 1 };
+      switch (kind) {
+        case 'lightsOn': {
+          for (const s of ['L', 'R']) if (!o.doors[s].on && !o.doors[s].broken) return { type: 'cmd', name: 'doorLight', args: { side: s, on: true } };
+          const e = o.emergencies?.find((x) => x.id === 'E-1');
+          if (e && o.spares > 0) return { type: 'hold', name: 'replaceBulb', args: { side: e.side }, dur: 4 };
+          return task(o);
+        }
+        case 'lureSpam':
+          if (o.calibrated.lure) return { type: 'cmd', name: 'lure', args: { room: agent.rng.pick(['06', '11', '02', '08', '13']) } };
+          return task(o);
+        case 'noTasks': {
+          const a = base.decide(o, agent);
+          return a && a.type === 'task' ? { type: 'wait', dur: 1 } : a;
+        }
+        case 'lateTasks': {
+          const a = base.decide(o, agent);
+          return a && a.type === 'task' && o.t < 520 ? { type: 'wait', dur: 1 } : a;
+        }
+        case 'sealAll': {
+          const m = agent.mem;
+          m.si = ((m.si || 0) + 1) % 2;
+          return { type: 'cmd', name: 'seal', args: { room: m.si ? '07' : '08', on: true } };
+        }
+        default:
+          return base.decide(o, agent);
       }
-      if (kind === 'lureSpam') {
-        if (o.calibrated.lure) return { type: 'cmd', name: 'lure', args: { room: agent.rng.pick(['06', '11', '02', '08', '13']) } };
-        const t = o.tasks.find((x) => !x.done);
-        return t ? { type: 'task', id: t.id, dur: 5 } : { type: 'wait', dur: 1 };
-      }
-      if (kind === 'noTasks') {
-        const a = base.decide(o, agent);
-        return a && a.type === 'task' ? { type: 'wait', dur: 1 } : a;
-      }
-      if (kind === 'lateTasks') {
-        const a = base.decide(o, agent);
-        return a && a.type === 'task' && o.t < 520 ? { type: 'wait', dur: 1 } : a;
-      }
-      if (kind === 'sealAll') {
-        const m = agent.mem;
-        m.si = ((m.si || 0) + 1) % 4;
-        const room = ['07', '08', '02', '06'][m.si];
-        return { type: 'cmd', name: 'seal', args: { room, on: true } };
+    },
+  };
+}
+
+// T-*: an expert player plus one "clever" trick. If a trick adds a lot of
+// win rate on top of the expert, it is a dominant strategy and must be fixed.
+export function trickBot(kind) {
+  const off = { pipLightOnly: { lure: true }, freezerOff: { freezer: true }, fanOff: { heat: true }, dark: { dim: true, heat: true } }[kind] || {};
+  const base = heuristicBot('expert', { disable: off });
+  return {
+    name: 'T-' + kind,
+    reset: base.reset,
+    interrupt: base.interrupt.bind(base),
+    decide(o, agent) {
+      const m = agent.mem;
+      switch (kind) {
+        case 'roomFreeze':
+          // keep the dining room and west hall lit all night: Sunny never moves?
+          if (o.focused || o.t > 2) {
+            m.rf = m.rf || {};
+            for (const r of ['02', '07']) {
+              if (!m.rf[r] || o.t - m.rf[r] > 60) {
+                m.rf[r] = o.t;
+                return { type: 'cmd', name: 'roomLight', args: { room: r, on: true } };
+              }
+            }
+          }
+          break;
+        case 'dark':
+          if (o.office.light !== 0) return { type: 'cmd', name: 'officeLight', args: { level: 0 } };
+          if (o.office.fan) return { type: 'cmd', name: 'fan', args: { on: false } };
+          break;
+        case 'stageEarly':
+          if (o.circuits.C9) return { type: 'cmd', name: 'breaker', args: { id: 'C9', on: false } };
+          break;
+        case 'freezerOff':
+          if (o.circuits.C0) return { type: 'cmd', name: 'breaker', args: { id: 'C0', on: false } };
+          break;
+        case 'turtle':
+          if (!o.shutterBusy) {
+            m.tt = ((m.tt || 0) + 1) % 2;
+            return { type: 'cmd', name: 'seal', args: { room: m.tt ? '07' : '08', on: true } };
+          }
+          break;
+        case 'fanOff':
+          if (o.office.fan) return { type: 'cmd', name: 'fan', args: { on: false } };
+          break;
+        default:
       }
       return base.decide(o, agent);
     },
   };
 }
+
+export const EXPLOITS = ['X-lightsOn', 'X-lureSpam', 'X-noTasks', 'X-lateTasks', 'X-sealAll'];
+export const TRICKS = ['T-roomFreeze', 'T-dark', 'T-stageEarly', 'T-freezerOff', 'T-turtle', 'T-fanOff', 'T-pipLightOnly'];
 
 export function makeBot(name) {
   switch (name) {
@@ -79,6 +135,7 @@ export function makeBot(name) {
     case 'B5': return { bot: heuristicBot('expert', { oracle: true }), skill: 'expert', oracle: true };
     default:
       if (name.startsWith('X-')) return { bot: exploitBot(name.slice(2)), skill: 'average' };
+      if (name.startsWith('T-')) return { bot: trickBot(name.slice(2)), skill: 'expert' };
       if (name.includes('!')) {
         // ablation: B3!lure, B4!stageCut ...
         const [b, off] = name.split('!');

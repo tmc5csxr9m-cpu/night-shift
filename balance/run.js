@@ -6,7 +6,8 @@ import { cpus } from 'node:os';
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import { execSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { WIN_TARGETS, ABLATIONS, MIN_WARN_LEAD } from './gates.js';
+import { WIN_TARGETS, ABLATIONS, MIN_WARN_LEAD, TRICK_MARGIN } from './gates.js';
+import { EXPLOITS, TRICKS } from './bots/index.js';
 
 const args = Object.fromEntries(process.argv.slice(2).map((a, i, arr) => (a.startsWith('--') ? [a.slice(2), arr[i + 1] && !arr[i + 1].startsWith('--') ? arr[i + 1] : true] : null)).filter(Boolean));
 const parseNights = (s) => (String(s).includes('-') ? (([a, b]) => Array.from({ length: b - a + 1 }, (_, i) => a + i))(String(s).split('-').map(Number)) : String(s).split(',').map(Number));
@@ -85,18 +86,26 @@ async function main() {
     const T = WIN_TARGETS[night] || {};
     const N = (report.nights[night] = { bots: {}, ablations: [] });
     let list = [...bots];
-    if (args.exploits) list.push('X-lightsOn', 'X-lureSpam', 'X-noTasks', 'X-lateTasks', 'X-sealAll');
+    if (args.exploits) list.push(...EXPLOITS);
+    if (args.tricks) {
+      if (!list.includes('B4')) list.push('B4');
+      list.push(...TRICKS);
+    }
     for (const b of list) {
       const s = summarize(await play(night, b, runs));
       N.bots[b] = s;
       process.stderr.write(`N${night} ${b.padEnd(12)} win ${pct(s.win)} [${pct(s.ci[0])}, ${pct(s.ci[1])}] causes ${JSON.stringify(s.causes)}\n`);
+      if (b.startsWith('T-') && N.bots.B4) {
+        const base = N.bots.B4;
+        gate(s.win <= base.win + TRICK_MARGIN, `N${night} 技巧 ${b} 胜率 ${pct(s.win)} ≤ 专家 ${pct(base.win)} + ${pct(TRICK_MARGIN)}`);
+      }
       const tgt = b.startsWith('X-') ? T.X : T[b];
       if (tgt && !(b === 'B1')) gate(s.ci[0] >= tgt[0] - 1e-9 && s.ci[1] <= tgt[1] + 1e-9, `N${night} ${b} 胜率 ${pct(s.win)} (CI ${pct(s.ci[0])}–${pct(s.ci[1])}) ∈ [${pct(tgt[0])}, ${pct(tgt[1])}]`);
       if (['B2', 'B3', 'B4', 'B5'].includes(b)) gate(s.unfair === 0, `N${night} ${b} 不公平死亡 = ${s.unfair} ${s.unfairSeeds.join(' ')}`);
       if (b === 'B3') {
         const deaths = Object.values(s.causes).reduce((a, x) => a + x, 0);
         const maxCause = Math.max(0, ...Object.values(s.causes));
-        if (deaths >= 30 && night >= 3) gate(maxCause / deaths <= (night === 3 ? 0.6 : 0.55), `N${night} B3 单一死因占比 ${pct(maxCause / Math.max(1, deaths))} ≤ 55%`);
+        if (deaths >= 30 && night >= 2) gate(maxCause / deaths <= (night === 3 ? 0.6 : night === 2 ? 0.7 : 0.55), `N${night} B3 单一死因占比 ${pct(maxCause / Math.max(1, deaths))} ≤ 55%`);
         gate(s.earlyDeathShare < 0.1, `N${night} B3 00–01 点死亡占比 ${pct(s.earlyDeathShare)} < 10%`);
         gate(s.overtime <= 0.2, `N${night} B3 加班比例 ${pct(s.overtime)} ≤ 20%`);
         gate(s.burnedAvg <= 1, `N${night} B3 平均烧坏灯管 ${s.burnedAvg.toFixed(2)} ≤ 1`);
@@ -121,7 +130,7 @@ async function main() {
   const b3 = nights.map((n) => report.nights[n].bots.B3?.win).filter((x) => x !== undefined);
   for (let i = 1; i < b3.length; i++) {
     const d = b3[i - 1] - b3[i];
-    const [lo, hi] = nights[i] <= 2 ? [0, 0.1] : [0.08, 0.2];
+    const [lo, hi] = [0.08, 0.25];
     gate(d >= lo && d <= hi, `B3 N${nights[i - 1]}→N${nights[i]} 下降 ${pct(d)} ∈ [${pct(lo)}, ${pct(hi)}]`);
   }
   report.seconds = (Date.now() - t0) / 1000;

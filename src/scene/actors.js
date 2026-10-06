@@ -265,7 +265,60 @@ function bibTexture() {
   return t;
 }
 
-const BUILDERS = { sunny: buildSunny, pip: buildPip, tootie: buildTootie };
+function buildChef() {
+  const g = new THREE.Group();
+  // pale, frost-bitten fur and an apron
+  const fur = std({ map: furTexture('#8a6a58'), color: 0xd8e4f0 });
+  const frost = std({ color: 0xdfefff, roughness: 0.3, metalness: 0.1, transparent: true, opacity: 0.55 });
+  const white = std({ color: 0xe8e6de });
+  const steel = std({ color: 0x9aa4ae, metalness: 0.8, roughness: 0.3 });
+  for (const s of [-1, 1]) {
+    g.add(cyl(0.16, 0.18, 0.7, fur, s * 0.2, 0.35, 0));
+    g.add(sph(0.17, steel, s * 0.2, 0.06, 0.06, 1, 0.5, 1.4));
+  }
+  const torso = new THREE.Group();
+  torso.position.y = 0.7;
+  torso.add(sph(0.46, fur, 0, 0.38, 0, 1.05, 1.1, 0.9));
+  torso.add(sph(0.47, frost, 0, 0.42, 0.02, 1.0, 0.9, 0.85));
+  const apron = new THREE.Mesh(new THREE.PlaneGeometry(0.5, 0.6), white);
+  apron.position.set(0, 0.25, 0.42);
+  torso.add(apron);
+  const arms = [];
+  for (const s of [-1, 1]) {
+    const a = new THREE.Group();
+    a.position.set(s * 0.5, 0.65, 0);
+    a.add(cyl(0.11, 0.1, 0.5, fur, 0, -0.25, 0));
+    a.add(sph(0.12, fur, 0, -0.55, 0.05));
+    if (s > 0) {
+      const cleaver = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.22, 0.32), steel);
+      cleaver.position.set(0, -0.7, 0.12);
+      a.add(cleaver);
+    }
+    a.rotation.z = s * 0.15;
+    torso.add(a);
+    arms.push(a);
+  }
+  g.add(torso);
+  const head = new THREE.Group();
+  head.userData.furMat = fur;
+  head.position.y = 0.95;
+  torso.add(head);
+  head.add(sph(0.3, fur, 0, 0, 0, 1.1, 0.95, 1));
+  head.add(sph(0.15, white, 0, -0.08, 0.22, 1.3, 0.8, 0.9));
+  head.add(sph(0.05, std({ color: 0x221111 }), 0, -0.02, 0.36));
+  // chef's hat
+  head.add(cyl(0.2, 0.18, 0.12, white, 0, 0.3, 0));
+  head.add(sph(0.24, white, 0, 0.44, 0, 1, 0.6, 1));
+  head.add(sph(0.31, frost, 0, 0.02, 0.02, 1.1, 0.95, 1));
+  const jaw = new THREE.Group();
+  jaw.position.set(0, -0.12, 0.08);
+  jaw.add(sph(0.14, white, 0, -0.03, 0.14, 1.2, 0.45, 0.9));
+  head.add(jaw);
+  const eye = eyes(head, { x: 0.11, y: 0.07, z: 0.23, r: 0.06, iris: 0x60c0ff });
+  return { group: g, torso, head, jaw, arms, ...eye, height: 2.05 };
+}
+
+const BUILDERS = { sunny: buildSunny, pip: buildPip, tootie: buildTootie, chef: buildChef };
 
 export class ActorViews {
   constructor(scene) {

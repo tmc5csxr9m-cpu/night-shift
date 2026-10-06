@@ -125,7 +125,8 @@ export const mapPage = {
       for (const v of s.hist) sp += SPARK[Math.max(0, Math.min(7, Math.floor((v - 22) / 4)))];
       ui.text(X + 14, 7, sp.slice(-7), C.cy);
       row(8, '照明', s.light ? '开启 0.3kW' : '关闭', s.light ? C.yel : C.fg);
-      row(9, '卷帘', s.sealed ? `落下 ${s.sealT.toFixed(0)}s` : s.sealCd > 0 ? `复位 ${s.sealCd.toFixed(0)}s` : '升起', s.sealed ? C.yel : C.fg);
+      const other = Object.entries(w.rooms).find(([id, x]) => x.sealed && id !== r.id);
+      row(9, '卷帘', s.sealed ? `落下 ${s.sealT.toFixed(0)}s` : other ? `泵忙(${other[0]})` : w.shutterCd > 0 ? `复位 ${w.shutterCd.toFixed(0)}s` : '升起', s.sealed ? C.yel : C.fg);
       ui.text(X + 2, 10, '扫描', C.dim);
       if (isOffice) ui.text(X + 7, 10, '你在这里.', C.yel);
       else if (s.result) ui.text(X + 7, 10, fit(s.result.text, 14), s.result.count ? C.yel : C.dim);
@@ -142,7 +143,7 @@ export const mapPage = {
     y += 3;
     ui.pushButton('m-light', X + 2, y, 18, s.light ? '☼ 关闭照明' : '☼ 区域照明', () => term.cmd('roomLight', { room: r.id }, s.light ? 'off' : 'on'), { disabled: isOffice, active: s.light });
     y += 3;
-    ui.pushButton('m-seal', X + 2, y, 18, s.sealed ? '▣ 升起卷帘' : '▣ 落下卷帘', () => term.cmd('seal', { room: r.id }, s.sealed ? 'off' : 'on'), { disabled: dis || (!s.sealed && s.sealCd > 0), active: s.sealed });
+    ui.pushButton('m-seal', X + 2, y, 18, s.sealed ? '▣ 升起卷帘' : '▣ 落下卷帘', () => term.cmd('seal', { room: r.id }, s.sealed ? 'off' : 'on'), { disabled: dis || (!s.sealed && (w.shutterCd > 0 || Object.values(w.rooms).some((x) => x.sealed))), active: s.sealed });
     y += 3;
     ui.hline(X + 1, y, 21, '─', C.dim2);
     ui.text(X + 2, y + 1, `扫描 ${w.stats.scans}  诱饵 ${w.stats.lures}`, C.dim);

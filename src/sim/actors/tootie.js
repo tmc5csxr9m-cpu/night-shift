@@ -47,7 +47,7 @@ export class Tootie extends Actor {
       return;
     }
     if (this.state === 'door') {
-      this.attackT -= dt;
+      this.attackT -= dt * this.w.attackRate();
       if (this.attackT <= 0) w.kill(this);
       return;
     }
