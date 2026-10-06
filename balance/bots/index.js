@@ -75,7 +75,7 @@ export function exploitBot(kind) {
 // T-*: an expert player plus one "clever" trick. If a trick adds a lot of
 // win rate on top of the expert, it is a dominant strategy and must be fixed.
 export function trickBot(kind) {
-  const off = { pipLightOnly: { lure: true }, freezerOff: { freezer: true }, fanOff: { heat: true }, dark: { dim: true, heat: true } }[kind] || {};
+  const off = { pipLightOnly: { lure: true }, freezerOff: { freezer: true }, fanOff: { heat: true }, dark: { dim: true, heat: true, bright: true }, darkP4: { bright: true }, ventMax: { vent: true } }[kind] || {};
   const base = heuristicBot('expert', { disable: off });
   return {
     name: 'T-' + kind,
@@ -115,6 +115,17 @@ export function trickBot(kind) {
         case 'fanOff':
           if (o.office.fan) return { type: 'cmd', name: 'fan', args: { on: false } };
           break;
+        case 'ventMax':
+          if (o.office.vent < 3 && o.circuits.C4) return { type: 'cmd', name: 'vent', args: { level: 3 } };
+          break;
+        case 'genEarly': {
+          const g = o.tasks.find((x) => x.id === 'T-06' && !x.done && x.open);
+          if (g) return { type: 'task', id: 'T-06', dur: 4 };
+          break;
+        }
+        case 'darkP4':
+          if (o.bossPhase === 4 && o.office.light !== 0) return { type: 'cmd', name: 'officeLight', args: { level: 0 } };
+          break;
         default:
       }
       return base.decide(o, agent);
@@ -123,7 +134,7 @@ export function trickBot(kind) {
 }
 
 export const EXPLOITS = ['X-lightsOn', 'X-lureSpam', 'X-noTasks', 'X-lateTasks', 'X-sealAll'];
-export const TRICKS = ['T-roomFreeze', 'T-dark', 'T-stageEarly', 'T-freezerOff', 'T-turtle', 'T-fanOff', 'T-pipLightOnly'];
+export const TRICKS = ['T-roomFreeze', 'T-dark', 'T-stageEarly', 'T-freezerOff', 'T-turtle', 'T-fanOff', 'T-pipLightOnly', 'T-ventMax', 'T-genEarly', 'T-darkP4'];
 
 export function makeBot(name) {
   switch (name) {

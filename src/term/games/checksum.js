@@ -5,6 +5,7 @@ const COLS = 8;
 const ROWS = 6;
 const NEED = 4;
 const ROUNDS = 3;
+const rounds = (g) => g.rounds ?? ROUNDS;
 
 const hex = (v) => v.toString(16).toUpperCase().padStart(2, '0');
 
@@ -46,11 +47,11 @@ export const checksumGame = {
   },
 
   draw(term, ui, complete) {
-    const finished = this.round >= ROUNDS;
+    const finished = this.round >= rounds(this);
     ui.text(30, 6, '目标字节', C.dim);
     ui.text(39, 6, finished ? '----' : `0x${hex(this.target)}`, C.yel);
     ui.text(46, 6, `已找到 ${this.found.size}/${NEED}`, C.fg);
-    ui.text(60, 6, `轮次 ${Math.min(this.round + 1, ROUNDS)}/${ROUNDS}`, C.fg);
+    ui.text(60, 6, `轮次 ${Math.min(this.round + 1, rounds(this))}/${rounds(this)}`, C.fg);
     ui.text(72, 6, `误${this.errors}`, this.errors ? C.red : C.dim);
 
     ui.text(31, 8, 'ADDR   ', C.dim2);
@@ -74,7 +75,7 @@ export const checksumGame = {
             if (this.found.size >= NEED) {
               this.round++;
               term.sfx.ok();
-              if (this.round >= ROUNDS) complete();
+              if (this.round >= rounds(this)) complete();
               else {
                 this.newRound();
                 term.reprint();

@@ -72,6 +72,15 @@ export const powerPage = {
     ui.text(3, 19, `当前 ${pw.load.toFixed(2)}kW`, C.hi);
     ui.text(20, 19, `跳闸 ${top.toFixed(1)}kW`, pw.load > top * 0.85 ? C.yel : C.dim);
 
+    // ------------------------------------------------- grid / generator
+    if (w.night.gridFail !== undefined) {
+      const g = w.generator;
+      ui.text(3, 21, g.gridDown ? '电网:故障' : '电网:正常', g.gridDown ? C.red : C.dim);
+      ui.text(13, 21, g.running ? '发电机:运转' : '发电机:待机', g.running ? C.ok : C.dim);
+      ui.bar(25, 21, 8, g.fuel, { fg: C.yel, blocky: true });
+      if (g.running) ui.button('gen-stop', 34, 21, '停', () => term.cmd('generator', { on: false }, 'off'));
+    }
+
     // ------------------------------------------------- breakdown
     ui.box(2, 22, 36, 7, { title: '负载分项', titleAlign: 'left' });
     const chef = w.actor('chef');
@@ -110,6 +119,14 @@ export const powerPage = {
       ui.segments(57, y + 1, 6, on ? Math.ceil((load / 2.4) * 6) : 0, C.cy, C.dim2);
       if (on) ui.text(68, y, '▐ON ▌', C.ink, pw.tripped ? C.dim : C.cy);
       else ui.text(68, y, '▐OFF▌', C.dim, C.bg2);
+      // N6: write-protect a breaker against STARLIGHT
+      if (w.night.boss) {
+        const l = w.locks[id];
+        const pend = w.actor('starlight')?.pending?.id === id;
+        const label = l && l.t > 0 ? `■${Math.ceil(l.t)}` : l && l.cd > 0 ? `…${Math.ceil(l.cd)}` : '锁';
+        ui.button('lk-' + id, 74, y + 1, label, () => term.cmd('lockBreaker', { id }, 'on'), { raw: false, fg: pend ? C.red : C.dim });
+        if (pend && Math.floor(term.time * 6) % 2) ui.text(64, y, '◆', C.red, bg);
+      }
       ui.text(68, y + 1, on ? ' ▀▀  ' : '  ▄▄ ', on ? C.cy : C.dim2, bg);
     });
     ui.text(42, 25, '─'.repeat(34), C.dim2);

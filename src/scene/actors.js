@@ -3,6 +3,8 @@
 // positions, animates idles and reactions, and performs the jumpscare.
 import * as THREE from 'three';
 
+const ROOM_FRONT = -1.8;
+
 // feet position + facing for corridor nodes that are visible from the office
 const STAGE = {
   DOOR_L: { p: [-2.78, 0, 0.08], ry: Math.PI / 2 },
@@ -318,11 +320,68 @@ function buildChef() {
   return { group: g, torso, head, jaw, arms, ...eye, height: 2.05 };
 }
 
-const BUILDERS = { sunny: buildSunny, pip: buildPip, tootie: buildTootie, chef: buildChef };
+function buildRibbon() {
+  // a thin marionette from the ceiling rails: porcelain mask, ribbons for hair
+  const g = new THREE.Group();
+  const cloth = std({ color: 0x3a1020, roughness: 0.8 });
+  const porcelain = std({ color: 0xf0ece4, roughness: 0.25 });
+  const red = std({ color: 0xa01020, roughness: 0.5, side: THREE.DoubleSide });
+  const wood = std({ color: 0x6a4a30 });
+  for (const s of [-1, 1]) g.add(cyl(0.025, 0.03, 0.9, wood, s * 0.08, 0.45, 0));
+  const torso = new THREE.Group();
+  torso.position.y = 0.9;
+  torso.add(cyl(0.08, 0.14, 0.6, cloth, 0, 0.3, 0));
+  const arms = [];
+  for (const s of [-1, 1]) {
+    const a = new THREE.Group();
+    a.position.set(s * 0.14, 0.55, 0);
+    a.add(cyl(0.018, 0.018, 0.75, wood, 0, -0.37, 0));
+    a.add(sph(0.03, porcelain, 0, -0.76, 0));
+    a.rotation.z = s * 0.25;
+    torso.add(a);
+    arms.push(a);
+  }
+  g.add(torso);
+  const head = new THREE.Group();
+  head.userData.furMat = porcelain;
+  head.position.y = 0.78;
+  torso.add(head);
+  head.add(sph(0.13, porcelain, 0, 0, 0, 0.9, 1.15, 0.8));
+  // painted smile
+  const smile = new THREE.Mesh(new THREE.TorusGeometry(0.06, 0.008, 6, 16, Math.PI), red);
+  smile.position.set(0, -0.05, 0.1);
+  smile.rotation.z = Math.PI;
+  head.add(smile);
+  for (let i = 0; i < 6; i++) {
+    const rib = new THREE.Mesh(new THREE.PlaneGeometry(0.03, 0.5), red);
+    rib.position.set(-0.1 + i * 0.04, -0.1, -0.06);
+    rib.rotation.z = (i - 2.5) * 0.08;
+    head.add(rib);
+  }
+  const jaw = new THREE.Group();
+  head.add(jaw);
+  const eye = eyes(head, { x: 0.045, y: 0.03, z: 0.09, r: 0.025, iris: 0xffffff, scl: 0x080808 });
+  // fingers that curl through the vent slats
+  const fingers = new THREE.Group();
+  for (let i = 0; i < 4; i++) {
+    const f = new THREE.Group();
+    f.position.set(-0.12 + i * 0.075, -0.02, 0);
+    const a = cyl(0.009, 0.007, 0.18, porcelain, 0, -0.09, 0);
+    f.add(a);
+    const b = cyl(0.007, 0.005, 0.12, porcelain, 0, -0.2, 0.03);
+    b.rotation.x = 0.6;
+    f.add(b);
+    fingers.add(f);
+  }
+  return { group: g, torso, head, jaw, arms, fingers, ...eye, height: 1.7 };
+}
+
+const BUILDERS = { sunny: buildSunny, pip: buildPip, tootie: buildTootie, chef: buildChef, ribbon: buildRibbon };
 
 export class ActorViews {
-  constructor(scene) {
+  constructor(scene, room) {
     this.scene = scene;
+    this.room = room;
     this.views = {};
     for (const [id, fn] of Object.entries(BUILDERS)) {
       const v = fn();
@@ -345,6 +404,13 @@ export class ActorViews {
       v.pose = 0;
       v.hold = 0;            // keep showing the old spot (bow) for a moment
       v.lunge = 0;
+      if (v.fingers) {
+        v.fingers.visible = false;
+        if (room?.anchors.vent) {
+          v.fingers.position.set(-1.45, 2.26, ROOM_FRONT + 0.08);
+          scene.add(v.fingers);
+        }
+      }
       // debug ghost: wireframe marker wherever the sim says the actor is
       v.ghost = new THREE.Mesh(new THREE.BoxGeometry(0.6, v.height, 0.6), new THREE.MeshBasicMaterial({ color: 0xff40ff, wireframe: true, depthTest: false, transparent: true, opacity: 0.8, fog: false }));
       v.ghost.renderOrder = 10;
@@ -378,6 +444,16 @@ export class ActorViews {
       if (v.hold > 0) {
         v.hold -= dt;
         node = v.node;
+      }
+      // Ribbon: fingers through the vent, rattling slats in the duct behind it
+      if (v.fingers) {
+        v.fingers.visible = node === 'VENT';
+        if (v.fingers.visible) v.fingers.children.forEach((f, i) => (f.rotation.x = 0.3 + Math.sin(t * 3 + i) * 0.25));
+        const slats = this.room?.ventSlats;
+        if (slats) {
+          const shake = node === 'VENT' ? 0.25 : node === 'D2' ? 0.12 : 0;
+          slats.forEach((sl, i) => (sl.rotation.x = -0.6 + (shake ? Math.sin(t * 40 + i * 1.7) * shake : 0)));
+        }
       }
       const st = node && STAGE[node];
       const gp = a && NODE_POS[a.node];

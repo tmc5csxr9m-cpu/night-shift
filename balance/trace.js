@@ -41,7 +41,7 @@ for (const seed of seeds) {
     ag.step();
   }
   const r = w.result;
-  if (a.seed || (r.outcome !== 'win' && (!a.cause || r.cause === a.cause))) {
+  if (a.seed || (r.outcome !== 'win' && (!a.cause || (r.cause || r.outcome) === a.cause))) {
     console.log(`seed ${seed}  →  ${r.outcome} ${r.cause || ''} @ ${r.clock}`);
     console.log(out.slice(-lines).join('\n'));
     break;

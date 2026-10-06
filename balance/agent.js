@@ -25,8 +25,8 @@ export class Agent {
     this.mem = {};              // bot's private memory
     this.pendingInfo = [];      // perceived but not yet "registered" (reaction delay)
     this.heard = [];            // registered cues
-    this.seen = { L: [], R: [] };
-    this.seenAt = { L: -99, R: -99 };
+    this.seen = { L: [], R: [], T: [] };
+    this.seenAt = { L: -99, R: -99, T: -99 };
     this.emi = null;
     this.taskProgress = {};
     this.taskNeed = {};
@@ -79,6 +79,12 @@ export class Agent {
         this.seenAt[side] = t;
       }
     }
+    // the vent is on the front wall: visible whenever you look ahead
+    if (!this.focused && this.look === 'F') {
+      const r = w.actor('ribbon');
+      this.seen.T = r && (r.node === 'VENT' || r.node === 'D2') ? [{ id: 'ribbon', node: r.node }] : [];
+      this.seenAt.T = t;
+    }
     // CRT edge interference, only visible while focused
     if (this.focused) {
       // perceived edge distortion; below the skill threshold it is not noticed
@@ -100,6 +106,14 @@ export class Agent {
       this.emi = out;
     } else this.emi = null;
 
+    // tasks that appear mid-night (emergency T-07) or come back undone
+    for (const x of w.tasks) {
+      if (this.taskNeed[x.id] === undefined || (!x.done && this.taskProgress[x.id] >= this.taskNeed[x.id])) {
+        const [lo, hi] = TASK_TIME[x.id] || [20, 30];
+        this.taskNeed[x.id] = this.rng.range(lo, hi) * this.S.taskMul;
+        this.taskProgress[x.id] = 0;
+      }
+    }
     const obs = {
       t, hour: w.hour, overtime: w.overtime, night: w.nightIndex,
       look: this.look, focused: this.focused, page: this.page,
@@ -114,17 +128,27 @@ export class Agent {
       musicPlaying: w.musicPlaying(),     // audible anywhere
       tripped: w.power.tripped, powerOut: w.power.out,
       phone: w.phone.state,
-      tasks: w.tasks.map((x) => ({ id: x.id, done: x.done, open: w.taskOpen(x), progress: this.taskProgress[x.id], need: this.taskNeed[x.id] })),
+      tasks: w.tasks.map((x) => ({ id: x.id, done: x.done, optional: !!x.optional, open: w.taskOpen(x), progress: this.taskProgress[x.id], need: this.taskNeed[x.id] })),
       circuits: { ...w.circuits },        // known: player sets them (and the log reports trips)
       calibrated: { ...w.calibrated },
       office: { light: w.office.light, fan: w.office.fan, vent: w.office.vent, maglock: w.office.maglock, coilLockout: w.office.coilLockout > 0 },
-      shutterBusy: Object.values(w.rooms).some((r) => r.sealed) || w.shutterCd > 0,
+      shutterBusy: !w.calibrated.seal || Object.values(w.rooms).some((r) => r.sealed) || w.shutterCd > 0,
     };
     if (this.focused) {
       obs.power = { pct: w.powerPct(), load: w.power.load };
       obs.emergencies = w.emergencies.map((e) => ({ ...e }));
       obs.wind = w.musicBox.wind;
+      obs.autoWind = w.musicBox.auto;
+      obs.coil = w.office.coil / w.P.maglock.maxLock;
+      obs.offline = Object.entries(w.rooms).filter(([, r]) => r.offline).map(([id]) => id);
       obs.temp = w.temp.eff;
+      obs.pageLock = w.pageLock && w.pageLock.t > 0 ? w.pageLock.page : null;
+      const boss = w.actor('starlight');
+      if (boss) {
+        obs.bossPending = boss.pending ? boss.pending.id : null;
+        obs.locks = Object.fromEntries(Object.entries(w.locks).map(([k, l]) => [k, { t: l.t, cd: l.cd }]));
+        obs.bossPhase = boss.phase;
+      }
       obs.faulty = w.faulty();
       obs.magnet = w.emi.magnet;
       const chef = w.actor('chef');
@@ -203,7 +227,8 @@ export class Agent {
         cost += this.positionCost(true, page) + a.dur;
         after = () => {
           this.enter(page);
-          if (a.name === 'wind') this.w.cmd('wind', { dt: a.dur });
+          // winding happens continuously while the button is held
+          if (a.name === 'wind') for (let k = 0; k < a.dur; k += 0.5) this.w.cmd('wind', { dt: Math.min(0.5, a.dur - k) });
           else this.w.cmd(a.name, a.args || {});
           this.usage[a.name] = (this.usage[a.name] || 0) + 1;
         };

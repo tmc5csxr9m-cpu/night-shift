@@ -552,12 +552,25 @@ export function buildRoom(scene) {
     const d2 = plane(0.28, 0.21, std({ map: T.drawingTexture(7), roughness: 0.9 }), X - 0.006, 1.2, -1.35, -Math.PI / 2);
     d2.rotation.z = 0.15;
     root.add(d2);
+    // the vent sits high on the front wall, in plain sight
     const vent = new THREE.Group();
-    vent.position.set(X - 0.02, 2.2, 1.0);
-    vent.add(box(0.03, 0.4, 0.6, darkMetal, 0, 0, 0));
-    for (let i = 0; i < 8; i++) vent.add(box(0.04, 0.02, 0.56, metal, -0.01, -0.17 + i * 0.048, 0));
+    vent.position.set(-1.45, 2.18, ROOM.zf + 0.03);
+    vent.add(box(0.62, 0.42, 0.04, darkMetal, 0, 0, 0));
+    vent.add(box(0.56, 0.36, 0.02, black, 0, 0, 0.012));
+    const slats = [];
+    for (let i = 0; i < 7; i++) {
+      const sl = box(0.56, 0.018, 0.05, metal, 0, -0.15 + i * 0.05, 0.03);
+      sl.rotation.x = -0.6;
+      vent.add(sl);
+      slats.push(sl);
+    }
     root.add(shadowed(vent));
     refs.vent = vent;
+    refs.ventSlats = slats;
+    const ventAnchor = new THREE.Object3D();
+    ventAnchor.position.set(-1.45, 2.18, ROOM.zf + 0.2);
+    scene.add(ventAnchor);
+    refs.anchors.vent = ventAnchor;
 
     // pipes along the ceiling
     const pipeMat = std({ color: 0x5a4a3a, metalness: 0.6, roughness: 0.5 });
@@ -595,6 +608,8 @@ export function buildRoom(scene) {
     root.add(shadowed(box(0.3, 0.2, 0.22, boxMat, 1.3, 2.17, ROOM.zf + 0.13)));
     root.add(shadowed(box(0.22, 0.14, 0.2, boxMat, 1.62, 2.14, ROOM.zf + 0.13)));
     const head = plushHead(std, 1.85, 2.07, ROOM.zf + 0.14);
+    refs.head = head;
+    refs.headPupil = head.userData.pupil;
     root.add(shadowed(head));
 
     // trash bin + paper balls
@@ -768,6 +783,7 @@ function plushHead(std, x, y, z) {
   const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.007, 8, 6), new THREE.MeshStandardMaterial({ color: 0x111, emissive: 0xffffff, emissiveIntensity: 0.15 }));
   pupil.position.set(0.042, 0.122, 0.116);
   g.add(pupil);
+  g.userData.pupil = pupil.material;
   g.position.set(x, y, z);
   g.rotation.y = -0.6;
   g.rotation.z = 0.25;

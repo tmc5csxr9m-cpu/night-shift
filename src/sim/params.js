@@ -22,7 +22,7 @@ export const DEFAULT_PARAMS = {
   temp: { equipment: 2.0, lightPerLevel: 0.15, ventK: 0.22, fan: 1.0, tau: 40, fault: 32, shutdown: 36, rebootTime: 8 },
 
   noise: {
-    base: 30, fan: 38, ventPerLevel: 4, generator: 45, phone: 40, degauss: 45, degaussTime: 1.0, musicBox: 32,
+    base: 30, fan: 38, ventPerLevel: 4, generator: 42, phone: 40, degauss: 45, degaussTime: 1.0, musicBox: 32,
     pipPerDb: 7, pipMax: 3,
   },
 
@@ -45,14 +45,17 @@ export const DEFAULT_PARAMS = {
   // while an actor waits at a door it keeps making noise (greeting / knocking)
   doorCueEvery: 2.5,
 
-  maglock: { maxLock: 25, lockout: 15, giveUp: 4 },
+  maglock: { maxLock: 18, lockout: 20, giveUp: 4 },
 
   musicBox: { windRate: 0.25, resumeAt: 0.3 },
 
   actors: {
-    sunny: { interval: 5.0, attackDelay: [6.5, 6.5, 7, 7, 6.5, 6.5], retreatLight: 2.5, rageRate: 1, rageDiv: 4, rageTime: 30, freezeMax: 15, stageOn: -4, stageOff: 2 },
-    pip: { interval: 3.5, attackDelay: [4.8, 4.8, 5, 4.8, 4.6, 4.5], litSlow: 0.2, lureHesitate: 0.8, impatienceDiv: 10, stageOn: -4, stageOff: 2 },
+    sunny: { interval: 5.0, attackDelay: [6.5, 6.5, 6, 6.2, 6, 6], retreatLight: 2.5, rageRate: 1, rageDiv: 4, rageTime: 30, freezeMax: 15, stageOn: -4, stageOff: 2 },
+    pip: { interval: 3.5, attackDelay: [4.8, 4.8, 4.4, 4.5, 4.3, 4.2], litSlow: 0.2, lureHesitate: 0.8, impatienceDiv: 10, stageOn: -4, stageOff: 2 },
     tootie: { stepTime: 6.5, attackDelay: 4, returnStep: 2.5 },
+    back: { interval: 6, attackDelay: [7, 7, 5.5, 6, 5.5, 5], generator: 4 },
+    ribbon: { interval: 5, attackDelay: [7, 7, 7, 7, 7, 6.5], ventMod: -4, brightMod: -2, blowTime: 3 },
+    starlight: { breakerGap: [25, 40], breakerWarn: 3, extraLoad: 2.5, pageLock: 20, ventHijack: 15, attackGap: 16, telegraph: 3 },
     chef: { interval: 8, moveChance: 0.55, attackDelay: 10, thawRate: 1.0, refreeze: 0.5, dormantAt: 60, returnStep: 4 },
   },
 
@@ -61,12 +64,18 @@ export const DEFAULT_PARAMS = {
     sunny: { '02': 32, '07F': 38, '07N': 44, DOOR_L: 50 },
     pip: { '02': 30, '06': 30, '11': 33, '08F': 37, '08N': 43, DOOR_R: 48 },
     tootie: { '11': 36, '08F': 42, '08N': 47, DOOR_R: 52 },
+    back: { BACKP: 32, '12': 38, DOOR_B: 46 },
+    ribbon: { D1: 34, D2: 40, VENT: 46 },
     chef: { '06': 34, '02': 36, '11': 36, '07F': 40, '07N': 46, DOOR_L: 50, '08F': 40, '08N': 46, DOOR_R: 50 },
   },
 
   events: { meanGap: 70, relayStuck: 1, drift: 1, aging: 1 },
 
-  call: { ringTime: 6 },
+  call: { ringTime: 6, spamRing: 15 },
+
+  generator: { duration: 150, magnet: 0.012, batteryMul: 1.2 },
+
+  boss: { lockTime: 45, lockCooldown: 30, scanLie: 0.3 },
 };
 
 export function mergeParams(base, over) {

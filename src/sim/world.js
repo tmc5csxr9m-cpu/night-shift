@@ -9,15 +9,26 @@ import { Sunny } from './actors/sunny.js';
 import { Pip } from './actors/pip.js';
 import { Tootie } from './actors/tootie.js';
 import { Chef } from './actors/chef.js';
+import { Back } from './actors/back.js';
+import { Ribbon } from './actors/ribbon.js';
+import { Starlight } from './actors/starlight.js';
 
-const ACTORS = { sunny: Sunny, pip: Pip, tootie: Tootie, chef: Chef };
+const ACTORS = { sunny: Sunny, pip: Pip, tootie: Tootie, chef: Chef, back: Back, ribbon: Ribbon, starlight: Starlight };
+const HOME_DOOR = { sunny: 'DOOR_L', pip: 'DOOR_R', back: 'DOOR_B', ribbon: 'VENT' };
+// which terminal page a command lives on (for STARLIGHT's page locks)
+const CMD_PAGES = {
+  scan: 'map', lure: 'map', roomLight: 'map', seal: 'map', rebootNode: 'map',
+  breaker: 'power', resetMain: 'power', lockBreaker: 'power', generator: 'power',
+  officeLight: 'facility', fan: 'facility', vent: 'facility', wind: 'facility', replaceBulb: 'facility', oscillate: 'facility',
+  taskComplete: 'tasks',
+};
 
 export const ROOM_IDS = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', '13', 'OF'];
 export const CIRCUITS = ['C1', 'C2', 'C3', 'C4', 'C5', 'C6', 'C7', 'C8', 'C9', 'C0'];
 export const ACTOR_NAMES = { sunny: '桑尼熊', pip: '皮普兔', tootie: '嘟嘟鸟', chef: '高迪大厨', back: '后门之物', ribbon: '丝带', starlight: 'STARLIGHT', power: '断电' };
 
 // tonight's brand-new threats are held back while the tutorial call plays
-const NEW_TONIGHT = { 1: ['sunny', 'pip'] };
+const NEW_TONIGHT = { 1: ['sunny', 'pip'], 3: ['back'], 5: ['ribbon'], 6: ['starlight'] };
 
 const BREAKER_NOTES = {
   C9: ['舞台电路断开. 台上的表演者切换为内置电池.', '舞台电路恢复.'],
@@ -61,7 +72,8 @@ export class World {
     this.musicBox = { wind: 1, auto: n.autoWind };
     this.phone = { state: 'idle', t: 0, kind: null };
     this.player = { look: 'F', focused: false, page: null };
-    this.calibrated = { sensors: false, lure: !n.lureNeedsT02, radio: false, relays: false };
+    // n.broken: which module T-02 has to repair tonight ('lure' | 'seal')
+    this.calibrated = { sensors: false, lure: n.broken !== 'lure', seal: n.broken !== 'seal', radio: false, relays: false, winder: false };
     // tasks: 'T-01' or ['T-01', openHour]
     this.tasks = n.tasks.map((x) => {
       const [id, open] = Array.isArray(x) ? x : [x, 0];
@@ -69,6 +81,11 @@ export class World {
     });
     this.shutterCd = 0;
     this.compressor = { fault: false, t: 0 };
+    this.generator = { running: false, fuel: n.genFuel ?? 1, gridDown: false };
+    this.locks = {};          // breaker write-protection { id: {t, cd} }
+    this.bossLoad = 0;
+    this.pageLock = null;
+    this.ventHijack = 0;
     this.emergencies = [];
     this.lureCooldown = 0;
     this.eventT = this.P.events.meanGap * (0.6 + this.rng.float());
@@ -146,6 +163,102 @@ export class World {
   // hot terminal: misclicks, garbled rows, slower work
   faulty() {
     return this.temp.eff >= this.P.temp.fault;
+  }
+
+  generatorRunning() {
+    return !!(this.generator && this.generator.running);
+  }
+
+  // a mistimed ignition: a huge bang in the power room
+  c_backfire() {
+    this.noise.backfireT = 1.5;
+    const back = this.actor('back');
+    if (back) back.timer = Math.min(back.timer, 0.5);
+    this.log('发电机回火!', 'warn');
+    this.cue('generator', '10', 52, 'bang');
+  }
+
+  breakerLocked(id) {
+    return !!(this.locks[id] && this.locks[id].t > 0);
+  }
+
+  c_lockBreaker({ id }) {
+    const l = this.locks[id];
+    if (l && l.t > 0) return { ok: false, msg: '已锁定' };
+    if (l && l.cd > 0) return { ok: false, msg: `写保护冷却 ${l.cd.toFixed(0)}s` };
+    this.locks[id] = { t: this.P.boss.lockTime, cd: 0 };
+    this.log(`回路 ${id} 写保护 ${this.P.boss.lockTime} 秒.`);
+  }
+
+  ventLevel() {
+    return this.powered('C4') && this.ventHijack <= 0 ? this.office.vent : 0;
+  }
+
+  c_generator({ on }) {
+    const g = this.generator;
+    if (on) return { ok: false, msg: '需要完成点火程序 (T-06)' };
+    if (!g.running) return { ok: false };
+    g.running = false;
+    this.restartGenTask();
+    this.log('发电机已停机.');
+    this.emit('generator', { running: false });
+  }
+
+  // starting the generator again needs the ignition sequence again
+  restartGenTask() {
+    const t6 = this.tasks.find((x) => x.id === 'T-06');
+    if (t6) t6.done = false;
+    else this.tasks.push({ id: 'T-06', open: 0, done: false, doneAt: null, optional: true });
+  }
+
+  tickBoss(dt) {
+    for (const l of Object.values(this.locks)) {
+      if (l.t > 0) {
+        l.t -= dt;
+        if (l.t <= 0) l.cd = this.P.boss.lockCooldown;
+      } else if (l.cd > 0) l.cd -= dt;
+    }
+    if (this.pageLock && this.pageLock.t > 0) this.pageLock.t -= dt;
+    if (this.ventHijack > 0) this.ventHijack -= dt;
+    // boss-forced attacks: appear at the door after the warning
+    for (const a of this.actors) {
+      if (!(a.forcedT > 0)) continue;
+      a.forcedT -= dt;
+      if (a.forcedT > 0) continue;
+      const door = HOME_DOOR[a.id];
+      if (!door || a.state === 'door') continue;
+      a.lure = null;
+      a.pendingLure = null;
+      a.moveTo(door);
+      a.state = 'door';
+      const d = a.p.attackDelay;
+      a.attackT = Array.isArray(d) ? d[Math.min(5, this.nightIndex - 1)] : d;
+      a.litT = 0;
+      a.lockT = 0;
+      this.onDoor(a, DOOR_NODES[door]);
+    }
+  }
+
+  tickGenerator(dt) {
+    const n = this.night;
+    const g = this.generator;
+    if (n.gridFail !== undefined && !g.gridDown && this.t >= n.gridFail * this.P.hourSeconds) {
+      g.gridDown = true;
+      this.drain(n.gridPenalty || 0);
+      this.log('雷击! 主电网故障 — 切换到蓄电池 (消耗加快). 可启动备用发电机 (T-06).', 'err');
+      this.addEmergency('E-5');
+      this.restartGenTask();
+      this.emit('gridFail');
+    }
+    if (g.running) {
+      g.fuel = Math.max(0, g.fuel - dt / this.P.generator.duration);
+      this.emi.magnet = Math.min(1, this.emi.magnet + this.P.generator.magnet * dt);
+      if (g.fuel <= 0) {
+        g.running = false;
+        this.log('发电机燃料耗尽.', 'warn');
+        this.emit('generator', { running: false });
+      }
+    }
   }
 
   compressorFault() {
@@ -254,6 +367,7 @@ export class World {
     if (this.result) return { ok: false, msg: 'ended' };
     const fn = this['c_' + name];
     if (!fn) return { ok: false, msg: 'unknown ' + name };
+    if (this.pageLock && this.pageLock.t > 0 && CMD_PAGES[name] === this.pageLock.page) return { ok: false, msg: 'ACCESS DENIED — STARLIGHT' };
     this.commands.push({ tick: this.tickN, name, args });
     const r = fn.call(this, args) || { ok: true };
     this.emit('cmd', { name, args, ok: r.ok });
@@ -324,6 +438,7 @@ export class World {
     const r = this.rooms[room];
     if (!r || room === 'OF') return { ok: false };
     if (!this.powered('C6')) return { ok: false, msg: '传感网络离线' };
+    if (r.offline) return { ok: false, msg: '节点离线' };
     if (r.scanT > 0 || r.scanCd > 0) return { ok: false, msg: '扫描冷却中' };
     r.scanT = this.P.scan.time;
     r.result = null;
@@ -338,10 +453,17 @@ export class World {
     if (this.lureCooldown > 0) return { ok: false, msg: '放音模块忙' };
     if (!this.rooms[room] || room === 'OF') return { ok: false };
     this.lureCooldown = 3;
+    this.lastLureRoom = room;
     this.stats.lures++;
     this.rooms[room].spike = 40;
     this.emit('lure', { room });
     for (const a of this.actors) if (a.onLure) a.onLure(room);
+  }
+
+  // hotbar: replay the last lure without opening the map
+  c_lureRepeat() {
+    if (!this.lastLureRoom) return { ok: false, msg: '还没有放过诱饵' };
+    return this.c_lure({ room: this.lastLureRoom });
   }
 
   c_roomLight({ room, on }) {
@@ -355,6 +477,8 @@ export class World {
     if (!r || room === 'OF') return { ok: false };
     const want = on === undefined ? !r.sealed : !!on;
     if (want) {
+      if (['10', '12', '09', '13'].includes(room)) return { ok: false, msg: '该区域没有卷帘' };
+      if (!this.calibrated.seal) return { ok: false, msg: '卷帘液压泵故障 (T-02)' };
       if (!this.powered('C6')) return { ok: false, msg: '传感网络离线' };
       // one hydraulic pump drives every shutter: one at a time
       if (Object.values(this.rooms).some((x) => x.sealed)) return { ok: false, msg: '另一道卷帘仍在落下' };
@@ -399,11 +523,16 @@ export class World {
     }
   }
 
+  requiredDone() {
+    return this.tasks.every((x) => x.done || x.optional);
+  }
+
   taskOpen(task) {
     return this.t >= task.open * this.P.hourSeconds;
   }
 
   c_taskComplete({ id }) {
+    if (id.startsWith('T-08')) this.log(`>> 系统夺回 ${id.slice(4)} 完成.`, 'info');
     const task = this.tasks.find((x) => x.id === id);
     if (!task || task.done) return { ok: false };
     if (!this.taskOpen(task)) return { ok: false, msg: `任务 ${id} 尚未开放` };
@@ -413,15 +542,35 @@ export class World {
       this.calibrated.sensors = true;
       for (const r of Object.values(this.rooms)) r.drift = 0;
     }
-    if (id === 'T-02') this.calibrated.lure = true;
+    if (id === 'T-02') {
+      this.calibrated.lure = true;
+      this.calibrated.seal = true;
+    }
     if (id === 'T-03') this.calibrated.radio = true;
     if (id === 'T-07') this.fixCompressor();
+    if (id === 'T-05') this.calibrated.winder = true;
+    if (id === 'T-06') {
+      if (this.generator.fuel > 0) {
+        this.generator.running = true;
+        this.resolveEmergency('E-5');
+        this.log('备用发电机已启动.');
+        this.emit('generator', { running: true });
+      }
+    }
     if (id === 'T-04') {
       this.calibrated.relays = true;
       for (const d of Object.values(this.doors)) d.stuckT = 0;
     }
     this.emit('task', { id });
-    if (this.overtime && this.tasks.every((x) => x.done)) this.finish('win');
+    if (this.overtime && this.requiredDone()) this.finish('win');
+  }
+
+  c_rebootNode({ room }) {
+    const r = this.rooms[room];
+    if (!r || !r.offline) return { ok: false };
+    r.offline = false;
+    this.resolveEmergency('E-2', room);
+    this.log(`节点 ${room} 已重启.`);
   }
 
   c_replaceBulb({ side }) {
@@ -478,6 +627,8 @@ export class World {
     this.tickN++;
 
     this.tickPhone(dt);
+    this.tickGenerator(dt);
+    this.tickBoss(dt);
     this.tickPower(dt);
     this.tickDoors(dt);
     this.tickMusic(dt);
@@ -510,14 +661,14 @@ export class World {
       this.lastHour = h;
     }
     if (!this.overtime && this.t >= P.nightSeconds) {
-      if (this.tasks.every((x) => x.done)) this.finish('win');
+      if (this.requiredDone()) this.finish('win');
       else {
         this.overtime = true;
         this.log('交班清单未完成 — 进入加班!', 'warn');
         this.emit('overtime');
       }
     }
-    if (this.overtime && this.t >= P.nightSeconds + P.overtimeSeconds) this.finish('fired');
+    if (this.overtime && !this.night.boss && this.t >= P.nightSeconds + P.overtimeSeconds) this.finish('fired');
   }
 
   finish(outcome) {
@@ -535,7 +686,7 @@ export class World {
       this.emit('phone', { state: 'ringing' });
     } else if (ph.state === 'ringing') {
       ph.t += dt;
-      if (ph.t >= this.P.call.ringTime) {
+      if (ph.t >= (ph.kind === 'spam' ? this.P.call.spamRing : this.P.call.ringTime)) {
         if (ph.kind === 'tutorial') this.startCall();
         else {
           ph.state = 'idle';
@@ -571,7 +722,7 @@ export class World {
       if (on('C1') && this.office.light) parts.officeLight = P.officeLight[this.office.light];
       if (this.doorLit('L')) parts.doorL = P.doorLight;
       if (this.doorLit('R')) parts.doorR = P.doorLight;
-      if (on('C4') && this.office.vent) parts.vent = P.vent * this.office.vent;
+      if (this.ventLevel()) parts.vent = P.vent * this.ventLevel();
       if (on('C5') && this.office.fan) parts.fan = P.fan;
       let lights = 0;
       let seals = 0;
@@ -581,6 +732,8 @@ export class World {
       }
       if (lights) parts.roomLights = lights * P.roomLight;
       if (seals) parts.seals = seals * P.seal;
+      if (this.generator.running) parts.generator = -P.generator;
+      if (this.bossLoad) parts.boss = this.bossLoad;
     }
     let total = 0;
     for (const k in parts) total += parts[k];
@@ -607,7 +760,8 @@ export class World {
       this.emit('trip');
     }
     if (pw.blackoutT > 0) pw.blackoutT -= dt;
-    this.drain((load * dt) / 60);
+    // on battery (grid down) every kW costs more
+    this.drain((Math.max(0, load) * dt / 60) * (this.generator.gridDown ? this.P.generator.batteryMul : 1));
     if (!pw.out && pw.reserve <= 0) {
       pw.out = true;
       pw.outT = 6 + this.rng.float() * 10;
@@ -656,7 +810,7 @@ export class World {
     if (mb.auto) {
       if (this.powered('C7')) mb.wind = 1;
     } else if (this.musicPlaying()) {
-      mb.wind = Math.max(0, mb.wind - (this.night.windDrain || 0.01) * dt);
+      mb.wind = Math.max(0, mb.wind - (this.night.windDrain || 0.01) * (this.calibrated.winder ? 0.7 : 1) * dt);
     }
   }
 
@@ -680,7 +834,7 @@ export class World {
     const T = this.P.temp;
     const tp = this.temp;
     const light = this.powered('C1') ? this.office.light : 0;
-    const vent = this.powered('C4') ? this.office.vent : 0;
+    const vent = this.ventLevel();
     let target = tp.out + T.equipment + T.lightPerLevel * light;
     target -= Math.max(0, target - tp.out) * Math.min(0.9, T.ventK * vent);
     tp.room += (target - tp.room) * (dt / T.tau);
@@ -698,13 +852,18 @@ export class World {
     const parts = { base: N.base };
     const o = this.office;
     if (this.powered('C5') && o.fan) parts.fan = N.fan;
-    if (this.powered('C4') && o.vent) parts.vent = N.base + N.ventPerLevel * o.vent;
+    if (this.ventLevel()) parts.vent = N.base + N.ventPerLevel * this.ventLevel();
     if (this.phone.state === 'ringing') parts.phone = N.phone;
     if (this.noise.degaussT > 0) {
       parts.degauss = N.degauss;
       this.noise.degaussT -= dt;
     }
     if (this.musicPlaying()) parts.musicBox = N.musicBox;
+    if (this.generator.running) parts.generator = N.generator;
+    if (this.noise.backfireT > 0) {
+      parts.backfire = 52;
+      this.noise.backfireT -= dt;
+    }
     let e = 0;
     for (const k in parts) e += Math.pow(10, parts[k] / 10);
     this.noise.db = 10 * Math.log10(e);
@@ -718,6 +877,12 @@ export class World {
       r.spike = Math.max(0, r.spike - dt * 6);
       const target = 28 + r.spike + r.drift;
       r.noise += (target - r.noise) * dt * 0.9 + (this.rng.float() - 0.5) * 5 * dt;
+      // node 12 reports over the untuned radio link: noisy and late (T-03 fixes it)
+      if (id === '12' && !this.calibrated.radio) {
+        r.lagged = (r.lagged ?? r.noise) + (r.noise - (r.lagged ?? r.noise)) * Math.min(1, dt / 1.2);
+        r.reading = r.lagged + (this.rng.float() - 0.5) * 16;
+      } else r.reading = r.noise;
+      if (r.offline) r.reading = null;
       r.histT = (r.histT || 0) + dt;
       if (r.histT >= 0.5) {
         r.histT = 0;
@@ -757,7 +922,9 @@ export class World {
     const acc = this.calibrated.sensors ? this.P.scan.accuracyCalibrated : this.P.scan.accuracy;
     let count = real;
     let falsePos = false;
-    if (!this.rng.chance(acc)) {
+    const boss = this.actor('starlight');
+    const lies = boss && boss.phase >= 2 && !this.calibrated.sensors && this.rng.chance(this.P.boss.scanLie);
+    if (lies || !this.rng.chance(acc)) {
       if (real > 0) count = real - 1;
       else {
         count = 1;
@@ -810,7 +977,38 @@ export class World {
 
   randomEvent(kind) {
     const kinds = ['relayStuck', 'drift', 'aging'];
+    if (this.nightIndex >= 3) kinds.push('spamCall', 'nodeOffline');
+    if (this.nightIndex >= 4) kinds.push('compressor');
     kind = kind || this.rng.pick(kinds);
+    if (kind === 'spamCall') {
+      if (this.phone.state !== 'idle') return;
+      this.phone.state = 'ringing';
+      this.phone.t = 0;
+      this.phone.kind = 'spam';
+      this.emit('phone', { state: 'ringing', spam: true });
+      return;
+    }
+    if (kind === 'nodeOffline') {
+      const room = this.rng.pick(['02', '06', '07', '08', '11', '12', '13']);
+      if (this.rooms[room].offline) return;
+      this.rooms[room].offline = true;
+      this.log(`节点 ${room} 离线 (E-2: 到地图重启节点).`, 'warn');
+      this.addEmergency('E-2', room);
+      return;
+    }
+    if (kind === 'compressor') {
+      const chef = this.actor('chef');
+      if (this.compressor.fault || !chef || chef.node !== '05') return;
+      this.compressor.fault = true;
+      this.compressor.t = 0;
+      this.log('冷库压缩机故障! (E-3: 完成 T-07 压缩机重启)', 'err');
+      this.addEmergency('E-3');
+      const t7 = this.tasks.find((x) => x.id === 'T-07');
+      if (t7) t7.done = false;
+      else this.tasks.push({ id: 'T-07', open: 0, done: false, doneAt: null, optional: true });
+      this.emit('compressor');
+      return;
+    }
     if (kind === 'relayStuck') {
       if (this.calibrated.relays) return;
       const side = this.rng.chance(0.5) ? 'L' : 'R';

@@ -54,7 +54,7 @@ termTex.minFilter = THREE.LinearMipmapLinearFilter;
 room.makeScreen(termTex);
 const crt = room.crtMat;
 const director = new Director({ audio, scene, room, term });
-const actors = new ActorViews(scene);
+const actors = new ActorViews(scene, room);
 debugPanel.init();
 
 // ------------------------------------------------------------------ view control
@@ -232,6 +232,7 @@ function showMenu() {
 }
 
 let ending = null; // { kind, t }
+let blackout = false; // force the office lamp off (back-door death)
 let scare = null;
 
 // a short ringing in the ears after a scare
@@ -262,6 +263,7 @@ function startNight(n, debug) {
   view.cinematic = null;
   actors.clearJumpscare();
   scare = null;
+  blackout = false;
   term.startNight();
   intro.querySelector('.t').textContent = n === 0 ? 'TEST' : '12:00 AM';
   intro.querySelector('.n').textContent = game.nightName(n);
@@ -276,6 +278,7 @@ function startNight(n, debug) {
 term.actions = {
   start: (n, debug) => startNight(n, debug),
   menu: () => showMenu(),
+  backfire: () => game.cmd('backfire'),
 };
 
 // replays exported from the debug panel (or the balance tools)
@@ -352,6 +355,9 @@ const CUE_SOUND = {
   pip: { step: ['step_light', 1], greet: ['greet_pip', 1] },
   tootie: { step: ['step_light', 1.35], greet: ['horn', 1] },
   chef: { step: ['step_heavy', 0.7], greet: ['greet_sunny', 0.7], wake: ['clank', 0.8] },
+  back: { step: ['back_drag', 1], greet: ['back_scratch', 1] },
+  ribbon: { step: ['duct', 1], greet: ['duct', 0.7] },
+  generator: { bang: ['thunder', 2.2] },
 };
 on('sim:cue', (e) => {
   actors.event(e);
@@ -362,6 +368,8 @@ on('sim:cue', (e) => {
   const far = v.length() > 6;
   const vol = Math.min(2.5, Math.pow(10, (e.db - 44) / 20));
   audio.shot(def[0], v, { scene, volume: vol, ref: 2, lowpass: far ? 1400 : 0, rate: def[1] * (0.95 + Math.random() * 0.1) });
+  // at the back door it also "breathes"
+  if (e.source === 'back' && e.kind === 'greet') audio.shot('back_breath', v, { scene, volume: vol * 0.8, ref: 1.2 });
 });
 on('sim:repel', (e) => {
   actors.event(e);
@@ -381,6 +389,37 @@ on('sim:seal', (e) => {
   audio.shot('shutter', new THREE.Vector3(p.x, 1.5, p.z), { scene, volume: 1.4, ref: 3, lowpass: 1500, rate: e.on ? 1 : 1.3 });
 });
 
+on('sim:gridFail', () => {
+  audio.shot('thunder', new THREE.Vector3(-6, 6, -10), { scene, volume: 2.5, ref: 6 });
+  director.flicker = 1.6;
+  shake.amp = 0.6;
+  term.triggerGlitch(0.4);
+});
+on('sim:generator', (e) => {
+  if (e.running) audio.shot('thud', new THREE.Vector3(...NODE_POS['10']), { scene, volume: 2, ref: 3, lowpass: 600 });
+});
+
+// --- STARLIGHT
+on('sim:bossPhase', (e) => {
+  term.triggerGlitch(0.6);
+  shake.amp = 0.3;
+  audio.shot('thud', room.anchors.monitor.position, { scene, volume: 1.2, ref: 1, rate: 0.5 });
+  buzzer.tone(110, 0.6, 0.6);
+});
+on('sim:bossTelegraph', (e) => {
+  if (e.kind === 'breaker') {
+    for (let i = 0; i < 6; i++) setTimeout(() => audio.shot('relay', new THREE.Vector3(...NODE_POS['10']), { scene, volume: 0.9, ref: 2, rate: 0.8 + Math.random() * 0.6 }), i * 300);
+    buzzer.tone(330, 0.3, 0.5, 220);
+  } else if (e.kind === 'attack') {
+    const p = e.side === 'L' ? NODE_POS['07N'] : e.side === 'R' ? NODE_POS['08N'] : NODE_POS['12'];
+    audio.shot('horn', new THREE.Vector3(...p), { scene, volume: 1.4, ref: 2, rate: 0.55 });
+  }
+});
+on('sim:pageLock', () => {
+  term.triggerGlitch(0.5);
+  buzzer.error();
+});
+
 on('sim:powerOut', () => {
   audio.shot('thud', room.anchors.lamp.position, { scene, volume: 1.2, ref: 2, rate: 0.7 });
 });
@@ -389,7 +428,14 @@ on('nightEnd', ({ result }) => {
   phone.stop();
   subtitle.classList.remove('show');
   ending = { kind: result.outcome, t: 0 };
-  if (result.outcome === 'death') {
+  if (result.outcome === 'death' && result.cause === 'back') {
+    // it never shows itself: the door behind you opens, the light dies
+    ending.backDeath = true;
+    audio.shot('creak', new THREE.Vector3(0, 1.2, 2.3), { scene, volume: 2.2, ref: 1, rate: 0.7 });
+    audio.shot('wind_gust', new THREE.Vector3(0, 1.2, 2.0), { scene, volume: 1.6, ref: 1.5 });
+    setTimeout(() => audio.shot('back_breath', new THREE.Vector3(0.1, 1.25, 0.75), { scene, volume: 2.5, ref: 0.6 }), 700);
+    shake.amp = 0.4;
+  } else if (result.outcome === 'death') {
     const who = actors.views[result.cause] ? result.cause : 'sunny';
     const side = result.side || (who === 'sunny' ? 'L' : 'R');
     // snap the view to the door it came from, then it lunges
@@ -410,7 +456,12 @@ function updateEnding(dt) {
   if (!ending || ending.done) return;
   ending.t += dt;
   const k = ending.kind;
-  if (k === 'death') {
+  if (k === 'death' && ending.backDeath) {
+    // the lamp sputters out, then nothing
+    director.flicker = ending.t < 1.2 ? 1 : 0;
+    blackout = ending.t > 1.2;
+    grade.uniforms.dark.value = ending.t > 2.2 ? Math.min(1, (ending.t - 2.2) * 2) : 0;
+  } else if (k === 'death') {
     if (ending.scareAt !== undefined && ending.t >= ending.scareAt && !scare) {
       scare = actors.jumpscare(ending.who, camera);
       audio.shot('scream', camera.position, { scene, volume: 1.6, ref: 1 });
@@ -422,6 +473,7 @@ function updateEnding(dt) {
   }
   if (ending.t > (k === 'death' ? 2.6 : k === 'win' ? 5.5 : 1.5) && term.mode !== 'result') {
     grade.uniforms.dark.value = 0;
+    blackout = false;
     ending.done = true;
     view.cinematic = null;
     actors.clearJumpscare();
@@ -446,6 +498,10 @@ function startAudio() {
   loops.doorL = audio.loop('buzz', { parent: room.doorLights.L.anchor, volume: 0, ref: 1, rate: 0.98 });
   loops.doorR = audio.loop('buzz', { parent: room.doorLights.R.anchor, volume: 0, ref: 1, rate: 1.02 });
   loops.tension = audio.loop('tension', { volume: 0 });
+  const genAnchor = new THREE.Object3D();
+  genAnchor.position.set(...NODE_POS['10']);
+  scene.add(genAnchor);
+  loops.gen = audio.loop('generator', { parent: genAnchor, volume: 0, ref: 3, lowpass: 900 });
   loops.heart = audio.loop('heartbeat', { volume: 0 });
   loops.emi = audio.loop('buzz', { parent: room.anchors.monitor, volume: 0, ref: 0.5, rate: 1.5 });
   const mbAnchor = new THREE.Object3D();
@@ -482,7 +538,7 @@ function updateWorld(dt, t) {
   }
 
   // office lamp
-  const lv = [0, 0.35, 1][st.light];
+  const lv = blackout ? 0 : [0, 0.35, 1][st.light];
   const fl = director.lampFlicker(t);
   const L = room.lamp;
   L.spot.intensity = L.base.spot * lv * fl;
@@ -583,6 +639,18 @@ function updateWorld(dt, t) {
 
   room.clockSecond.rotation.z = -(Math.floor(t) % 2 ? 0.105 : 0);
 
+  // N6: the terminal turns red phase by phase; the head on the shelf wakes up
+  const boss = w && w.actor('starlight');
+  const ph = boss ? boss.phase : 0;
+  const red = boss && !w.result ? [0, 0.2, 0.4, 0.65, 0.9][ph] : 0;
+  crt.uniforms.tint.value.set(1 + red * 0.5, 1 - red * 0.55, 1 - red * 0.6);
+  room.screenLight.color.setRGB(0.36 + red * 0.6, 0.49 - red * 0.35, 1 - red * 0.75);
+  if (room.headPupil) room.headPupil.emissiveIntensity = boss ? 0.15 + ph * 0.8 + (ph === 4 ? Math.sin(t * 9) * 0.6 : 0) : 0.15;
+  if (room.head && boss) {
+    const want = ph === 4 ? (view.yaw > 0.8 ? 0.4 : view.yaw < -0.8 ? -1.6 : -0.6) : -0.6;
+    room.head.rotation.y += (want - room.head.rotation.y) * Math.min(1, dt * 2);
+  }
+
   // music box
   if (loops.music) {
     const vol = st.music ? 0.55 : 0;
@@ -591,6 +659,11 @@ function updateWorld(dt, t) {
     loops.music.setPlaybackRate(0.82 + 0.18 * Math.min(1, st.wind * 3));
   }
   if (loops.room) loops.room.setVolume(0.12 + st.vent * 0.07);
+  if (loops.gen) {
+    const on = w && w.generator && w.generator.running;
+    loops.gen.setVolume(on ? 2.2 : 0);
+    if (on) shake.amp = Math.max(shake.amp, 0.06);
+  }
   if (loops.ambience) loops.ambience.setVolume(0.32 * (save.data.settings.musicVol ?? 0.8));
   audio.listener.setMasterVolume(save.data.settings.masterVol ?? 0.9);
   renderer.toneMappingExposure = 1.15 * (save.data.settings.brightness ?? 1);

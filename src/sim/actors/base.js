@@ -49,6 +49,11 @@ export class Actor {
     return sensorRoom(this.node);
   }
 
+  // boss-driven attack: after `delay` seconds, appear at this actor's door
+  forceDoor(delay) {
+    this.forcedT = delay;
+  }
+
   moveTo(node) {
     const from = this.node;
     this.node = node;

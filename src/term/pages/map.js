@@ -22,7 +22,7 @@ export const mapPage = {
     const w = term.world;
     for (const r of ROOMS) {
       const s = w.rooms[r.id];
-      const h = Math.max(0, (s.noise - 34) / 20);
+      const h = s.offline ? 0 : Math.max(0, ((s.reading ?? s.noise) - 34) / 20);
       heat[r.id] = Math.max((heat[r.id] || 0) - dt * 0.05, h);
     }
   },
@@ -92,7 +92,8 @@ export const mapPage = {
       let icons = '';
       if (s.light) icons += '☼';
       if (s.sealed) icons += '▣';
-      if (s.noise > 42 && net) icons += '!';
+      if (s.offline) icons += '×';
+      else if (s.reading > 42 && net) icons += '!';
       if (icons) ui.text(r.x + r.w - 1 - strWidth(icons), r.y + r.h - 2, icons, C.yel, bg);
       if (marks[r.id]) ui.text(r.x + 1, r.y + r.h - 2, fit(marks[r.id].join(' '), r.w - 2 - strWidth(icons)), '#ff70ff', bg);
     }
@@ -120,7 +121,8 @@ export const mapPage = {
     if (!net) row(6, '状态', '离线', C.red);
     else {
       row(6, '状态', s.scanT > 0 ? '扫描中...' : '在线', s.scanT > 0 ? C.yel : C.ok);
-      row(7, '声学', `${s.noise.toFixed(0)} dB`, s.noise > 42 ? C.yel : C.fg);
+      if (s.offline) row(7, '声学', '节点离线', C.red);
+      else row(7, '声学', `${s.reading.toFixed(0)} dB${r.id === '12' && !w.calibrated.radio ? ' ?' : ''}`, s.reading > 42 ? C.yel : C.fg);
       let sp = '';
       for (const v of s.hist) sp += SPARK[Math.max(0, Math.min(7, Math.floor((v - 22) / 4)))];
       ui.text(X + 14, 7, sp.slice(-7), C.cy);
@@ -133,8 +135,25 @@ export const mapPage = {
       else ui.text(X + 7, 10, '——', C.dim);
     }
     ui.hline(X + 1, 12, 21, '─', C.dim2);
-    const dis = !net || isOffice;
+    const dis = !net || isOffice || s.offline;
     let y = 13;
+    if (s.offline) {
+      // E-2: hold to reboot the node
+      const p = (this.rebootHold || 0) / 3;
+      const hov = ui.pushButton('m-reboot', X + 2, y, 18, p > 0 ? `重启中 ${Math.round(p * 100)}%` : '⟳ 重启节点(按住)', null, {
+        danger: true,
+        onHold: (dt) => {
+          this.rebootHold = (this.rebootHold || 0) + dt;
+          if (Math.floor(this.rebootHold * 3) !== Math.floor((this.rebootHold - dt) * 3)) term.sfx.tick();
+          if (this.rebootHold >= 3) {
+            this.rebootHold = 0;
+            term.cmd('rebootNode', { room: r.id }, 'ok');
+          }
+        },
+      });
+      if (!(hov && ui.down)) this.rebootHold = Math.max(0, (this.rebootHold || 0) - 0.02);
+      return;
+    }
     const scanLabel = s.scanCd > 0 ? `◉ 冷却 ${s.scanCd.toFixed(0)}s` : '◉ 运动扫描';
     ui.pushButton('m-scan', X + 2, y, 18, scanLabel, () => term.cmd('scan', { room: r.id }, 'blip'), { disabled: dis || s.scanT > 0 || s.scanCd > 0 });
     y += 3;

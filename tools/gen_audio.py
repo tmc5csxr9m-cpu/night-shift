@@ -658,6 +658,108 @@ def shutter():
     write("shutter", stereo(s) * 0.4 + convolve(s, ir)[:, :len(t)] * 0.6, 0.7)
 
 
+def back_drag():
+    """Something heavy dragging a thick cable over concrete."""
+    sec = 2.2
+    t = t_axis(sec)
+    n = len(t)
+    grit = bandpass(white(sec), 700, 1.2) * (0.5 + 0.5 * smooth_noise(sec, 18))
+    env = np.sin(np.pi * t / sec) ** 1.5
+    clunk = np.zeros(n)
+    for off in (0.35, 1.25):
+        i = int(off * SR)
+        tt = t[: n - i]
+        clunk[i:] += np.sin(2 * np.pi * 90 * tt) * np.exp(-tt / 0.08)
+    s = grit * env + 0.6 * clunk
+    ir = make_ir(1.6, 1.3, damp_hz=1200, seed=31)
+    write("back_drag", stereo(s) * 0.5 + 0.6 * convolve(s, ir)[:, :n], 0.7)
+
+
+def back_scratch():
+    """Fingers (or something) scraping down a steel door."""
+    sec = 1.8
+    t = t_axis(sec)
+    n = len(t)
+    s = np.zeros(n)
+    for k in range(3):
+        start = 0.1 + k * 0.45
+        i = int(start * SR)
+        d = int(0.38 * SR)
+        tt = np.arange(d) / SR
+        f = 2600 - 1400 * tt / 0.38 + 300 * np.sin(2 * np.pi * 37 * tt)
+        sq = np.sign(np.sin(2 * np.pi * np.cumsum(f) / SR)) * 0.3 + bandpass(white(0.38), 3500, 2) * 0.7
+        s[i:i + d] += sq * np.sin(np.pi * tt / 0.38)
+    s = peaks(s, [1800, 3200], 6, 2)
+    ir = make_ir(0.8, 0.6, damp_hz=4000, seed=32)
+    write("back_scratch", stereo(s) * 0.6 + 0.5 * convolve(s, ir)[:, :n], 0.75)
+
+
+def back_breath():
+    """A slow hydraulic hiss that sounds far too much like breathing."""
+    sec = 3.0
+    t = t_axis(sec)
+    n = len(t)
+    hiss = bandpass(white(sec), 900, 0.9)
+    env = np.zeros(n)
+    for start, dur, a in ((0.1, 1.1, 1.0), (1.5, 1.3, 0.8)):
+        m = (t >= start) & (t < start + dur)
+        env[m] = a * np.sin(np.pi * (t[m] - start) / dur) ** 2
+    valve = np.sin(2 * np.pi * 52 * t) * 0.15 * env
+    s = hiss * env + valve
+    write("back_breath", lowpass(s, 2500), 0.6)
+
+
+def wind_gust():
+    sec = 3.5
+    t = t_axis(sec)
+    s = bandpass(pink(sec), 500, 0.7) * np.sin(np.pi * t / sec) ** 2 * (0.7 + 0.3 * smooth_noise(sec, 4))
+    write("wind_gust", stereo(s), 0.7)
+
+
+def generator():
+    """Diesel generator idling in the power room (loop)."""
+    L = 4.0
+    t = t_axis(L + 0.5)
+    fire = 25.0
+    s = np.zeros(len(t))
+    for h, a in [(1, 1.0), (2, 0.6), (3, 0.35), (4, 0.25), (6, 0.12)]:
+        s += a * np.sin(2 * np.pi * fire * h * t + h)
+    s *= 0.7 + 0.3 * np.sign(np.sin(2 * np.pi * fire * t))
+    mech = bandpass(white(L + 0.5), 1500, 2) * (0.5 + 0.5 * np.sin(2 * np.pi * fire * t) ** 2)
+    out = lowpass(s, 400) + 0.25 * mech
+    write("generator", loopify(stereo(out), 0.5), 0.8)
+
+
+def thunder():
+    sec = 5.0
+    t = t_axis(sec)
+    crack = white(sec) * np.exp(-t / 0.05)
+    rumble = lowpass(brown(sec), 120) * np.exp(-t / 1.8) * (0.6 + 0.4 * smooth_noise(sec, 3))
+    s = highpass(crack, 800) * 0.4 + norm(rumble, 1)
+    ir = make_ir(3.5, 3.0, damp_hz=800, seed=41)
+    write("thunder", stereo(s) * 0.6 + convolve(s, ir)[:, :len(t)] * 0.5, 0.9)
+
+
+def duct():
+    """Something crawling inside sheet-metal ductwork."""
+    sec = 1.6
+    t = t_axis(sec)
+    n = len(t)
+    taps = np.zeros(n)
+    for off in np.sort(rng.uniform(0, sec - 0.2, 7)):
+        i = int(off * SR)
+        k = min(2000, n - i)
+        taps[i:i + k] += rng.standard_normal(k) * np.exp(-np.arange(k) / 300)
+    scrape = bandpass(white(sec), 2200, 4) * np.sin(np.pi * t / sec) * 0.4
+    s = taps + scrape
+    # duct resonance: comb filter
+    d = int(SR / 310)
+    y = s.copy()
+    for i in range(d, n):
+        y[i] += 0.7 * y[i - d]
+    write("duct", lowpass(y, 5000), 0.7)
+
+
 if __name__ == "__main__":
     print("synthesising audio ->", os.path.abspath(OUT))
     music_box()
@@ -672,7 +774,8 @@ if __name__ == "__main__":
     zap()
     relay()
     chime()
-    for fn in (step_heavy, step_light, greet_sunny, greet_pip, horn, servo, scream, heartbeat, tension, bell6, shutter):
+    for fn in (step_heavy, step_light, greet_sunny, greet_pip, horn, servo, scream, heartbeat, tension, bell6, shutter,
+               back_drag, back_scratch, back_breath, wind_gust, generator, thunder, duct):
         fn()
     import shutil
     shutil.rmtree(TMP, ignore_errors=True)

@@ -50,7 +50,8 @@ export class Back extends Actor {
     this.moveTo(next);
     if (next === 'DOOR_B') {
       this.state = 'door';
-      this.attackT = this.p.attackDelay;
+      const d = this.p.attackDelay;
+      this.attackT = Array.isArray(d) ? d[Math.min(5, w.nightIndex - 1)] : d;
       this.lockT = 0;
       w.onDoor(this, 'B');
     }

@@ -4,7 +4,8 @@
 import * as THREE from 'three';
 
 const FILES = ['musicbox', 'ambience', 'fan', 'buzz', 'roomtone', 'clank', 'creak', 'thud', 'drip', 'zap', 'relay', 'chime',
-  'step_heavy', 'step_light', 'greet_sunny', 'greet_pip', 'horn', 'servo', 'scream', 'heartbeat', 'tension', 'bell6', 'shutter'];
+  'step_heavy', 'step_light', 'greet_sunny', 'greet_pip', 'horn', 'servo', 'scream', 'heartbeat', 'tension', 'bell6', 'shutter',
+  'back_drag', 'back_scratch', 'back_breath', 'wind_gust', 'generator', 'thunder', 'duct'];
 
 export class AudioSys {
   constructor(camera) {

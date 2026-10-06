@@ -19,14 +19,15 @@ export const SKILLS = {
 // seconds a human needs for each required task (min, max) at skill 1.0
 export const TASK_TIME = {
   'T-01': [25, 40], 'T-02': [15, 25], 'T-03': [15, 30], 'T-04': [20, 35],
-  'T-05': [20, 30], 'T-06': [8, 15], 'T-07': [20, 30], 'T-08': [70, 85],
+  'T-05': [20, 30], 'T-06': [8, 15], 'T-07': [20, 30],
+  'T-08a': [17, 27], 'T-08b': [15, 25], 'T-08c': [15, 30],
 };
 
 // which terminal page a command lives on (null = hotbar / status bar)
 export const CMD_PAGE = {
-  doorLight: null, maglock: null, degauss: null, answerPhone: null, hangUp: null,
+  doorLight: null, maglock: null, degauss: null, answerPhone: null, hangUp: null, lureRepeat: null,
   scan: 'map', lure: 'map', roomLight: 'map', seal: 'map',
-  breaker: 'power', resetMain: 'power',
+  breaker: 'power', resetMain: 'power', lockBreaker: 'power', generator: 'power',
   officeLight: 'facility', fan: 'facility', vent: 'facility', wind: 'facility', replaceBulb: 'facility', oscillate: 'facility',
-  taskComplete: 'tasks',
+  taskComplete: 'tasks', rebootNode: 'map',
 };

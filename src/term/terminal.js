@@ -201,7 +201,9 @@ export class Terminal {
     if (this.mode === 'ui') {
       this.drawStatus();
       this.drawMenu();
-      this.page.draw(this, ui);
+      const w = this.world;
+      if (w.pageLock && w.pageLock.t > 0 && w.pageLock.page === this.pageKey) this.drawDenied(w.pageLock.t);
+      else this.page.draw(this, ui);
       this.drawFooter();
     } else {
       this.page.draw(this, ui);
@@ -216,6 +218,17 @@ export class Terminal {
       persistence: 0.45,
       glitchRows: this.glitchRows,
     });
+  }
+
+  // STARLIGHT has this page
+  drawDenied(t) {
+    const s = this.screen;
+    s.fill(0, 2, COLS, ROWS - 3, ' ', C.red, '#2a0606');
+    const junk = '▓▒░█STARLIGHT';
+    for (let i = 0; i < 160; i++) s.set((Math.random() * COLS) | 0, 2 + ((Math.random() * (ROWS - 3)) | 0), junk[(Math.random() * junk.length) | 0], '#5a1010');
+    this.ui.center(12, ' ACCESS DENIED ', C.hi, '#8a0c0c');
+    this.ui.center(14, `该页面已被 STARLIGHT 锁定 · ${Math.ceil(t)}s`, '#ff9090');
+    this.ui.center(16, '用快捷栏撑过去.', '#a06060');
   }
 
   drawBoot() {
@@ -335,6 +348,10 @@ export class Terminal {
     if (game.night >= 3 || game.debug) {
       hb('lock', w.office.maglock ? '■锁' : '□锁', w.office.maglock, () => this.cmd('maglock', {}, w.office.maglock ? 'off' : 'on'), w.office.coilLockout > 0);
     }
+    {
+      const ok = w.lastLureRoom && w.lureCooldown <= 0;
+      hb('relure', w.lastLureRoom ? `♪${w.lastLureRoom}` : '♪--', false, () => this.cmd('lureRepeat', {}, 'ok'), !ok);
+    }
     if (game.night >= 2 || game.debug) {
       const cd = w.emi.cooldown > 0;
       hb('degauss', cd ? '消磁…' : '消磁', false, () => this.cmd('degauss', {}, null));
@@ -351,10 +368,13 @@ export class Terminal {
       this.screen.fill(0, y, COLS, 1, ' ', C.hi, blink ? '#8a0c0c' : '#5a0606');
       const label = {
         'E-1': `⚠ E-1 ${em.side === 'L' ? '左' : '右'}门灯管烧坏 · 备件 ${w.spares}`,
+        'E-2': `⚠ E-2 节点 ${em.side} 离线 · 到地图重启`,
+        'E-3': '⚠ E-3 冷库压缩机故障 · 完成 T-07',
         'E-4': '⚠ E-4 主闸跳闸 · 全馆断电',
+        'E-5': '⚠ E-5 电网故障 · 蓄电池供电 · 发电机待点火 (T-06)',
       }[em.id] || `⚠ ${em.id}`;
       ui.text(1, y, label, C.hi, blink ? '#8a0c0c' : '#5a0606');
-      const target = em.id === 'E-4' ? 'power' : 'facility';
+      const target = { 'E-4': 'power', 'E-2': 'map', 'E-3': 'tasks', 'E-5': 'tasks' }[em.id] || 'facility';
       ui.button('em-go', COLS - 12, y, ' 前往处理 ', () => this.go(target), { raw: false, fg: C.yel });
       return;
     }

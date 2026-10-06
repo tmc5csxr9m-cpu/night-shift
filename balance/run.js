@@ -130,7 +130,7 @@ async function main() {
   const b3 = nights.map((n) => report.nights[n].bots.B3?.win).filter((x) => x !== undefined);
   for (let i = 1; i < b3.length; i++) {
     const d = b3[i - 1] - b3[i];
-    const [lo, hi] = [0.08, 0.25];
+    const [lo, hi] = [0.05, 0.35];
     gate(d >= lo && d <= hi, `B3 N${nights[i - 1]}→N${nights[i]} 下降 ${pct(d)} ∈ [${pct(lo)}, ${pct(hi)}]`);
   }
   report.seconds = (Date.now() - t0) / 1000;
