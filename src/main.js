@@ -13,6 +13,14 @@ import { debugPanel } from './debug/panel.js';
 import { CALLS } from './data/calls.js';
 import { ActorViews, NODE_POS } from './scene/actors.js';
 import { ROOMS, roomWorldPos } from './rooms.js';
+import { native, DEBUG_ALLOWED } from './native.js';
+
+// the game ships as a desktop program only
+if (!native) {
+  document.getElementById('nobrowser').style.display = 'flex';
+  document.getElementById('start').remove();
+  throw new Error('NIGHT SHIFT runs in the desktop build only');
+}
 
 // ------------------------------------------------------------------ renderer
 const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
@@ -74,8 +82,8 @@ let started = false;
 let hoverMonitor = false;
 let hoverPhone = false;
 
-function screenCell() {
-  ray.setFromCamera(view.mouse, camera);
+function screenCell(ndc = view.mouse) {
+  ray.setFromCamera(ndc, camera);
   const hit = ray.intersectObject(room.screen, false)[0];
   if (!hit || !hit.uv) return null;
   const [u, v] = crtCurve(hit.uv.x, hit.uv.y);
@@ -101,12 +109,41 @@ function exitFocus() {
 }
 
 const canvas = renderer.domElement;
-window.addEventListener('mousemove', (e) => {
-  view.mouse.set((e.clientX / window.innerWidth) * 2 - 1, -(e.clientY / window.innerHeight) * 2 + 1);
+
+// The mouse is captured (pointer lock) and a cursor is drawn by the game,
+// so turning at the screen edge works in a window and on multi-monitor
+// setups. ESC releases the capture (Chromium rule); the next click takes it back.
+const cursorEl = document.getElementById('cursor');
+const vm = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+let captured = false;
+function setMouse(x, y) {
+  vm.x = Math.max(0, Math.min(window.innerWidth - 1, x));
+  vm.y = Math.max(0, Math.min(window.innerHeight - 1, y));
+  view.mouse.set((vm.x / window.innerWidth) * 2 - 1, -(vm.y / window.innerHeight) * 2 + 1);
   view.hasMouse = true;
+  if (captured) cursorEl.style.transform = `translate(${vm.x}px, ${vm.y}px)`;
+}
+function capture(e) {
+  if (e) setMouse(e.clientX, e.clientY);
+  if (captured || !started || debugPanel.open) return;
+  try {
+    canvas.requestPointerLock()?.catch?.(() => {});
+  } catch { /* not allowed right now: retry on the next click */ }
+}
+window.addEventListener('mousemove', (e) => {
+  if (captured) setMouse(vm.x + e.movementX, vm.y + e.movementY);
+  else setMouse(e.clientX, e.clientY);
 });
-document.addEventListener('mouseleave', () => (view.hasMouse = false));
+document.addEventListener('pointerlockchange', () => {
+  captured = document.pointerLockElement === canvas;
+  if (!captured) cursorEl.style.display = 'none';
+  else setMouse(vm.x, vm.y);
+});
+document.addEventListener('mouseleave', () => {
+  if (!captured) view.hasMouse = false;
+});
 canvas.addEventListener('mousedown', (e) => {
+  if (!captured) capture(e);
   if (!started || e.button !== 0) return;
   if (view.focused) {
     const cell = screenCell();
@@ -233,6 +270,7 @@ function showMenu() {
 
 let ending = null; // { kind, t }
 let blackout = false; // force the office lamp off (back-door death)
+const calm = () => !!save.data.settings.reduceFlicker;
 let powerOutT = 0;
 // two eyes in the left doorway when the power is gone
 const outEyes = (() => {
@@ -267,6 +305,7 @@ function tinnitus() {
 }
 
 function startNight(n, debug) {
+  debug = debug && DEBUG_ALLOWED;
   phone.stop();
   subtitle.classList.remove('show');
   game.start(n, { debug });
@@ -513,7 +552,7 @@ let degauss = 0;
 const MENU = { light: 2, fan: true, osc: true, vent: 1, music: true, wind: 1, doors: { L: false, R: false }, heat: { L: 0, R: 0 } };
 
 function startAudio() {
-  loops.ambience = audio.loop('ambience', { volume: 0.32 });
+  loops.ambience = audio.loop('ambience', { volume: 0.32, music: true });
   loops.room = audio.loop('roomtone', { volume: 0.22 });
   loops.fan = audio.loop('fan', { parent: room.anchors.fan, volume: 0.5, ref: 0.6, rolloff: 1.1 });
   loops.lamp = audio.loop('buzz', { parent: room.anchors.lamp, volume: 0.05, ref: 0.8 });
@@ -566,7 +605,8 @@ function updateWorld(dt, t) {
 
   // office lamp
   const lv = blackout ? 0 : [0, 0.35, 1][st.light];
-  const fl = director.lampFlicker(t);
+  // reduced flashing: a steady dip instead of a strobe
+  const fl = calm() ? (director.flicker > 0 ? 0.8 : 1) : director.lampFlicker(t);
   const L = room.lamp;
   L.spot.intensity = L.base.spot * lv * fl;
   L.fill.intensity = L.base.fill * lv * fl;
@@ -582,10 +622,10 @@ function updateWorld(dt, t) {
     if (st.doors[k]) {
       if (doorStrike[k] > 0) {
         doorStrike[k] -= dt;
-        lvl = Math.random() < 0.5 ? 0 : 0.7;
+        lvl = calm() ? 0.7 : Math.random() < 0.5 ? 0 : 0.7;
       } else {
         const hot = st.heat[k] > 75;
-        lvl = Math.random() < (hot ? 0.12 : 0.006) ? 0.3 : 1;
+        lvl = calm() ? (hot ? 0.85 : 1) : Math.random() < (hot ? 0.12 : 0.006) ? 0.3 : 1;
       }
     }
     const warm = Math.min(1, Math.max(0, (st.heat[k] - 50) / 50));
@@ -595,7 +635,7 @@ function updateWorld(dt, t) {
     D.bulbMat.emissiveIntensity = 4 * lvl;
     if (sparks[k] > 0) {
       sparks[k] -= dt;
-      D.spill.intensity = Math.random() < 0.5 ? 3 : 0;
+      D.spill.intensity = calm() ? 1.5 : Math.random() < 0.5 ? 3 : 0;
       D.spill.color.setHex(0xffc070);
     } else D.spill.color.setHex(0xd8e4ff);
     room.panelLeds[k].emissive.setHex(st.doors[k] ? 0x30ff60 : 0xff3020);
@@ -674,7 +714,7 @@ function updateWorld(dt, t) {
   const red = boss && !w.result ? [0, 0.2, 0.4, 0.65, 0.9][ph] : 0;
   crt.uniforms.tint.value.set(1 + red * 0.5, 1 - red * 0.55, 1 - red * 0.6);
   room.screenLight.color.setRGB(0.36 + red * 0.6, 0.49 - red * 0.35, 1 - red * 0.75);
-  if (room.headPupil) room.headPupil.emissiveIntensity = boss ? 0.15 + ph * 0.8 + (ph === 4 ? Math.sin(t * 9) * 0.6 : 0) : 0.15;
+  if (room.headPupil) room.headPupil.emissiveIntensity = boss ? 0.15 + ph * 0.8 + (ph === 4 && !calm() ? Math.sin(t * 9) * 0.6 : 0) : 0.15;
   if (room.head && boss) {
     const want = ph === 4 ? (view.yaw > 0.8 ? 0.4 : view.yaw < -0.8 ? -1.6 : -0.6) : -0.6;
     room.head.rotation.y += (want - room.head.rotation.y) * Math.min(1, dt * 2);
@@ -712,8 +752,11 @@ function updateWorld(dt, t) {
     loops.gen.setVolume(on ? 2.2 : 0);
     if (on) shake.amp = Math.max(shake.amp, 0.06);
   }
-  if (loops.ambience) loops.ambience.setVolume(0.32 * (save.data.settings.musicVol ?? 0.8));
+  audio.setBusVolume('music', save.data.settings.musicVol ?? 0.8);
+  audio.setBusVolume('sfx', save.data.settings.sfxVol ?? 1);
   audio.listener.setMasterVolume(save.data.settings.masterVol ?? 0.9);
+  crt.uniforms.calm.value = calm() ? 1 : 0;
+  actors.calm = calm();
   renderer.toneMappingExposure = 1.15 * (save.data.settings.brightness ?? 1);
 }
 
@@ -722,6 +765,21 @@ function setCursor() {
   if (view.focused || view.focus > 0.5) c = 'none';
   else if (hoverMonitor || hoverPhone) c = 'pointer';
   if (canvas.style.cursor !== c) canvas.style.cursor = c;
+  // the drawn cursor stands in for the system one while captured
+  if (debugPanel.open && captured) document.exitPointerLock();
+  const show = captured && c !== 'none';
+  if ((cursorEl.style.display === 'block') !== show) cursorEl.style.display = show ? 'block' : 'none';
+  cursorEl.classList.toggle('pointer', c === 'pointer');
+}
+
+// hold ESC to quit (timed by the desktop shell)
+{
+  const quitEl = document.getElementById('quit');
+  const bar = quitEl.querySelector('.bar');
+  native.onEscHold((p) => {
+    quitEl.classList.toggle('show', p > 0.1);
+    bar.style.width = `${Math.round(p * 100)}%`;
+  });
 }
 
 // ------------------------------------------------------------------ loop
@@ -788,22 +846,38 @@ async function boot() {
   term.screen.fontReady();
   loadEl.textContent = '载入音频...';
   await audio.load((p) => (loadEl.textContent = `载入音频 ${Math.round(p * 100)}%`));
-  loadEl.textContent = '点击进入';
+  loadEl.textContent = '已阅读上述警告 · 点击继续';
   startEl.classList.add('ready');
   computeFocusPose();
   frame();
 }
 
-startEl.addEventListener('click', () => {
+startEl.addEventListener('click', (e) => {
   if (!startEl.classList.contains('ready') || started) return;
   started = true;
   audio.resume();
   startAudio();
   startEl.classList.add('gone');
   showMenu();
-  if (new URLSearchParams(location.search).has('debug')) save.setting('debug', true);
+  capture(e);
 });
 
 boot();
 
-if (import.meta.env.DEV) window.__game = { game, term, view, enterFocus, exitFocus, director, room, camera, save, startNight, showMenu, grade, bloom, actors, renderer, scene };
+if (import.meta.env.DEV) {
+  // test hooks (dev shell only): cellPx(x, y) finds the window pixel of a terminal cell
+  const cellPx = (cx, cy) => {
+    let best = null;
+    for (let i = 0; i <= 160; i++) {
+      for (let j = 0; j <= 90; j++) {
+        const ndc = new THREE.Vector2(-1 + (2 * i) / 160, -1 + (2 * j) / 90);
+        const c = screenCell(ndc);
+        if (!c) continue;
+        const d = Math.abs(c.x + 0.5 - (cx + 0.5)) + Math.abs(c.y - cy) * 2;
+        if (!best || d < best.d) best = { d, ndc };
+      }
+    }
+    return best && { x: ((best.ndc.x + 1) / 2) * window.innerWidth, y: ((1 - best.ndc.y) / 2) * window.innerHeight };
+  };
+  window.__game = { game, term, view, enterFocus, exitFocus, director, room, camera, save, startNight, showMenu, grade, bloom, actors, renderer, scene, cellPx, captured: () => captured };
+}

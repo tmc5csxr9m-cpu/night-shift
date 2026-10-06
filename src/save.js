@@ -1,10 +1,13 @@
-// Save data in localStorage with a backup copy and versioned migrations.
-const KEY = 'nightshift.save.v1';
+// Save data: one JSON file in the user's app-data folder, written atomically
+// by the desktop shell (with a .bak of the previous save). Versioned
+// migrations; a corrupt save falls back to the backup.
+import { native, DEBUG_ALLOWED } from './native.js';
+
 const VERSION = 1;
 
 export const DEFAULT_SETTINGS = {
   masterVol: 0.9, musicVol: 0.8, sfxVol: 1.0, brightness: 1.0, crtIntensity: 1.0,
-  turnSpeed: 1.0, audioCaptions: false, reduceFlicker: false, contextHints: true, debug: false,
+  turnSpeed: 1.0, reduceFlicker: false, display: 'fullscreen', debug: false,
 };
 
 function fresh() {
@@ -22,19 +25,6 @@ const MIGRATIONS = {
   // 1: (s) => s,   // v1 -> v2 goes here
 };
 
-let storageOk = true;
-function store() {
-  try {
-    const t = '__ns_test';
-    localStorage.setItem(t, '1');
-    localStorage.removeItem(t);
-    return localStorage;
-  } catch {
-    storageOk = false;
-    return null;
-  }
-}
-
 function parse(raw) {
   if (!raw) return null;
   try {
@@ -51,35 +41,44 @@ function parse(raw) {
 export const save = {
   data: fresh(),
   warning: null,
+  path: null,
 
   load() {
-    const ls = store();
-    if (!ls) {
-      this.warning = '浏览器存储不可用: 本次进度不会保存.';
+    if (!native) {
+      this.warning = '未在桌面版中运行: 本次进度不会保存.';
       return this.data;
     }
-    const main = parse(ls.getItem(KEY));
+    let files;
+    try {
+      files = native.readSave();
+    } catch {
+      this.warning = '无法读取存档: 本次进度可能不会保存.';
+      return this.data;
+    }
+    this.path = files.path;
+    const main = parse(files.main);
     if (main) this.data = main;
     else {
-      const bak = parse(ls.getItem(KEY + '.bak'));
+      const bak = parse(files.bak);
       if (bak) {
         this.data = bak;
         this.warning = '主存档损坏, 已从备份恢复.';
-      } else if (ls.getItem(KEY)) this.warning = '存档损坏, 已重置.';
+        this.write();
+      } else if (files.main) this.warning = '存档损坏, 已重置.';
     }
+    // the release build has no debug mode
+    if (!DEBUG_ALLOWED) this.data.settings.debug = false;
     return this.data;
   },
 
   write() {
-    const ls = storageOk ? store() : null;
-    if (!ls) return false;
+    if (!native) return false;
     try {
-      const prev = ls.getItem(KEY);
-      if (prev) ls.setItem(KEY + '.bak', prev);
-      const raw = JSON.stringify(this.data);
-      ls.setItem(KEY, raw);
-      return ls.getItem(KEY) === raw;
+      const ok = native.writeSave(JSON.stringify(this.data, null, 1));
+      if (!ok) this.warning = '存档写入失败 (磁盘已满或没有权限?)';
+      return ok;
     } catch {
+      this.warning = '存档写入失败.';
       return false;
     }
   },

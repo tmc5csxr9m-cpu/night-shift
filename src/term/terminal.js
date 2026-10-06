@@ -11,6 +11,7 @@ import { facilityPage } from './pages/facility.js';
 import { tasksPage } from './pages/tasks.js';
 import { menuPage } from './pages/menu.js';
 import { resultPage } from './pages/result.js';
+import { manualPage } from './pages/manual.js';
 
 const LINE_MS = 11;
 const CONTENT_TOP = 2;
@@ -53,6 +54,7 @@ export class Terminal {
       tasks: tasksPage,
       menu: menuPage,
       result: resultPage,
+      manual: manualPage,
     };
     for (const p of Object.values(this.pages)) p.init?.(this);
     this.page = null;
@@ -303,6 +305,7 @@ export class Terminal {
       ['map', '▦地图'],
       ['facility', '☼设施'],
       ['tasks', '✓任务'],
+      ['manual', '?'],
     ];
     let x = 0;
     for (const [k, label] of items) {
@@ -327,7 +330,7 @@ export class Terminal {
       ui.text(x, y, label, fg, bg);
       x += wdt + 1;
     };
-    x = 44;
+    x = 46;
     ui.text(x - 2, y, '┃', C.dim2, C.bg2);
     const dl = (side) => {
       const d = w.doors[side];

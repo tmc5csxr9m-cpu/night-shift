@@ -1,20 +1,83 @@
 {
   "name": "fnaf-night-shift-demo",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.4.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview",
+    "dev": "node tools/dev.mjs",
+    "build:web": "vite build",
+    "build:win": "vite build && node tools/gen_licenses.mjs && electron-builder --win --x64 --publish never",
+    "build:linux": "vite build && node tools/gen_licenses.mjs && electron-builder --linux --x64 --publish never",
+    "build": "npm run build:win && npm run build:linux",
     "audio": "python3 tools/gen_audio.py",
+    "icon": "python3 tools/gen_icon.py",
     "balance": "node balance/run.js",
     "balance:quick": "node balance/run.js --runs 300"
   },
-  "dependencies": {
+  "devDependencies": {
+    "electron": "^44.5.1",
+    "electron-builder": "^26.15.3",
+    "vite": "^8.3.2",
     "three": "^0.186.1"
   },
-  "devDependencies": {
-    "vite": "^8.3.2"
+  "description": "NIGHT SHIFT — FNAF fan game (made with AI)",
+  "author": {
+    "name": "@g_t_u (bilibili)"
+  },
+  "license": "UNLICENSED",
+  "main": "electron/main.cjs",
+  "build": {
+    "appId": "com.gtu.nightshift",
+    "productName": "NightShift",
+    "copyright": "© 2026 @g_t_u (bilibili). All rights reserved.",
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "package.json"
+    ],
+    "extraFiles": [
+      {
+        "from": "build/LICENSES.txt",
+        "to": "LICENSES.txt"
+      }
+    ],
+    "asar": true,
+    "compression": "maximum",
+    "electronLanguages": [
+      "zh-CN",
+      "en-US"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.ico",
+      "artifactName": "NightShift-${version}-win-x64.exe"
+    },
+    "portable": {
+      "unpackDirName": "NightShift"
+    },
+    "linux": {
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.png",
+      "category": "Game",
+      "artifactName": "NightShift-${version}-linux-x86_64.AppImage"
+    }
   }
 }

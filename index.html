@@ -140,6 +140,90 @@
       #hint.hidden {
         opacity: 0;
       }
+      #warn {
+        max-width: 760px;
+        margin: 26px 24px 0;
+        padding: 14px 22px;
+        border: 2px solid #8a6a10;
+        background: rgba(40, 30, 0, 0.35);
+        color: #e8dca8;
+        font-size: 16px;
+        line-height: 1.75;
+      }
+      #warn .wt {
+        color: #ffd24a;
+        font-size: 20px;
+        margin-bottom: 6px;
+        letter-spacing: 2px;
+      }
+      #warn p {
+        margin: 0 0 6px;
+      }
+      #warn .opt {
+        color: #9fb4ff;
+      }
+      /* virtual cursor while the mouse is captured (pointer lock) */
+      #cursor {
+        position: fixed;
+        left: 0;
+        top: 0;
+        width: 0;
+        height: 0;
+        pointer-events: none;
+        z-index: 50;
+        display: none;
+      }
+      #cursor::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 0;
+        height: 0;
+        border-left: 9px solid #e8ecff;
+        border-top: 0 solid transparent;
+        border-right: 9px solid transparent;
+        border-bottom: 15px solid transparent;
+        filter: drop-shadow(1px 1px 0 #000) drop-shadow(-1px 0 0 #000);
+      }
+      #cursor.pointer::before {
+        border-left-color: #7fe3ff;
+      }
+      #quit {
+        position: fixed;
+        right: 24px;
+        top: 20px;
+        z-index: 60;
+        padding: 8px 14px;
+        background: rgba(0, 0, 10, 0.8);
+        border: 1px solid #8a0c0c;
+        color: #ffb0b0;
+        font-size: 16px;
+        opacity: 0;
+        transition: opacity 0.15s;
+        pointer-events: none;
+      }
+      #quit.show {
+        opacity: 1;
+      }
+      #quit .bar {
+        height: 4px;
+        margin-top: 6px;
+        background: #ff4040;
+        width: 0;
+      }
+      #nobrowser {
+        position: fixed;
+        inset: 0;
+        z-index: 100;
+        background: #000;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        line-height: 2;
+        font-size: 18px;
+      }
       @keyframes blink {
         50% {
           opacity: 0;
@@ -159,9 +243,19 @@
     <div id="start">
       <h1>NIGHT SHIFT</h1>
       <h2>星光披萨乐园 · 夜班保安</h2>
+      <div id="warn">
+        <div class="wt">⚠ 光敏性癫痫警告</div>
+        <p>极少数人在看到特定的闪光或光影图案时, 可能会出现癫痫发作或短暂失去意识, 即使此前从未有过相关病史。</p>
+        <p>本游戏包含<b>闪光、频闪、画面快速闪烁、剧烈晃动与突然的巨响</b>。如果你或你的家人有癫痫或光敏性病史, 请在游玩前咨询医生。</p>
+        <p>游玩时如出现头晕、视觉异常、眼部或面部抽搐、肢体不自主运动、意识模糊等症状, 请立即停止游戏并就医。</p>
+        <p class="opt">可在「设置 → 减弱闪光」中关闭频闪并减弱闪烁。</p>
+      </div>
       <div id="load">载入字体...</div>
-      <small>建议佩戴耳机 · 关灯游玩<br />FNAF 同人作品</small>
+      <small>建议佩戴耳机 · 关灯游玩 · 长按 ESC 退出游戏<br />FNAF 同人作品 · 由 AI 制作 · © 2026 @g_t_u (bilibili) 保留所有权利</small>
     </div>
+    <div id="cursor"></div>
+    <div id="quit">继续按住 ESC 退出游戏<div class="bar"></div></div>
+    <div id="nobrowser"><div>NIGHT SHIFT 只能通过桌面版运行。<br />请使用发布的程序 (Windows: .exe)。</div></div>
     <div id="intro"><div class="t">12:00 AM</div><div class="n">第 1 夜</div></div>
     <div id="subtitle"></div>
     <div id="hint" class="hidden">鼠标移到屏幕两侧转头 · 点击终端进行操作 · 右键 / ESC 离开终端</div>

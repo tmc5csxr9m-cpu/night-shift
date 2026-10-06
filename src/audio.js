@@ -14,6 +14,24 @@ export class AudioSys {
     this.ctx = this.listener.context;
     this.buffers = {};
     this.pool = [];
+    // two mix buses under the master: music/ambience and everything else
+    this.bus = {};
+    for (const k of ['music', 'sfx']) {
+      this.bus[k] = this.ctx.createGain();
+      this.bus[k].connect(this.listener.getInput());
+    }
+  }
+
+  // send a THREE.Audio's output through a bus instead of straight to the master
+  route(a, kind = 'sfx') {
+    a.gain.disconnect();
+    a.gain.connect(this.bus[kind]);
+    return a;
+  }
+
+  setBusVolume(kind, v) {
+    const g = this.bus[kind].gain;
+    if (Math.abs(g.value - v) > 0.001) g.setTargetAtTime(v, this.ctx.currentTime, 0.05);
   }
 
   async load(onProgress) {
@@ -33,8 +51,9 @@ export class AudioSys {
   }
 
   // looping ambient source. parent = Object3D for positional, else global
-  loop(name, { parent, volume = 1, ref = 1, rolloff = 1, lowpass, rate = 1, offset } = {}) {
+  loop(name, { parent, volume = 1, ref = 1, rolloff = 1, lowpass, rate = 1, offset, music = false } = {}) {
     const a = parent ? new THREE.PositionalAudio(this.listener) : new THREE.Audio(this.listener);
+    this.route(a, music ? 'music' : 'sfx');
     a.setBuffer(this.buffers[name]);
     a.setLoop(true);
     a.setVolume(volume);
@@ -63,6 +82,7 @@ export class AudioSys {
     holder.position.copy(pos);
     scene.add(holder);
     const a = new THREE.PositionalAudio(this.listener);
+    this.route(a);
     a.setBuffer(this.buffers[name]);
     a.setRefDistance(ref);
     a.setRolloffFactor(1.2);
@@ -122,6 +142,7 @@ export class Buzzer {
     pa.setRefDistance(0.6);
     pa.setRolloffFactor(1);
     pa.setNodeSource(lp);
+    audio.route(pa);
     parent.add(pa);
     this.pa = pa;
     this.lastHover = 0;
@@ -218,6 +239,7 @@ export class Phone {
     const pa = new THREE.PositionalAudio(audio.listener);
     pa.setRefDistance(0.7);
     pa.setNodeSource(this.out);
+    audio.route(pa);
     parent.add(pa);
     // telephone line for the voice
     this.line = ctx.createGain();

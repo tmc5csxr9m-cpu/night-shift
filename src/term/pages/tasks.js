@@ -1,4 +1,4 @@
-import { C, fit } from '../screen.js';
+import { C, fit, wrap, hhmm } from '../screen.js';
 import { checksumGame } from '../games/checksum.js';
 import { patchGame } from '../games/patch.js';
 import { tuneGame } from '../games/tune.js';
@@ -80,7 +80,7 @@ export const tasksPage = {
       ui.text(9, y, fit(g.name, 14), C.hi, bg);
       ui.text(3, y + 1, fit(g.en, 15), C.dim, bg);
       const open = w.taskOpen(t);
-      ui.text(19, y + 1, t.done ? '[完成]' : t.optional ? '[紧急]' : open ? '[待办]' : `[${String(t.open).padStart(2, '0')}:00]`, t.done ? C.ok : t.optional ? C.red : open ? C.yel : C.dim, bg);
+      ui.text(19, y + 1, t.done ? '[完成]' : t.optional ? '[紧急]' : open ? '[待办]' : `[${hhmm(t.open)}]`, t.done ? C.ok : t.optional ? C.red : open ? C.yel : C.dim, bg);
       if (sel) ui.text(25, y, '►', C.yel, bg);
     });
     const req = tasks.filter((t) => !t.optional);
@@ -96,11 +96,12 @@ export const tasksPage = {
     const t = tasks[selected];
     const g = GAMES[t.id];
     ui.box(28, 2, 51, 27, { title: `${t.id} ${g.name}`, titleAlign: 'left' });
-    ui.text(30, 3, fit(`${g.desc}  完成后: ${BENEFIT[t.id]}`, 47), C.dim);
-    ui.hline(29, 4, 49, '─', C.dim2);
+    // description + what finishing it gives you, on two lines
+    const head = wrap(`${g.desc} 完成后: ${BENEFIT[t.id]}`, 47);
+    head.slice(0, 2).forEach((l, i) => ui.text(30, 3 + i, l, C.dim));
     if (!w.taskOpen(t) && !t.done) {
       ui.box(36, 10, 35, 7, { style: 'double', fg: C.dim, shadow: true });
-      ui.center(12, `${t.id} 将于 ${String(t.open).padStart(2, '0')}:00 开放`, C.fg, null, 36, 35);
+      ui.center(12, `${t.id} 将于 ${hhmm(t.open)} 开放`, C.fg, null, 36, 35);
       ui.center(14, '先处理其他任务, 或者守好门.', C.dim, null, 36, 35);
       return;
     }

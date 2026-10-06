@@ -562,7 +562,8 @@ export class ActorViews {
     const L = this.scareLight;
     L.position.copy(cam.position).addScaledVector(fwd, 0.3);
     L.position.y -= 0.45;
-    L.intensity = Math.random() < 0.55 ? 7 : 0.3;
+    // reduced flashing (settings): a steady light instead of the strobe
+    L.intensity = this.calm ? 2.5 : Math.random() < 0.55 ? 7 : 0.3;
   }
 
   clearJumpscare() {

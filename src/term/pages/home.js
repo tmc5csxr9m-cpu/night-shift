@@ -1,4 +1,4 @@
-import { C, COLS, fit } from '../screen.js';
+import { C, COLS, fit, hhmm } from '../screen.js';
 import { game } from '../../game.js';
 
 const ICONS = {
@@ -19,7 +19,7 @@ function status(key, w) {
   switch (key) {
     case 'power': {
       const on = Object.values(w.circuits).filter(Boolean).length;
-      return [`储备 ${w.powerPct().toFixed(1)}%  负载 ${w.power.load.toFixed(2)}kW`, w.power.tripped ? '!! 主闸跳闸 !!' : `回路 ${on}/10 闭合`];
+      return [`储备 ${w.powerPct().toFixed(1)}% · ${w.power.load.toFixed(2)}kW`, w.power.tripped ? '!! 主闸跳闸 !!' : `回路 ${on}/10 闭合`];
     }
     case 'map': {
       const n = Object.values(w.rooms).filter((r) => r.sealed).length;
@@ -29,12 +29,12 @@ function status(key, w) {
     case 'facility': {
       const l = w.doorLit('L') ? '亮' : w.doors.L.broken ? '坏' : '灭';
       const r = w.doorLit('R') ? '亮' : w.doors.R.broken ? '坏' : '灭';
-      return [`门灯  左:${l}  右:${r}  备件:${w.spares}`, `风扇:${w.office.fan ? '开' : '关'} 通风:${w.office.vent}档 发条:${Math.round(w.musicBox.wind * 100)}%`];
+      return [`门灯 左${l} 右${r} 备件${w.spares}`, `风扇${w.office.fan ? '开' : '关'} 通风${w.office.vent} 发条${Math.round(w.musicBox.wind * 100)}%`];
     }
     case 'tasks': {
       const done = w.tasks.filter((t) => t.done).length;
       const next = w.tasks.find((t) => !t.done && !w.taskOpen(t));
-      return [`进度 ${done}/${w.tasks.length} 已完成`, w.overtime ? '!! 加班中 !!' : next ? `${next.id} ${String(next.open).padStart(2, '0')}:00 开放` : '截止 06:00 AM'];
+      return [`进度 ${done}/${w.tasks.length} 已完成`, w.overtime ? '!! 加班中 !!' : next ? `${next.id} ${hhmm(next.open)} 开放` : '截止 06:00 AM'];
     }
   }
   return ['', ''];

@@ -68,10 +68,42 @@ export function fit(s, w, align = 'left') {
     out += ch;
     cw += k;
   }
+  // dev builds: remember every string that did not fit (UI text overflow check)
+  if (import.meta.env?.DEV && cw < strWidth(s) && s.trim()) (globalThis.__clipped ||= new Set()).add(`${s} [${w}]`);
   const pad = w - cw;
   if (align === 'right') return ' '.repeat(pad) + out;
   if (align === 'center') return ' '.repeat(pad >> 1) + out + ' '.repeat(pad - (pad >> 1));
   return out + ' '.repeat(pad);
+}
+
+// in-game hour (may be fractional: 4.5 -> "04:30")
+export function hhmm(h) {
+  const m = Math.round(h * 60);
+  return `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
+}
+
+// wrap text to a cell width; CJK breaks anywhere, but closing punctuation
+// never starts a line (the character before it moves down with it)
+const NO_START = '，。、；：！？）」』》,.;:!?)';
+export function wrap(s, w) {
+  const lines = [];
+  let line = [];
+  let cw = 0;
+  for (const ch of s) {
+    const k = charWidth(ch);
+    if (cw + k > w) {
+      let carry = [];
+      if (NO_START.includes(ch) && line.length > 1) carry = [line.pop()];
+      lines.push(line.join('').trimEnd());
+      line = carry;
+      cw = carry.reduce((a, c) => a + charWidth(c), 0);
+      if (ch === ' ' && !line.length) continue;
+    }
+    line.push(ch);
+    cw += k;
+  }
+  if (line.length) lines.push(line.join('').trimEnd());
+  return lines;
 }
 
 const CONT = '\u0000'; // marks the right half of a wide glyph

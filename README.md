@@ -2,12 +2,29 @@
 
 Three.js 3D 保安室 + 老式蓝白字符终端（TUI）的生存恐怖游戏。设计与开发计划见 [GAME_PLAN.md](GAME_PLAN.md)。
 
-## 运行
+## 运行与构建
+
+本作只通过桌面程序运行（Electron），不再支持浏览器。
 
 ```bash
 npm install
-npm run dev        # http://localhost:5199   (加 ?debug 直接打开调试模式)
+NODE_USE_ENV_PROXY=1 node node_modules/electron/install.js   # 首次: 下载 Electron (走代理时需要 NODE_USE_ENV_PROXY)
+npm run dev          # 开发: Vite 热更新 + 桌面窗口
+npm run build:win    # 发布版: release/NightShift-<版本>-win-x64.exe (单文件便携版, 需要 wine 写入图标与版本信息)
+npm run build:linux  # 测试版: release/NightShift-<版本>-linux-x86_64.AppImage
 ```
+
+| | Windows `.exe`（发布） | Linux AppImage（个人测试） |
+|---|---|---|
+| 调试模式 | 隐藏 | 主菜单可开 |
+| DevTools (F12) | 禁用 | 可用 |
+
+- **存档**：`%APPDATA%\NightShift\save.json`（Windows）/ `~/.config/NightShift/save.json`（Linux）。先写临时文件再替换，上一份存档保留为 `save.json.bak`；主存档损坏时自动从备份恢复。只允许同时运行一个实例。
+- **窗口**：默认全屏；设置 → 显示模式可切换 1280×720 / 1600×900 / 1920×1080 窗口，立即生效并在下次启动沿用。
+- **鼠标**：点击后鼠标被游戏捕获（指针锁定 + 游戏内光标），窗口模式和多显示器下转头也正常；ESC 释放，再点一下重新捕获。
+- **退出**：长按 ESC 1.5 秒，或主菜单「退出游戏」。
+- **自动化测试**：`xvfb-run -a node tools/smoke.mjs <脚本.mjs> [-- <程序>]` 在虚拟显示器上驱动开发版或打包版（真实鼠标/键盘事件 + 截图）。
+- 未签名的 exe 在 Windows 上首次运行会触发 SmartScreen 提示（「更多信息 → 仍要运行」）。
 
 建议戴耳机、关灯游玩。
 
@@ -23,17 +40,19 @@ npm run dev        # http://localhost:5199   (加 ?debug 直接打开调试模�
 | M5 Night 5（丝带 / 通风、雷暴停电、发电机） | ✅ |
 | M6 Night 6 Boss STARLIGHT（夺取配电、伪造感知、夺取终端、捉迷藏） | ✅ |
 | v3 策略审查与全面加难（GAME_PLAN 11.5c） | ✅ N1–N6 全部门槛 + 套路探针 + 机制消融 |
-| M7 打磨（音乐盒实物、断电演出、Boss 演出细节） | 进行中 |
+| 桌面版（Electron）：光敏警告、值班手册、版权页、存档文件、窗口模式、长按 ESC 退出 | ✅ |
+| M7 打磨（Boss 演出细节、真人试玩校准） | 进行中 |
 
 ## 操作
 
-- 鼠标移到屏幕左右边缘：转头；点击终端：聚焦（字符光标）；右键 / ESC：离开终端
+- 鼠标移到屏幕左右边缘：转头；点击终端：聚焦（字符光标）；右键 / ESC：离开终端；长按 ESC：退出游戏
+- 终端上的 `?`：值班手册（夜里也能查，时间照常流逝）
 - 菜单栏右侧快捷栏：左右门灯、磁锁（N3 起）、♪ 重放上一次诱饵、消磁（任何页面都能用）
 - 点击桌上的电话：接听 / 挂断留言
 
 ## 调试模式
 
-主菜单 → `调试模式 [开]`（无前置条件）。开启后可以选择任意夜晚和「空夜」，夜里按 **F1** 或 **`** 打开信息面板：
+仅 Linux 测试版 / 开发版：主菜单 → `调试模式 [开]`（无前置条件）。开启后可以选择任意夜晚和「空夜」，夜里按 **F1** 或 **`** 打开信息面板：
 模拟时间与倍率、电力分项、温度噪音、EMI、每个表演者的节点 / 进攻值 / 修正项 / 计时器、声音线索的听到概率、事件时间线；
 可以暂停、单步、加速、跳时间、无敌、无限电、冻结、传送表演者、触发事件、导出 / 导入回放。调试对局不写入存档。
 
@@ -55,8 +74,14 @@ src/game.js       推进模拟、转发事件
 src/term/         终端：屏幕、控件、页面（主菜单 / 结算 / 四大板块）、小游戏
 src/scene/        房间、表演者模型、CRT 着色器、后期
 src/audio.js      3D 环境音、蜂鸣器、电话（铃声 + 合成人声）
+electron/         桌面外壳：app:// 协议、存档文件、窗口模式、长按 ESC 退出
+tools/            dev.mjs 开发启动 · smoke.mjs 自动化测试 · gen_icon.py 图标 · gen_licenses.mjs 许可声明
 src/debug/        调试面板
 src/save.js       存档
 balance/          玩家模型、机器人、批量对局、门槛、报告
 tools/gen_audio.py  全部音频的合成脚本（npm run audio）
 ```
+
+## 版权
+
+© 2026 @g_t_u (bilibili)，保留所有权利。本作由 AI（Anthropic Claude）制作。FNAF 同人作品，与 Scott Cawthon 及 FNAF 官方无关。第三方组件许可见 `LICENSE` 与打包产物中的 `LICENSES.txt`。

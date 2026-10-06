@@ -6,7 +6,7 @@ import { C } from '../screen.js';
 export const ignitionGame = {
   id: 'T-06',
   name: '发电机点火',
-  en: 'GENERATOR IGNITION',
+  en: 'GENERATOR START',
   desc: '预热 → 在绿区点火 → 稳住转速. 点火失败会在配电室发出巨响.',
 
   reset() {

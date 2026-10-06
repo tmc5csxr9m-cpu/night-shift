@@ -203,14 +203,15 @@ export const facilityPage = {
       ui.text(x + 2, y + 1, fit(`室温 ${t.room.toFixed(1)}°C`, 15), hot ? C.red : C.hi, bg);
       ui.text(x + 2, y + 2, fit(`有效 ${t.eff.toFixed(1)}°C`, 15), hot ? C.red : C.fg, bg);
       ui.bar(x + 2, y + 3, 14, (t.eff - 20) / 18, { fg: hot ? C.red : t.eff > 30 ? C.yel : C.cy, blocky: true });
-      ui.text(x + 2, y + 5, fit(`室外 ${t.out.toFixed(0)}°C 空调关`, 15), C.dim, bg);
+      ui.text(x + 2, y + 5, fit(`室外 ${t.out.toFixed(1)}°C`, 15), C.dim, bg);
       ui.text(x + 2, y + 6, '噪音', C.dim, bg);
       ui.bar(x + 7, y + 6, 9, (w.noise.db - 30) / 18, { fg: w.noise.db > 38 ? C.yel : C.cy });
       ui.text(x + 2, y + 7, fit(`${w.noise.db.toFixed(0)}dB`, 5), C.fg, bg);
       const parts = Object.keys(w.noise.parts).filter((k) => k !== 'base');
       const names = { fan: '扇', vent: '风', phone: '铃', degauss: '磁', musicBox: '乐', generator: '机' };
-      ui.text(x + 8, y + 7, fit(parts.map((k) => names[k] || k).join(''), 8), C.dim, bg);
-      ui.text(x + 2, y + 9, fit(hot ? '!! 终端过热 !!' : '32°C以上终端出错', 15), hot ? C.red : C.dim2, bg);
+      const srcs = parts.map((k) => names[k] || '?');
+      ui.text(x + 8, y + 7, fit(srcs.length > 4 ? srcs.slice(0, 3).join('') + '+' : srcs.join(''), 8), C.dim, bg);
+      ui.text(x + 2, y + 9, fit(hot ? '!! 终端过热 !!' : '32°C+ 终端出错', 15), hot ? C.red : C.dim2, bg);
     }
   },
 };
