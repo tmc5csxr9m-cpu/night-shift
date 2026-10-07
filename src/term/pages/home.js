@@ -34,7 +34,7 @@ function status(key, w) {
     case 'tasks': {
       const done = w.tasks.filter((t) => t.done).length;
       const next = w.tasks.find((t) => !t.done && !w.taskOpen(t));
-      return [`进度 ${done}/${w.tasks.length} 已完成`, w.overtime ? '!! 加班中 !!' : next ? `${next.id} ${hhmm(next.open)} 开放` : '截止 06:00 AM'];
+      return [`进度 ${done}/${w.tasks.length} 已完成`, w.clockStuck ? '!! 时间停止 !!' : w.overtime ? '!! 加班中 !!' : next ? `${next.id} ${hhmm(next.open)} 开放` : '截止 06:00 AM'];
     }
   }
   return ['', ''];
@@ -51,7 +51,7 @@ export const homePage = {
     ui.text(3, 4, `夜间安保终端 · ${game.nightName(game.night)}`, C.cy);
     ui.text(3, 5, '班次 00:00 — 06:00    右键 / ESC 离开终端', C.dim);
     ui.bigText(57, 3, w.clock(), w.overtime ? C.red : C.hi);
-    ui.text(76, 3, w.overtime ? 'OT' : 'AM', C.cy);
+    ui.text(76, 3, w.overtime && !w.clockStuck ? 'OT' : 'AM', w.clockStuck ? C.red : C.cy);
     ui.text(76, 5, Math.floor(term.time * 2) % 2 ? '●' : ' ', C.red);
     ui.hline(1, 6, COLS - 2, '─', C.dim2);
 

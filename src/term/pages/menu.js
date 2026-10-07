@@ -66,7 +66,7 @@ export const menuPage = {
 
     // footer
     ui.fill(0, 29, COLS, 1, C.bg2);
-    ui.text(1, 29, fit(tip || save.warning || '鼠标操作 · 建议佩戴耳机 · 长按 ESC 退出', 64), save.warning && !tip ? C.yel : C.dim, C.bg2);
+    ui.text(1, 29, fit(tip || save.warning || '鼠标操作 · 建议佩戴耳机 · 主菜单长按 ESC 退出', 64), save.warning && !tip ? C.yel : C.dim, C.bg2);
     const ver = `v${VERSION}`;
     ui.text(COLS - strWidth(ver) - 1, 29, ver, C.dim2, C.bg2);
   },
@@ -106,7 +106,7 @@ export const menuPage = {
       }, { active: dbg, tip: '开启: 任意选夜 + 夜间信息面板 (F1) · 不写入进度' });
       y += step;
     }
-    btn(ui, term, 'm-quit', y, '退出游戏', () => native?.quit(), { tip: '也可以随时长按 ESC 退出' });
+    btn(ui, term, 'm-quit', y, '退出游戏', () => native?.quit(), { tip: '也可以在主菜单长按 ESC 退出' });
     // progress summary
     const x = 60;
     ui.text(x, 11, '值班记录', C.dim);

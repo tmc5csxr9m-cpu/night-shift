@@ -66,7 +66,9 @@ export class Starlight extends Actor {
           if (w.breakerLocked(id)) w.log(`>> STARLIGHT 试图接管 ${id} — 写保护拦截.`, 'warn');
           else if (w.circuits[id]) {
             w.circuits[id] = false;
-            w.log(`>> STARLIGHT 接管了回路 ${id}.`, 'err');
+            // held open for a while: closing it again has to wait
+            w.seized[id] = P.seizeTime;
+            w.log(`>> STARLIGHT 接管了回路 ${id} (${P.seizeTime} 秒内无法闭合).`, 'err');
             w.emit('breaker', { id, on: false, boss: true });
           }
         }
@@ -96,7 +98,7 @@ export class Starlight extends Actor {
         w.cues.push(c);
         w.emit('cue', c);
         const r = w.rooms[node.slice(0, 2)];
-        if (r) r.spike = Math.max(r.spike, 18);
+        if (r) r.spike = Math.max(r.spike, w.P.scan.stepSpike[0] + w.P.scan.stepSpike[1]);
       }
       if (!this.lureHijacked && w.t > 3 * w.P.hourSeconds) {
         this.lureHijacked = true;
@@ -120,12 +122,20 @@ export class Starlight extends Actor {
       }
       // it takes the PA zone selector: no lures for a while — hold them
       // with light and shutters instead
+      // (with a warning: the PA crackles 3 s before it is taken)
       this.paT -= dt;
-      if (this.paT <= 0) {
+      if (this.paPending > 0) {
+        this.paPending -= dt;
+        if (this.paPending <= 0) {
+          w.paJam = P.paJam;
+          w.log('>> STARLIGHT 占用了分区广播 — 诱饵不可用.', 'err');
+          w.emit('paJam', { t: P.paJam });
+        }
+      } else if (this.paT <= 0) {
         this.paT = w.rng.range(P.paGap[0], P.paGap[1]);
-        w.paJam = P.paJam;
-        w.log('>> STARLIGHT 占用了分区广播 — 诱饵不可用.', 'err');
-        w.emit('paJam', { t: P.paJam });
+        this.paPending = P.paWarn;
+        w.log('!! 广播线路杂音 — 3 秒后将被占用!', 'err');
+        w.emit('bossTelegraph', { kind: 'pa' });
       }
       this.ventT -= dt;
       if (this.ventT <= 0) {

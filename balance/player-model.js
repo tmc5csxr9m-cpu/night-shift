@@ -25,9 +25,10 @@ export const TASK_TIME = {
 
 // which terminal page a command lives on (null = hotbar / status bar)
 export const CMD_PAGE = {
-  doorLight: null, maglock: null, degauss: null, answerPhone: null, hangUp: null, lureRepeat: null,
+  // (wind, answerPhone, hangUp are physical: agent action 'phys')
+  doorLight: null, maglock: null, degauss: null, lureRepeat: null,
   scan: 'map', lure: 'map', roomLight: 'map', seal: 'map',
   breaker: 'power', resetMain: 'power', lockBreaker: 'power', generator: 'power',
-  officeLight: 'facility', fan: 'facility', vent: 'facility', wind: 'facility', replaceBulb: 'facility', oscillate: 'facility',
+  officeLight: 'facility', fan: 'facility', vent: 'facility', replaceBulb: 'facility', oscillate: 'facility',
   taskComplete: 'tasks', rebootNode: 'map',
 };

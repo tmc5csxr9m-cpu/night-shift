@@ -10,7 +10,7 @@ const DEV_URL = process.env.NS_DEV_URL || null;      // set by tools/dev.mjs
 // debug mode is a tester's tool: shown in the Linux (AppImage) build and in
 // development, hidden from the Windows release build
 const DEBUG_BUILD = !app.isPackaged || process.platform === 'linux';
-const ESC_HOLD = 1.5;                                 // seconds to quit
+const ESC_HOLD = 1.2;                                 // seconds (in a night: back to the menu; in the menu: quit)
 const DIST = path.join(__dirname, '..', 'dist');
 
 // one stable folder for saves, whatever the executable is called or where
@@ -147,8 +147,9 @@ function createWindow() {
     if (url !== wc.getURL()) e.preventDefault();
   });
 
-  // hold ESC to quit. Watched here, not in the page: pointer lock and the
-  // page's own ESC handling cannot swallow it.
+  // hold ESC. Watched here, not in the page, so pointer lock and the page's
+  // own ESC handling cannot swallow it. The page decides what a long press
+  // means (leave the night / quit).
   let escAt = 0;
   let escTimer = null;
   const stopEsc = () => {
@@ -166,7 +167,7 @@ function createWindow() {
           if (!wc.isDestroyed()) wc.send('esc-hold', Math.min(1, p));
           if (p >= 1) {
             stopEsc();
-            app.quit();
+            if (!wc.isDestroyed()) wc.send('esc-long');
           }
         }, 40);
       } else if (input.type === 'keyUp') stopEsc();

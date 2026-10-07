@@ -21,8 +21,11 @@ export class Sunny extends Actor {
   tick(dt) {
     const w = this.w;
     if (this.state === 'door') {
-      this.attackT -= dt * this.w.attackRate();
-      if (w.doorLit('L')) {
+      // the light alone only makes it hesitate; it backs off when it is
+      // lit AND stared down (you have to turn and look at the door)
+      const lit = w.doorLit('L');
+      this.attackT -= dt * this.w.attackRate() * (lit ? this.p.litSlow : 1);
+      if (lit && w.watching('L')) {
         this.litT += dt;
         if (this.litT >= this.p.retreatLight) {
           this.retreat();

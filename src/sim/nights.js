@@ -8,7 +8,7 @@ export const NIGHTS = {
     outside: 27, spares: 3, bulbsBurn: true, autoWind: true, events: false, call: 0,
   },
   1: {
-    name: '第 1 夜', reserve: 80,
+    name: '第 1 夜', reserve: 70,
     actors: ['sunny', 'pip', 'tootie', 'chef'],
     tasks: [['T-01', 0], ['T-04', 2]],
     // Pip only wakes up in the second half of the first night
@@ -16,7 +16,7 @@ export const NIGHTS = {
     outside: 27, spares: 3, bulbsBurn: true, autoWind: true, events: false, call: 1,
   },
   2: {
-    name: '第 2 夜', reserve: 64,
+    name: '第 2 夜', reserve: 48,
     actors: ['sunny', 'pip', 'tootie', 'chef'],
     tasks: [['T-02', 0], ['T-01', 2]],
     A: { sunny: [4, 6, 7, 8, 9, 10], pip: [4, 7, 9, 11, 12, 13] },
@@ -24,14 +24,14 @@ export const NIGHTS = {
     broken: 'lure',
   },
   3: {
-    name: '第 3 夜', reserve: 64,
+    name: '第 3 夜', reserve: 48,
     actors: ['sunny', 'pip', 'back', 'tootie', 'chef'],
     tasks: [['T-03', 0], ['T-04', 1], ['T-01', 3]],
     A: { sunny: [4, 6, 7, 8, 9, 10], pip: [4, 6, 8, 9, 10, 11], back: [2, 4, 6, 7, 8, 9] },
     outside: 30.0, spares: 2, bulbsBurn: true, autoWind: true, events: true, call: 3,
   },
   4: {
-    name: '第 4 夜', reserve: 62,
+    name: '第 4 夜', reserve: 42,
     actors: ['sunny', 'pip', 'back', 'tootie', 'chef'],
     tasks: [['T-05', 0], ['T-02', 2], ['T-04', 3]],
     A: { sunny: [4, 5, 7, 8, 9, 10], pip: [4, 6, 7, 9, 10, 11], back: [2, 4, 5, 7, 8, 9] },
@@ -39,7 +39,7 @@ export const NIGHTS = {
     broken: 'seal',
   },
   5: {
-    name: '第 5 夜', reserve: 61,
+    name: '第 5 夜', reserve: 40,
     actors: ['sunny', 'pip', 'back', 'ribbon', 'tootie', 'chef'],
     tasks: [['T-02', 0], ['T-03', 1], ['T-01', 3]],
     A: { sunny: [2, 3, 4, 5, 5, 6], pip: [2, 3, 4, 5, 6, 6], back: [1, 2, 3, 4, 4, 5], ribbon: [0, 3, 5, 6, 7, 8] },
@@ -47,10 +47,10 @@ export const NIGHTS = {
     broken: 'seal', gridFail: 3, gridPenalty: 6,
   },
   6: {
-    name: '第 6 夜', reserve: 54, boss: true,
+    name: '第 6 夜', reserve: 42, boss: true,
     actors: ['sunny', 'pip', 'back', 'ribbon', 'tootie', 'chef', 'starlight'],
     tasks: [['T-01', 0], ['T-08a', 1], ['T-08b', 2.5], ['T-08c', 4.5]],
-    A: { sunny: [3, 4, 5, 5, 6, 7], pip: [3, 4, 5, 6, 6, 6], back: [2, 3, 4, 4, 5, 5], ribbon: [0, 3, 4, 5, 6, 6] },
+    A: { sunny: [3, 3, 4, 4, 5, 5], pip: [3, 4, 4, 5, 5, 5], back: [2, 3, 3, 4, 4, 5], ribbon: [0, 3, 4, 4, 5, 5] },
     outside: 30.0, spares: 2, bulbsBurn: true, autoWind: false, windDrain: 0.011, events: true, call: 6,
   },
 };

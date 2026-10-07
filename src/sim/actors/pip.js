@@ -94,8 +94,9 @@ export class Pip extends Actor {
       }
     }
     if (this.state === 'door') {
-      // caught in the light it stops to pose: the attack waits, but it stays
-      const lit = w.doorLit('R');
+      // caught in the light, under your eyes, it stops to pose: the attack
+      // waits, but it stays (lit but unwatched it does not bother)
+      const lit = w.doorLit('R') && w.watching('R');
       if (lit && !this.posing) w.telegraph(this, 'pose', 'R');
       this.posing = lit;
       this.attackT -= (lit ? dt * this.p.litSlow : dt) * w.attackRate();

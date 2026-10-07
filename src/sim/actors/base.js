@@ -41,6 +41,7 @@ export class Actor {
   modifiers() {}
 
   stageMods(mods) {
+    if (this.shockT > 0) mods.shock = this.w.P.stageShock.bonus;
     if (this.node !== '01') return;
     mods.stage = this.w.powered('C9') ? this.p.stageOn : this.p.stageOff;
   }

@@ -222,6 +222,21 @@ export function buildRoom(scene) {
     dust.renderOrder = 2;
     scene.add(dust);
     refs.doorLights[key] = { spot, spill, bulbMat, anchor, dust, level: 0 };
+
+    // the light switch beside the doorway: click it while looking at the door
+    const sw = new THREE.Group();
+    sw.position.set(side * (X - 0.03), 1.3, DOOR.z1 + 0.22);
+    sw.rotation.y = -side * Math.PI / 2;
+    sw.add(box(0.16, 0.24, 0.04, std({ color: 0x2a2c30, metalness: 0.5, roughness: 0.5 }), 0, 0, 0));
+    const btnMat = std({ color: 0x401010, emissive: 0xff3020, emissiveIntensity: 0.4, roughness: 0.4 });
+    const btn = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.03, 18), btnMat);
+    btn.rotation.x = Math.PI / 2;
+    btn.position.set(0, 0.02, 0.03);
+    sw.add(btn);
+    sw.add(plane(0.12, 0.035, std({ map: T.labelTexture('LIGHT', { w: 128, h: 36, bg: '#222', fg: '#ddd', font: 'bold 22px monospace' }) }), 0, -0.08, 0.021, 0));
+    root.add(shadowed(sw, false, true));
+    refs.doorSwitches = refs.doorSwitches || {};
+    refs.doorSwitches[key] = { group: sw, btnMat };
   }
 
   // ---------------------------------------------------------------- corridor props
@@ -643,7 +658,7 @@ export function buildRoom(scene) {
       key.add(box(0.004, 0.03, 0.012, gold, 0.018, 0, 0));
       mb.add(key);
       root.add(mb);
-      refs.musicBox = { dancer, key };
+      refs.musicBox = { dancer, key, group: mb };
     }
     const head = plushHead(std, 1.85, 2.07, ROOM.zf + 0.14);
     refs.head = head;

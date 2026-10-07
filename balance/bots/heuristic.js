@@ -7,21 +7,21 @@
 const PROFILES = {
   novice: {
     lockBreakers: false, genAt: 20, preVent: false, windAt: 0.2, hangUp: 0.5, preLock: false, backQuiet: false, lockHold: 6,
-    quietChance: 0.4, checkEvery: 0, useEmi: true, lightHold: 3.4, chunk: 7, careBulbs: false, confirmLook: false,
+    quietChance: 0.4, checkEvery: 0, useEmi: true, chunk: 7, careBulbs: false,
     sealNear: false, sealFallback: false, heatMgmt: false, dim: false, degauss: false, roomFreeze: false,
     stageCut: false, preLure: false, chefBellEarly: false,
   },
   average: {
     lockBreakers: false, genAt: 30, preVent: false, windAt: 0.4, hangUp: 1, preLock: false, backQuiet: false, lockHold: 5.5,
-    quietChance: 1, checkEvery: 30, useEmi: true, lightHold: 3.0, chunk: 4.5, careBulbs: true, confirmLook: false,
+    quietChance: 1, checkEvery: 30, useEmi: true, chunk: 4.5, careBulbs: true,
     sealNear: true, sealFallback: true, heatMgmt: true, dim: false, degauss: true, roomFreeze: false,
-    stageCut: false, preLure: false, chefBellEarly: false,
+    stageCut: true, stageAt: 180, preLure: false, chefBellEarly: false,
   },
   expert: {
-    lockBreakers: true, genAt: 40, preVent: true, windAt: 0.5, hangUp: 1, preLock: true, backQuiet: true, lockHold: 5,
-    quietChance: 1, checkEvery: 22, useEmi: true, lightHold: 2.8, chunk: 3, careBulbs: true, confirmLook: true,
+    lockBreakers: true, genAt: 40, genProjection: true, preVent: true, windAt: 0.5, hangUp: 1, preLock: true, backQuiet: true, lockHold: 5,
+    quietChance: 1, checkEvery: 22, useEmi: true, chunk: 3, careBulbs: true,
     sealNear: true, sealFallback: true, heatMgmt: true, dim: true, degauss: true, roomFreeze: true,
-    stageCut: true, preLure: false, chefBellEarly: true,
+    stageCut: true, stageAt: 90, preLure: false, chefBellEarly: true,
   },
 };
 
@@ -117,6 +117,20 @@ export function heuristicBot(level = 'average', { oracle = false, disable = {} }
           }
         }
       }
+      // looking at a lit door right now: your eyes beat what you heard earlier
+      for (const side of ['L', 'R']) {
+        if (o.focused || o.look !== side || !o.doors[side].lit || t - o.seenAt[side] > 0.3) continue;
+        const atDoor = (id) => o.seen[side].some((s) => s.id === id && s.node.startsWith('DOOR'));
+        // seen gone: older cues about it no longer count
+        if (side === 'L' && !atDoor('sunny')) {
+          b.sunnyDoor = false;
+          m.handled.sunny = t;
+        }
+        if (side === 'R' && !atDoor('pip')) {
+          b.pipDoor = false;
+          m.handled.pip = Math.max(m.handled.pip || 0, t);
+        }
+      }
       if (K.useEmi && o.emi && !disable.emi) {
         if (o.emi.L > 0.5 && !b.chefDoor) b.sunnyDoor = true;
         else if (o.emi.L > 0) b.sunnyNear = true;
@@ -153,12 +167,21 @@ export function heuristicBot(level = 'average', { oracle = false, disable = {} }
       return PIP_LURES_DOOR.every((r) => (uses[r] || 0) >= 2);
     },
 
+    // a door light: the hotbar from the terminal, the fixture itself when
+    // you are already looking at that door
+    light(o, side, on) {
+      if (!o.focused && o.look === side) return { type: 'phys', name: 'doorLight', dir: side, args: { side, on } };
+      return { type: 'cmd', name: 'doorLight', args: { side, on } };
+    },
+
     // ------------------------------------------------------------ policy
     decide(o, agent) {
       const m = agent.mem;
       const t = o.t;
       const b = this.beliefs(o, agent);
-      const canLure = o.calibrated.lure && o.circuits.C7 && !o.paJam && !disable.lure && t >= (m.lureReady || 0);
+      // away from the terminal you remember what the screen last said
+      const last = o.focused ? o : m.lastFocusObs || {};
+      const canLure = o.calibrated.lure && o.circuits.C7 && !last.paJam && !disable.lure && t >= (m.lureReady || 0);
       const doorBusy = b.pipDoor || b.sunnyDoor || b.backDoor || !!b.chefDoor || b.ribbonVent;
 
       if (o.tripped) return { type: 'cmd', name: 'resetMain' };
@@ -170,37 +193,58 @@ export function heuristicBot(level = 'average', { oracle = false, disable = {} }
         if (o.office.fan) return { type: 'cmd', name: 'fan', args: { on: false } };
       }
 
-      // ---- 1. Pip at the right door (shortest window): light stalls it, a lure sends it away
-      if (b.pipDoor && !o.doors.R.lit && !o.doors.R.broken && !o.doors.R.stuck && !o.doors.R.hot && !disable.doorLight && !disable.pipLight) {
-        m.lightOffAt.R = t + 5;
-        return { type: 'cmd', name: 'doorLight', args: { side: 'R', on: true } };
+      // the PA is about to be taken: send Pip off while you still can
+      if (o.paSoon && (b.pipDoor || b.pipNear) && canLure && !disable.lure) {
+        const room = this.pickLure(PIP_LURES_DOOR, m, o);
+        if (room) {
+          m.lureReady = t + 4.2;
+          m.handled.pip = t + 3;
+          return { type: 'cmd', name: 'lure', args: { room } };
+        }
       }
-      // ---- 2. Sunny at the left door: hold the light on it
-      if (b.sunnyDoor && !disable.doorLight && !o.doors.L.lit && !o.doors.L.broken && !o.doors.L.stuck) {
-        m.lightOffAt.L = t + K.lightHold;
-        m.handled.sunny = t;
-        return { type: 'cmd', name: 'doorLight', args: { side: 'L', on: true } };
+      // ---- 1. Pip at the right door (shortest window): a lure sends it away
+      const lureRoom = () => (last.pageLock === 'map' && !disable.relure ? 'repeat' : this.pickLure(PIP_LURES_DOOR, m, o));
+      // a door light whose circuit is open (aging, STARLIGHT) needs the breaker first
+      for (const [side, c] of [['L', 'C2'], ['R', 'C3']]) {
+        const need = side === 'L' ? b.sunnyDoor : b.pipDoor && !canLure;
+        if (need && !o.circuits[c] && !(last.seized || {})[c] && t - (m.breakerFixAt || -99) > 1.5) {
+          m.breakerFixAt = t;
+          return { type: 'cmd', name: 'breaker', args: { id: c, on: true } };
+        }
       }
-      if (b.sunnyDoor && o.doors.L.lit) m.handled.sunny = t;
+      if (b.pipDoor && canLure) {
+        const room = lureRoom();
+        if (room) {
+          m.lureReady = t + 4.2;   // decision + carrying it out (~1s) + the 3 s module cooldown
+          // the lure is on its way: what Pip does at the door meanwhile is old news
+          m.handled.pip = t + 3;
+          return room === 'repeat' ? { type: 'cmd', name: 'lureRepeat' } : { type: 'cmd', name: 'lure', args: { room } };
+        }
+      }
+      // ...no lure to hand for a while (module broken, PA jammed or off, or a
+      // long cooldown): light it and stare, it stops to pose. Waiting a
+      // second for the lure is cheaper than walking away from the terminal.
+      const pipLightOk = !o.doors.R.broken && !o.doors.R.stuck && !disable.doorLight && !disable.pipLight;
+      const lureFar = !o.calibrated.lure || !o.circuits.C7 || last.paJam || (m.lureReady || 0) - t > 2;
+      // (only when nothing else is coming: staring pins you to the right door)
+      if (b.pipDoor && pipLightOk && lureFar && !b.sunnyDoor && !b.sunnyNear && !b.backDoor && !b.backNear) {
+        m.lightOffAt.R = t + 1;
+        if (!o.doors.R.lit) return this.light(o, 'R', true);
+        if (o.focused || o.look !== 'R') return { type: 'look', dir: 'R' };
+        return { type: 'wait', dur: 0.2 };
+      }
+      // ---- 2. Sunny at the left door: light it and stare it down
+      if (b.sunnyDoor && !disable.doorLight && !o.doors.L.broken && !o.doors.L.stuck) {
+        m.lightOffAt.L = t + 0.6;
+        if (!o.doors.L.lit) return this.light(o, 'L', true);
+        if (o.focused || o.look !== 'L') return { type: 'look', dir: 'L' };
+        return { type: 'wait', dur: 0.2 };
+      }
       // ---- 3. the back door: lock it
       if (b.backDoor && !o.office.maglock && !o.office.coilLockout && o.circuits.C8 && !disable.maglock) {
         m.lockOffAt = t + K.lockHold;
         m.handled.back = t;
         return { type: 'cmd', name: 'maglock', args: { on: true } };
-      }
-      if (b.pipDoor && canLure) {
-        // map locked (STARLIGHT): the hotbar replays the last lure
-        if (o.pageLock === 'map' && !disable.relure) {
-          m.lureReady = t + 3.1;
-          m.handled.pip = t;
-          return { type: 'cmd', name: 'lureRepeat' };
-        }
-        const room = this.pickLure(PIP_LURES_DOOR, m, o);
-        if (room) {
-          m.lureReady = t + 3.1;
-          m.handled.pip = t;
-          return { type: 'cmd', name: 'lure', args: { room } };
-        }
       }
       // ---- 3b. Ribbon at the vent: full airflow blows it back
       if ((b.ribbonVent || (b.ribbonNear && K.preVent)) && o.office.vent < 3 && o.circuits.C4 && !disable.vent) {
@@ -211,7 +255,7 @@ export function heuristicBot(level = 'average', { oracle = false, disable = {} }
       // ---- 4. Chef at a door (or awake, for experts): the kitchen bell
       if ((b.chefDoor || (b.chefAwake && K.chefBellEarly && !doorBusy)) && o.circuits.C7 && !disable.bell && t >= (m.lureReady || 0) && t - (m.bellAt || -99) > 12) {
         m.bellAt = t;
-        m.lureReady = t + 3.1;
+        m.lureReady = t + 4.2;   // decision + carrying it out (~1s) + the 3 s module cooldown
         m.handled.chef = t;
         return { type: 'cmd', name: 'lure', args: { room: '05' } };
       }
@@ -226,7 +270,7 @@ export function heuristicBot(level = 'average', { oracle = false, disable = {} }
       // ---- 5. music box
       if (b.tootie) {
         if (!o.circuits.C7) return { type: 'cmd', name: 'breaker', args: { id: 'C7', on: true } };
-        if (o.focused && o.wind !== undefined && o.wind < 0.35 && !disable.wind) return { type: 'hold', name: 'wind', dur: 2 };
+        if (o.manualWind && !disable.wind) return { type: 'phys', name: 'wind', dir: 'F', dur: 2 };
       }
       // both doors busy: freeze Sunny in its corridor for a few seconds
       if (K.roomFreeze && b.pipDoor && b.sunnyNear && !disable.roomLight && t >= m.freezeUntil) {
@@ -244,11 +288,9 @@ export function heuristicBot(level = 'average', { oracle = false, disable = {} }
       // ---- 6. releases (heat / power / coil)
       for (const side of ['L', 'R']) {
         const holding = side === 'L' ? b.sunnyDoor : b.pipDoor;
-        if (o.doors[side].on && t >= m.lightOffAt[side] && !(holding && t < m.lightOffAt[side] + 2)) {
-          return { type: 'cmd', name: 'doorLight', args: { side, on: false } };
-        }
+        if (o.doors[side].on && t >= m.lightOffAt[side] && !holding) return this.light(o, side, false);
         // protect the bulb, unless something is standing in that door
-        if (o.doors[side].on && o.doors[side].hot && K.careBulbs && !holding) return { type: 'cmd', name: 'doorLight', args: { side, on: false } };
+        if (o.doors[side].on && o.doors[side].hot && K.careBulbs && !holding) return this.light(o, side, false);
       }
       if (o.office.maglock && t >= (m.lockOffAt || 0) && !(b.backDoor && t < (m.lockOffAt || 0) + 1.5)) {
         return { type: 'cmd', name: 'maglock', args: { on: false } };
@@ -265,14 +307,9 @@ export function heuristicBot(level = 'average', { oracle = false, disable = {} }
         m.freezeOff = 0;
         return { type: 'cmd', name: 'roomLight', args: { room: '07', on: false } };
       }
-      // with the light already holding Sunny, keep an eye on it
-      if (b.sunnyDoor && o.doors.L.lit && !b.pipDoor && !b.backDoor) {
-        if (K.confirmLook && o.look !== 'L' && t > m.lightOffAt.L - 1.2) return { type: 'look', dir: 'L' };
-        return { type: 'wait', dur: 0.3 };
-      }
 
       // ---- 7. prevention
-      if (b.pipNear && !b.pipDoor && !o.shutterBusy && o.circuits.C6 && t >= (m.sealRetry || 0) && !disable.seal && (K.sealNear || o.paJam || (K.sealFallback && this.lureBudgetLow(m, o)))) {
+      if (b.pipNear && !b.pipDoor && !o.shutterBusy && o.circuits.C6 && t >= (m.sealRetry || 0) && !disable.seal && (K.sealNear || (K.sealFallback && this.lureBudgetLow(m, o)))) {
         m.sealRetry = t + 4;
         return { type: 'cmd', name: 'seal', args: { room: '08', on: true } };
       }
@@ -281,19 +318,23 @@ export function heuristicBot(level = 'average', { oracle = false, disable = {} }
         m.lockOffAt = t + 3;
         return { type: 'cmd', name: 'maglock', args: { on: true } };
       }
-      if (o.focused && o.autoWind === false && o.wind !== undefined && o.wind < K.windAt && !doorBusy && !disable.wind) {
-        return { type: 'hold', name: 'wind', dur: Math.min(3, (0.95 - o.wind) / 0.25) };
+      // the music box on the shelf: wind it when you know it is running down
+      // (seen on the facility page, or right there on the shelf)
+      if (o.wind !== undefined) m.windSeen = { v: o.wind, t };
+      const windEst = m.windSeen ? m.windSeen.v - (t - m.windSeen.t) * (o.night >= 6 ? 0.011 : 0.01) : 1;
+      if (o.manualWind && windEst < K.windAt && !doorBusy && !disable.wind) {
+        return { type: 'phys', name: 'wind', dir: 'F', dur: Math.min(3, Math.max(1, (0.95 - Math.max(0, windEst)) / 0.25)) };
       }
       if (!o.circuits.C0 && !disable.freezer) return { type: 'cmd', name: 'breaker', args: { id: 'C0', on: true } };
       for (const id of ['C1', 'C2', 'C3', 'C4', 'C5', 'C6', 'C7', 'C8']) {
-        if (!o.circuits[id] && t - (m.breakerFixAt || -99) > (level === 'novice' ? 15 : 3)) {
+        if (!o.circuits[id] && !(o.seized || {})[id] && t - (m.breakerFixAt || -99) > (level === 'novice' ? 15 : 3)) {
           m.breakerFixAt = t;
           return { type: 'cmd', name: 'breaker', args: { id, on: true } };
         }
       }
-      if (o.phone === 'ringing' && o.t > 30 && t - (m.hangAt || -99) > 3) {
+      if (o.phone === 'ringing' && o.phoneSpam && t - (m.hangAt || -99) > 3) {
         m.hangAt = t;
-        if (agent.rng.chance(K.hangUp)) return { type: 'cmd', name: 'hangUp' };
+        if (agent.rng.chance(K.hangUp)) return { type: 'phys', name: 'hangUp', dir: 'F' };
       }
       if (o.emergencies) {
         const e = o.emergencies.find((x) => x.id === 'E-1');
@@ -323,33 +364,34 @@ export function heuristicBot(level = 'average', { oracle = false, disable = {} }
       if (o.night >= 5 && o.office.light === 2 && disable.bright) return { type: 'cmd', name: 'officeLight', args: { level: 1 } };
       if (K.degauss && !disable.degauss && o.magnet !== undefined && o.magnet > 0.6 && !b.pipNear) return { type: 'cmd', name: 'degauss' };
 
-      // ---- 9. power: cut the stage once it is confirmed empty
-      if (K.stageCut && !disable.stageCut && !m.stageCut && t > 120 && o.circuits.C9) {
-        const r = o.rooms && o.rooms['01'];
-        if (r && r.result && r.result.count === 0 && t - m.stageScanAt < 8) {
-          m.stageCut = true;
-          return { type: 'cmd', name: 'breaker', args: { id: 'C9', on: false } };
-        }
-        if (t - m.stageScanAt > 40) {
-          m.stageScanAt = t;
-          return { type: 'cmd', name: 'scan', args: { room: '01' } };
-        }
+      // ---- 9. power: the stage circuit is a big drain. An expert cuts it
+      // around 01:00 (whoever is still up there gets a jolt, but early in the
+      // night that is cheap); scanning for an empty stage costs more than it saves
+      if (K.stageCut && o.night >= 2 && !disable.stageCut && !m.stageCut && t > K.stageAt && o.circuits.C9) {
+        m.stageCut = true;
+        return { type: 'cmd', name: 'breaker', args: { id: 'C9', on: false } };
       }
 
       // ---- 10. periodic glance at the left door when nothing has been heard
       if (K.checkEvery && t - m.lastCheck > K.checkEvery && !disable.doorLight) {
         m.lastCheck = t;
         if (!o.doors.L.lit && !o.doors.L.broken && !o.doors.L.hot) {
-          m.lightOffAt.L = t + 1.6;
-          return { type: 'cmd', name: 'doorLight', args: { side: 'L', on: true } };
+          m.lightOffAt.L = t + 1.2;
+          return { type: 'phys', name: 'doorLight', dir: 'L', args: { side: 'L', on: true } };
         }
       }
+
+      // nothing left to watch: back to the terminal, on the map (lures live there)
+      if (!o.focused && !doorBusy) return { type: 'focus', page: 'map' };
 
       // ---- 11. work: emergency tasks first, then whatever is open
       // (never start a task chunk that would be interrupted right away)
       if (this.interrupt(o, agent)) return { type: 'wait', dur: 0.3 };
       // the generator is loud: only fire it up when the battery is really running low
-      const wantGen = (x) => x.id !== 'T-06' || (!disable.generator && o.power && (o.power.pct < K.genAt || o.power.load > 8.2));
+      // experts read the runtime estimate: start it only when the reserve
+      // will not last until 06:00 (or the load is near the trip limit)
+      const short = o.power && (K.genProjection ? o.power.eta < Math.max(0, 540 - t) + 25 : o.power.pct < K.genAt);
+      const wantGen = (x) => x.id !== 'T-06' || (!disable.generator && o.power && (short || o.power.load > 8.2));
       const task = o.tasks.find((x) => !x.done && x.open && x.optional && wantGen(x)) || o.tasks.find((x) => !x.done && x.open && !x.optional);
       if (task) return { type: 'task', id: task.id, dur: Math.min(K.chunk, task.need - task.progress + 0.05) };
       return { type: 'wait', dur: 0.5 };

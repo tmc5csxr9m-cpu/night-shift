@@ -32,7 +32,7 @@ export const resultPage = {
     ui.box(3, 7, 46, 16, { title: '统计', titleAlign: 'left' });
     const done = w.tasks.filter((t) => t.done).length;
     const rows = [
-      ['存活时间', w.clock() + (w.overtime ? ' (加班)' : '')],
+      ['存活时间', w.clock() + (w.clockStuck ? ' (时间停止)' : w.overtime ? ' (加班)' : '')],
       ['剩余电力', `${w.powerPct().toFixed(1)}%   最低 ${w.stats.minPower.toFixed(1)}%`],
       ['完成任务', `${done}/${w.tasks.length}`],
       ['击退次数', Object.entries(w.stats.repels).map(([k, v]) => `${ACTOR_NAMES[k] || k}×${v}`).join(' ') || '—'],

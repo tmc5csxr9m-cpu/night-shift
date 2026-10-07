@@ -81,6 +81,10 @@ const ray = new THREE.Raycaster();
 let started = false;
 let hoverMonitor = false;
 let hoverPhone = false;
+let hoverBox = false;        // the music box on the shelf (hold to wind)
+let hoverSwitch = null;      // 'L' | 'R': a door light switch
+let winding = false;
+let windTick = 0;
 
 function screenCell(ndc = view.mouse) {
   ray.setFromCamera(ndc, camera);
@@ -110,22 +114,26 @@ function exitFocus() {
 
 const canvas = renderer.domElement;
 
-// The mouse is captured (pointer lock) and a cursor is drawn by the game,
-// so turning at the screen edge works in a window and on multi-monitor
-// setups. ESC releases the capture (Chromium rule); the next click takes it back.
+// The game always draws its own cursor. In a window the mouse is captured
+// (pointer lock) so it cannot wander off while turning; fullscreen needs no
+// capture (the screen edge holds it) and so ESC stays a plain key there.
+// Chromium releases a lock itself on the ESC key press and eats that press:
+// a lock we did not give up counts as ESC; the next click captures again.
 const cursorEl = document.getElementById('cursor');
 const vm = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
 let captured = false;
+let releasing = false;     // we gave the lock up ourselves (debug panel)
+const wantCapture = () => save.data.settings.display !== 'fullscreen';
 function setMouse(x, y) {
   vm.x = Math.max(0, Math.min(window.innerWidth - 1, x));
   vm.y = Math.max(0, Math.min(window.innerHeight - 1, y));
   view.mouse.set((vm.x / window.innerWidth) * 2 - 1, -(vm.y / window.innerHeight) * 2 + 1);
   view.hasMouse = true;
-  if (captured) cursorEl.style.transform = `translate(${vm.x}px, ${vm.y}px)`;
+  cursorEl.style.transform = `translate(${vm.x}px, ${vm.y}px)`;
 }
 function capture(e) {
   if (e) setMouse(e.clientX, e.clientY);
-  if (captured || !started || debugPanel.open) return;
+  if (captured || !started || debugPanel.open || !wantCapture()) return;
   try {
     canvas.requestPointerLock()?.catch?.(() => {});
   } catch { /* not allowed right now: retry on the next click */ }
@@ -135,32 +143,50 @@ window.addEventListener('mousemove', (e) => {
   else setMouse(e.clientX, e.clientY);
 });
 document.addEventListener('pointerlockchange', () => {
+  const was = captured;
   captured = document.pointerLockElement === canvas;
-  if (!captured) cursorEl.style.display = 'none';
-  else setMouse(vm.x, vm.y);
+  if (captured) setMouse(vm.x, vm.y);
+  else if (was && !releasing && document.hasFocus()) exitFocus();
+  releasing = false;
 });
-document.addEventListener('mouseleave', () => {
-  if (!captured) view.hasMouse = false;
+// switching to fullscreen: give the mouse back (the screen edge holds it now)
+function releaseCapture() {
+  if (!captured) return;
+  releasing = true;
+  document.exitPointerLock();
+}
+document.addEventListener('mouseleave', (e) => {
+  if (captured) return;
+  // slid off a side onto another monitor: keep turning that way
+  if (e.clientX <= 2 || e.clientX >= window.innerWidth - 3) setMouse(e.clientX <= 2 ? 0 : window.innerWidth, vm.y);
+  else view.hasMouse = false;
 });
 canvas.addEventListener('mousedown', (e) => {
   if (!captured) capture(e);
+  // right button leaves the terminal (no contextmenu event under pointer lock)
+  if (e.button === 2) {
+    exitFocus();
+    return;
+  }
   if (!started || e.button !== 0) return;
   if (view.focused) {
     const cell = screenCell();
     if (cell) term.mouseDown(cell);
     else exitFocus();
   } else if (hoverMonitor) enterFocus();
+  else if (hoverSwitch && game.world) game.cmd('doorLight', { side: hoverSwitch });
+  else if (hoverBox && game.world) winding = true;
   else if (hoverPhone && game.world) {
     const st = game.world.phone.state;
     if (st === 'ringing') game.cmd('answerPhone');
     else if (st === 'call') game.cmd('hangUp');
   }
 });
-window.addEventListener('mouseup', () => term.mouseUp());
-canvas.addEventListener('contextmenu', (e) => {
-  e.preventDefault();
-  exitFocus();
+window.addEventListener('mouseup', () => {
+  winding = false;
+  term.mouseUp();
 });
+canvas.addEventListener('contextmenu', (e) => e.preventDefault());
 window.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') exitFocus();
 });
@@ -356,7 +382,7 @@ on('sim:phone', (e) => {
     }, () => {
       subtitle.classList.remove('show');
       // message finished by itself: close the line so the [挂断] button goes away
-      if (game.world && game.world.phone.state === 'call') game.cmd('hangUp');
+      if (game.world && game.world.phone.state === 'call') game.cmd('hangUp', { auto: true });
     }, voice);
     if (!save.data.seen.calls.includes(e.night)) {
       save.data.seen.calls.push(e.night);
@@ -421,8 +447,11 @@ on('sim:cue', (e) => {
   if (!def || !pos) return;
   const v = new THREE.Vector3(...pos);
   const far = v.length() > 6;
-  const vol = Math.min(2.5, Math.pow(10, (e.db - 44) / 20));
-  audio.shot(def[0], v, { scene, volume: vol, ref: 2, lowpass: far ? 1400 : 0, rate: def[1] * (0.95 + Math.random() * 0.1) });
+  // the cue's loudness comes from the sim (dB); distance mostly colours it
+  // (low-pass) rather than burying it, so what the sim says you can hear,
+  // you can actually hear over the fan
+  const vol = Math.min(3, 1.6 * Math.pow(10, (e.db - 44) / 20));
+  audio.shot(def[0], v, { scene, volume: vol, ref: far ? 6 : 3, lowpass: far ? 1800 : 0, rate: def[1] * (0.95 + Math.random() * 0.1) });
   // at the back door it also "breathes"
   if (e.source === 'back' && e.kind === 'greet') audio.shot('back_breath', v, { scene, volume: vol * 0.8, ref: 1.2 });
 });
@@ -462,7 +491,11 @@ on('sim:bossPhase', (e) => {
   buzzer.tone(110, 0.6, 0.6);
 });
 on('sim:bossTelegraph', (e) => {
-  if (e.kind === 'breaker') {
+  if (e.kind === 'pa') {
+    // the PA speakers crackle in the halls: 3 s until the lures go dead
+    for (const n of ['07F', '08F']) audio.shot('zap', new THREE.Vector3(...NODE_POS[n]), { scene, volume: 1.0, ref: 3, lowpass: 2000, rate: 0.6 });
+    buzzer.tone(660, 0.2, 0.35, 440);
+  } else if (e.kind === 'breaker') {
     for (let i = 0; i < 6; i++) setTimeout(() => audio.shot('relay', new THREE.Vector3(...NODE_POS['10']), { scene, volume: 0.9, ref: 2, rate: 0.8 + Math.random() * 0.6 }), i * 300);
     buzzer.tone(330, 0.3, 0.5, 220);
   } else if (e.kind === 'attack') {
@@ -552,9 +585,9 @@ let degauss = 0;
 const MENU = { light: 2, fan: true, osc: true, vent: 1, music: true, wind: 1, doors: { L: false, R: false }, heat: { L: 0, R: 0 } };
 
 function startAudio() {
-  loops.ambience = audio.loop('ambience', { volume: 0.32, music: true });
+  loops.ambience = audio.loop('ambience', { volume: 0.24, music: true });
   loops.room = audio.loop('roomtone', { volume: 0.22 });
-  loops.fan = audio.loop('fan', { parent: room.anchors.fan, volume: 0.5, ref: 0.6, rolloff: 1.1 });
+  loops.fan = audio.loop('fan', { parent: room.anchors.fan, volume: 0.38, ref: 0.6, rolloff: 1.1 });
   loops.lamp = audio.loop('buzz', { parent: room.anchors.lamp, volume: 0.05, ref: 0.8 });
   loops.doorL = audio.loop('buzz', { parent: room.doorLights.L.anchor, volume: 0, ref: 1, rate: 0.98 });
   loops.doorR = audio.loop('buzz', { parent: room.doorLights.R.anchor, volume: 0, ref: 1, rate: 1.02 });
@@ -599,7 +632,7 @@ function updateWorld(dt, t) {
   if (st.osc && f.speed > 1) f.osc = (f.osc || 0) + dt * 0.45 * (f.speed / 26);
   f.head.rotation.y = Math.sin(f.osc || 0) * 0.65;
   if (loops.fan) {
-    loops.fan.setVolume(0.55 * Math.min(1, f.speed / 26));
+    loops.fan.setVolume(0.4 * Math.min(1, f.speed / 26));
     loops.fan.setPlaybackRate(0.55 + 0.45 * Math.min(1, f.speed / 26));
   }
 
@@ -639,6 +672,9 @@ function updateWorld(dt, t) {
       D.spill.color.setHex(0xffc070);
     } else D.spill.color.setHex(0xd8e4ff);
     room.panelLeds[k].emissive.setHex(st.doors[k] ? 0x30ff60 : 0xff3020);
+    const sw = room.doorSwitches[k].btnMat;
+    sw.emissive.setHex(st.doors[k] ? 0x30ff60 : 0xff3020);
+    sw.emissiveIntensity = st.doors[k] ? 0.9 : hoverSwitch === k ? 0.7 : 0.3;
     room.panelLeds[k].emissiveIntensity = st.doors[k] ? 2.2 : 0.6;
     const lp = k === 'L' ? loops.doorL : loops.doorR;
     if (lp) lp.setVolume(st.doors[k] ? 0.3 * Math.max(0.3, lvl) : 0);
@@ -681,7 +717,9 @@ function updateWorld(dt, t) {
   const pu = crt.uniforms.power;
   pu.value = termOn ? Math.min(1, pu.value + dt * 0.8) : Math.max(0, pu.value - dt * 1.6);
   if (w && !w.result) {
-    crt.uniforms.emi.value.set(w.emi.L, w.emi.R, w.emi.B, w.emi.T);
+    // interference shows faintly: your ears are the main sense
+    const ev = w.P.emi.visual ?? 1;
+    crt.uniforms.emi.value.set(w.emi.L * ev, w.emi.R * ev, w.emi.B * ev, w.emi.T * ev);
     crt.uniforms.magnet.value = w.emi.magnet * 0.8;
     crt.uniforms.heat.value = Math.max(0, w.temp.eff - 30) / 6;
     if (loops.emi) loops.emi.setVolume(Math.min(0.5, (w.emi.L + w.emi.R + w.emi.B + w.emi.T) * 0.25));
@@ -763,11 +801,13 @@ function updateWorld(dt, t) {
 function setCursor() {
   let c = 'default';
   if (view.focused || view.focus > 0.5) c = 'none';
-  else if (hoverMonitor || hoverPhone) c = 'pointer';
-  if (canvas.style.cursor !== c) canvas.style.cursor = c;
+  else if (hoverMonitor || hoverPhone || hoverBox || hoverSwitch) c = 'pointer';
+  // the system pointer stays hidden: the drawn cursor replaces it
+  const sys = started && !debugPanel.open ? 'none' : c;
+  if (canvas.style.cursor !== sys) canvas.style.cursor = sys;
   // the drawn cursor stands in for the system one while captured
-  if (debugPanel.open && captured) document.exitPointerLock();
-  const show = captured && c !== 'none';
+  if (debugPanel.open || !wantCapture()) releaseCapture();
+  const show = started && !debugPanel.open && c !== 'none';
   if ((cursorEl.style.display === 'block') !== show) cursorEl.style.display = show ? 'block' : 'none';
   cursorEl.classList.toggle('pointer', c === 'pointer');
 }
@@ -776,9 +816,20 @@ function setCursor() {
 {
   const quitEl = document.getElementById('quit');
   const bar = quitEl.querySelector('.bar');
+  const inNight = () => term.mode !== 'menu';
   native.onEscHold((p) => {
+    if (p > 0.1) quitEl.firstChild.textContent = inNight() ? '继续按住 ESC 返回主菜单' : '继续按住 ESC 退出游戏';
     quitEl.classList.toggle('show', p > 0.1);
     bar.style.width = `${Math.round(p * 100)}%`;
+  });
+  // long ESC: leave the night (not recorded) / quit from the menu
+  native.onEscLong(() => {
+    quitEl.classList.remove('show');
+    if (!started) return;
+    if (inNight()) {
+      buzzer.error();
+      showMenu();
+    } else native.quit();
   });
 }
 
@@ -807,6 +858,8 @@ function frame() {
 
   hoverMonitor = false;
   hoverPhone = false;
+  hoverBox = false;
+  hoverSwitch = null;
   let cell = null;
   if (started && view.hasMouse) {
     if (view.focused) cell = screenCell();
@@ -814,6 +867,18 @@ function frame() {
       ray.setFromCamera(view.mouse, camera);
       hoverMonitor = ray.intersectObject(room.monitor, true).length > 0;
       hoverPhone = !hoverMonitor && ray.intersectObject(room.phone, true).length > 0;
+      hoverBox = !hoverMonitor && !hoverPhone && ray.intersectObject(room.musicBox.group, true).length > 0;
+      for (const k of ['L', 'R']) if (ray.intersectObject(room.doorSwitches[k].group, true).length) hoverSwitch = k;
+    }
+  }
+  // winding: hold the mouse on the box
+  if (winding && (!hoverBox || !game.world)) winding = false;
+  if (winding) {
+    const r = game.cmd('wind', { dt });
+    windTick += dt;
+    if (r.ok !== false && windTick > 0.14) {
+      windTick = 0;
+      audio.shot('relay', room.musicBox.group.getWorldPosition(new THREE.Vector3()), { scene, volume: 0.25, ref: 0.6, rate: 2.2 });
     }
   }
   term.setMouse(view.focused ? cell : null);

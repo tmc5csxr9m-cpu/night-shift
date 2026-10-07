@@ -37,6 +37,7 @@ const task = (o, dur = 5) => {
 
 // X-*: one strategy and nothing else. Must lose.
 export function exploitBot(kind) {
+  if (kind === 'terminalOnly') return terminalOnlyBot();
   const base = heuristicBot('average');
   return {
     name: 'X-' + kind,
@@ -133,7 +134,25 @@ export function trickBot(kind) {
   };
 }
 
-export const EXPLOITS = ['X-lightsOn', 'X-lureSpam', 'X-noTasks', 'X-lateTasks', 'X-sealAll'];
+// an expert who never leaves the terminal: everything from the keyboard,
+// lights from the hotbar, never turns round, never touches the shelf or phone
+function terminalOnlyBot() {
+  const base = heuristicBot('expert');
+  return {
+    name: 'X-terminalOnly',
+    reset: base.reset,
+    interrupt: base.interrupt.bind(base),
+    decide(o, agent) {
+      const a = base.decide(o, agent);
+      if (!a) return a;
+      if (a.type === 'look') return { type: 'wait', dur: 0.3 };
+      if (a.type === 'phys') return a.name === 'doorLight' ? { type: 'cmd', name: 'doorLight', args: a.args } : { type: 'wait', dur: 0.3 };
+      return a;
+    },
+  };
+}
+
+export const EXPLOITS = ['X-lightsOn', 'X-lureSpam', 'X-noTasks', 'X-lateTasks', 'X-sealAll', 'X-terminalOnly'];
 export const TRICKS = ['T-roomFreeze', 'T-dark', 'T-stageEarly', 'T-freezerOff', 'T-turtle', 'T-fanOff', 'T-pipLightOnly', 'T-ventMax', 'T-genEarly', 'T-darkP4'];
 
 export function makeBot(name) {

@@ -113,6 +113,13 @@ const app = {
     await sleep(40);
     await send('Input.dispatchMouseEvent', { type: 'mouseReleased', x, y, button, clickCount: 1 });
   },
+  // press, keep the button down for ms, release (hold-to-use objects)
+  async hold(x, y, ms) {
+    await send('Input.dispatchMouseEvent', { type: 'mouseMoved', x, y });
+    await send('Input.dispatchMouseEvent', { type: 'mousePressed', x, y, button: 'left', clickCount: 1 });
+    await sleep(ms);
+    await send('Input.dispatchMouseEvent', { type: 'mouseReleased', x, y, button: 'left', clickCount: 1 });
+  },
   async move(x, y) {
     await send('Input.dispatchMouseEvent', { type: 'mouseMoved', x, y });
   },

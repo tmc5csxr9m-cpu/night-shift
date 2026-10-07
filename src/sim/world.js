@@ -83,6 +83,7 @@ export class World {
     this.compressor = { fault: false, t: 0 };
     this.generator = { running: false, fuel: n.genFuel ?? 1, gridDown: false };
     this.locks = {};          // breaker write-protection { id: {t, cd} }
+    this.seized = {};         // N6: circuits STARLIGHT holds open { id: seconds }
     this.bossLoad = 0;
     this.pageLock = null;
     this.ventHijack = 0;
@@ -111,7 +112,14 @@ export class World {
     return Math.min(360 + (this.overtime ? 30 : 0), (this.t / this.P.nightSeconds) * 360);
   }
 
+  // Night 6 does not end at 06:00 while the takeback is unfinished: the
+  // clock freezes at 05:59 (shown red) until the last task is done
+  get clockStuck() {
+    return !!(this.night.boss && this.overtime);
+  }
+
   clock() {
+    if (this.clockStuck) return '05:59';
     const m = Math.floor(this.gameMinutes);
     return `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
   }
@@ -221,6 +229,7 @@ export class World {
     }
     if (this.pageLock && this.pageLock.t > 0) this.pageLock.t -= dt;
     if (this.ventHijack > 0) this.ventHijack -= dt;
+    for (const k in this.seized) if (this.seized[k] > 0) this.seized[k] -= dt;
     if (this.paJam > 0) this.paJam -= dt;
     // boss-forced attacks: appear at the door after the warning
     for (const a of this.actors) {
@@ -309,9 +318,15 @@ export class World {
     this.emit('cue', c);
   }
 
+  // you can see a door only by looking at it (not from the terminal)
+  watching(side) {
+    return !this.player.focused && this.player.look === side;
+  }
+
   onMove(actor, from, to) {
     const room = sensorRoom(to);
-    if (room && this.rooms[room]) this.rooms[room].spike = Math.max(this.rooms[room].spike, 14 + this.rng.float() * 8);
+    // footsteps barely lift a room's reading: the map hints, your ears tell
+    if (room && this.rooms[room]) this.rooms[room].spike = Math.max(this.rooms[room].spike, this.P.scan.stepSpike[0] + this.rng.float() * this.P.scan.stepSpike[1]);
     const db = this.P.cues[actor.id]?.[to];
     if (db) this.cue(actor.id, to, db, 'step');
     this.emit('move', { actor: actor.id, from, to });
@@ -418,6 +433,15 @@ export class World {
 
   c_breaker({ id, on }) {
     const was = this.circuits[id];
+    if (!was && on !== false && this.seized[id] > 0) return { ok: false, msg: `回路 ${id} 被 STARLIGHT 占用 (${Math.ceil(this.seized[id])}s)` };
+    // cutting the stage while someone is still on it jolts them awake
+    if (id === 'C9' && was && on !== true) {
+      for (const a of this.actors) {
+        if (a.node !== '01') continue;
+        a.shockT = this.P.stageShock.time;
+        this.log(`舞台断电 — 台上的表演者被惊醒了!`, 'warn');
+      }
+    }
     this.circuits[id] = on === undefined ? !was : !!on;
     if (was !== this.circuits[id]) {
       const note = BREAKER_NOTES[id];
@@ -505,7 +529,9 @@ export class World {
     o.maglock = want;
   }
 
+  // the music box is on the shelf: you have to leave the terminal to wind it
   c_wind({ dt }) {
+    if (this.player.focused || this.player.look !== 'F') return { ok: false, msg: '音乐盒在架子上' };
     if (!this.powered('C7')) return { ok: false, msg: '无供电' };
     this.musicBox.wind = Math.min(1, this.musicBox.wind + this.P.musicBox.windRate * Math.min(dt, 0.5));
   }
@@ -519,10 +545,17 @@ export class World {
   }
 
   c_answerPhone() {
-    if (this.phone.state === 'ringing') this.startCall();
+    if (this.phone.state !== 'ringing') return;
+    if (this.player.focused) return { ok: false, msg: '电话在桌上' };
+    // a nuisance call: picking up just ends it (no message to play)
+    if (this.phone.kind === 'spam') return this.c_hangUp();
+    this.startCall();
   }
 
-  c_hangUp() {
+  // the phone is on the desk: a ringing nuisance call has to be picked up
+  // there (the client closes a finished voicemail itself: auto)
+  c_hangUp({ auto } = {}) {
+    if (!auto && this.player.focused) return { ok: false, msg: '电话在桌上' };
     if (this.phone.state === 'ringing' || this.phone.state === 'call') {
       this.phone.state = 'idle';
       this.emit('phone', { state: 'idle' });
@@ -646,6 +679,7 @@ export class World {
     if (!this.debug.freeze) {
       for (const a of this.actors) {
         if (this.debug.disabled[a.id]) continue;
+        if (a.shockT > 0) a.shockT -= dt;
         a.tick(dt);
         if (a.state === 'door' && !this.result) this.doorNag(a, dt);
       }
@@ -671,7 +705,8 @@ export class World {
       if (this.requiredDone()) this.finish('win');
       else {
         this.overtime = true;
-        this.log('交班清单未完成 — 进入加班!', 'warn');
+        if (this.night.boss) this.log('>> STARLIGHT: 时间停在这里. 直到你做完为止.', 'err');
+        else this.log('交班清单未完成 — 进入加班!', 'warn');
         this.emit('overtime');
       }
     }
@@ -988,7 +1023,9 @@ export class World {
 
   randomEvent(kind) {
     const kinds = ['relayStuck', 'drift', 'aging'];
-    if (this.nightIndex >= 3) kinds.push('spamCall', 'nodeOffline');
+    if (this.nightIndex >= 3) kinds.push('nodeOffline');
+    // STARLIGHT owns the line on Night 6: no ordinary nuisance calls
+    if (this.nightIndex >= 3 && !this.night.boss) kinds.push('spamCall');
     if (this.nightIndex >= 4) kinds.push('compressor');
     kind = kind || this.rng.pick(kinds);
     if (kind === 'spamCall') {

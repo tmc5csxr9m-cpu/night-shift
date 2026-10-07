@@ -275,7 +275,7 @@ export class Terminal {
     x += ui.text(x, 0, ` ${w.power.load.toFixed(1)}kW `, w.power.tripped ? '#c01010' : C.ink, C.inv);
     sep();
     const colon = Math.floor(this.time * 2) % 2 ? ':' : ' ';
-    const clk = w.overtime ? `${w.clock().replace(':', colon)} OT` : `${w.clock().replace(':', colon)} AM`;
+    const clk = w.overtime && !w.clockStuck ? `${w.clock().replace(':', colon)} OT` : `${w.clock().replace(':', colon)} AM`;
     x += ui.text(x, 0, ` ◷ ${clk} `, w.overtime ? '#c01010' : C.bg, C.inv);
     sep();
     const te = w.temp.eff;
@@ -285,10 +285,9 @@ export class Terminal {
     if (w.phone.state === 'call' || w.phone.state === 'ringing') {
       sep();
       const ring = w.phone.state === 'ringing';
-      const label = ring ? (Math.floor(this.time * 4) % 2 ? ' ☎ 来电 ' : ' ☎      ') : ' ☎ 通话 ';
+      // the phone is on the desk: pick it up there (leave the terminal)
+      const label = ring ? (Math.floor(this.time * 4) % 2 ? ' ☎ 来电·桌上 ' : ' ☎          ') : ' ☎ 通话 ';
       x += ui.text(x, 0, label, '#a01010', C.inv);
-      const hov = ui.hit('hangup', x, 0, 6, 1, () => this.cmd(ring ? 'answerPhone' : 'hangUp', {}, 'blip'));
-      x += ui.text(x, 0, ring ? '[接听]' : '[挂断]', hov ? C.hi : C.bg, hov ? C.ink : C.inv);
     }
     const right = game.debug ? ' DEBUG ' : `HDD${Math.random() < 0.15 ? '■' : '□'} `;
     ui.text(COLS - strWidth(right), 0, right, game.debug ? C.hi : C.dim2, game.debug ? '#a01010' : C.inv);

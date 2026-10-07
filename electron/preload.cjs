@@ -14,4 +14,5 @@ contextBridge.exposeInMainWorld('native', {
   setDisplay: (mode) => ipcRenderer.invoke('display:set', mode),
   quit: () => ipcRenderer.send('app:quit'),
   onEscHold: (cb) => ipcRenderer.on('esc-hold', (_e, p) => cb(p)),
+  onEscLong: (cb) => ipcRenderer.on('esc-long', () => cb()),
 });

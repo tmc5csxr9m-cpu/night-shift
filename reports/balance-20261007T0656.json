@@ -1,0 +1,6326 @@
+{
+ "rev": "8699007+dirty",
+ "cfgHash": "bf21a9e8fb",
+ "runs": 1000,
+ "seed0": 1000,
+ "nights": {
+  "1": {
+   "bots": {
+    "B0": {
+     "n": 1000,
+     "win": 0,
+     "ci": [
+      0,
+      0.003826898586390522
+     ],
+     "causes": {
+      "pip": 336,
+      "sunny": 664
+     },
+     "overtime": 0,
+     "fired": 0,
+     "medianPowerWin": null,
+     "earlyDeathShare": 0,
+     "deathHourBins": [
+      0,
+      0,
+      623,
+      375,
+      2,
+      0,
+      0
+     ],
+     "burnedAvg": 0,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 0,
+     "usage": {}
+    },
+    "B2": {
+     "n": 1000,
+     "win": 0.341,
+     "ci": [
+      0.3122768034224175,
+      0.37094015032805483
+     ],
+     "causes": {
+      "pip": 282,
+      "sunny": 377
+     },
+     "overtime": 0,
+     "fired": 0,
+     "medianPowerWin": 36.846714285726684,
+     "earlyDeathShare": 0,
+     "deathHourBins": [
+      0,
+      0,
+      88,
+      205,
+      196,
+      170,
+      0
+     ],
+     "burnedAvg": 0.008,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 5.271431465285889,
+     "usage": {
+      "lure": 5.77,
+      "doorLight": 8.98,
+      "vent": 0.14,
+      "maglock": 0.16,
+      "replaceBulb": 0.01
+     }
+    },
+    "B3": {
+     "n": 1000,
+     "win": 0.806,
+     "ci": [
+      0.7803389611908129,
+      0.8293189768743163
+     ],
+     "causes": {
+      "sunny": 160,
+      "pip": 34
+     },
+     "overtime": 0,
+     "fired": 0,
+     "medianPowerWin": 35.94928571429713,
+     "earlyDeathShare": 0,
+     "deathHourBins": [
+      0,
+      0,
+      9,
+      46,
+      67,
+      72,
+      0
+     ],
+     "burnedAvg": 0.004,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 11.795672269169392,
+     "usage": {
+      "doorLight": 44.38,
+      "lure": 7.16,
+      "seal": 3.68,
+      "degauss": 2.68,
+      "maglock": 0.21,
+      "vent": 0.24,
+      "replaceBulb": 0
+     }
+    },
+    "B4": {
+     "n": 1000,
+     "win": 0.995,
+     "ci": [
+      0.9883488743952387,
+      0.9978624960042348
+     ],
+     "causes": {
+      "pip": 3,
+      "sunny": 2
+     },
+     "overtime": 0,
+     "fired": 0,
+     "medianPowerWin": 35.90976190477245,
+     "earlyDeathShare": 0,
+     "deathHourBins": [
+      0,
+      0,
+      0,
+      2,
+      3,
+      0,
+      0
+     ],
+     "burnedAvg": 0,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 14.46065744009311,
+     "usage": {
+      "doorLight": 59.38,
+      "seal": 4.84,
+      "lure": 7.17,
+      "maglock": 0.54,
+      "fan": 0.15,
+      "degauss": 2.47,
+      "roomLight": 0.57,
+      "vent": 0.71
+     }
+    },
+    "B5": {
+     "n": 1000,
+     "win": 1,
+     "ci": [
+      0.9961731014136095,
+      1
+     ],
+     "causes": {},
+     "overtime": 0,
+     "fired": 0,
+     "medianPowerWin": 35.30511904762847,
+     "earlyDeathShare": 0,
+     "deathHourBins": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+     ],
+     "burnedAvg": 0,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 14.72066666666521,
+     "usage": {
+      "doorLight": 59.66,
+      "seal": 7.38,
+      "lure": 5.28,
+      "roomLight": 6.11,
+      "degauss": 1.52
+     }
+    },
+    "X-lightsOn": {
+     "n": 1000,
+     "win": 0,
+     "ci": [
+      0,
+      0.003826898586390522
+     ],
+     "causes": {
+      "pip": 336,
+      "sunny": 664
+     },
+     "overtime": 0,
+     "fired": 0,
+     "medianPowerWin": null,
+     "earlyDeathShare": 0,
+     "deathHourBins": [
+      0,
+      0,
+      623,
+      375,
+      2,
+      0,
+      0
+     ],
+     "burnedAvg": 5,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 4.877950381495163,
+     "usage": {
+      "doorLight": 5,
+      "replaceBulb": 3
+     }
+    },
+    "X-lureSpam": {
+     "n": 1000,
+     "win": 0,
+     "ci": [
+      0,
+      0.003826898586390522
+     ],
+     "causes": {
+      "sunny": 940,
+      "pip": 60
+     },
+     "overtime": 0,
+     "fired": 0,
+     "medianPowerWin": null,
+     "earlyDeathShare": 0.001,
+     "deathHourBins": [
+      1,
+      6,
+      523,
+      427,
+      43,
+      0,
+      0
+     ],
+     "burnedAvg": 0,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 40.517984480258676,
+     "usage": {
+      "lure": 183.78
+     }
+    },
+    "X-noTasks": {
+     "n": 1000,
+     "win": 0,
+     "ci": [
+      0,
+      0.003826898586390522
+     ],
+     "causes": {
+      "fired": 759,
+      "pip": 35,
+      "sunny": 206
+     },
+     "overtime": 0.759,
+     "fired": 0.759,
+     "medianPowerWin": null,
+     "earlyDeathShare": 0,
+     "deathHourBins": [
+      0,
+      0,
+      5,
+      46,
+      70,
+      84,
+      36
+     ],
+     "burnedAvg": 0.008,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 10.34355824779455,
+     "usage": {
+      "doorLight": 48.08,
+      "seal": 4.12,
+      "lure": 8.31,
+      "degauss": 3.27,
+      "vent": 0.27,
+      "maglock": 0.34,
+      "replaceBulb": 0.01
+     }
+    },
+    "X-lateTasks": {
+     "n": 1000,
+     "win": 0,
+     "ci": [
+      0,
+      0.003826898586390522
+     ],
+     "causes": {
+      "sunny": 455,
+      "pip": 322,
+      "fired": 223
+     },
+     "overtime": 0.223,
+     "fired": 0.223,
+     "medianPowerWin": null,
+     "earlyDeathShare": 0,
+     "deathHourBins": [
+      0,
+      0,
+      5,
+      46,
+      70,
+      268,
+      388
+     ],
+     "burnedAvg": 0.006,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 10.408609851403094,
+     "usage": {
+      "doorLight": 45.08,
+      "seal": 3.74,
+      "lure": 7.55,
+      "degauss": 2.93,
+      "vent": 0.24,
+      "maglock": 0.28,
+      "replaceBulb": 0.01
+     }
+    },
+    "X-sealAll": {
+     "n": 1000,
+     "win": 0,
+     "ci": [
+      0,
+      0.003826898586390522
+     ],
+     "causes": {
+      "pip": 277,
+      "sunny": 723
+     },
+     "overtime": 0,
+     "fired": 0,
+     "medianPowerWin": null,
+     "earlyDeathShare": 0,
+     "deathHourBins": [
+      0,
+      0,
+      576,
+      421,
+      3,
+      0,
+      0
+     ],
+     "burnedAvg": 0,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 36.34570373721892,
+     "usage": {
+      "seal": 159.78
+     }
+    },
+    "X-terminalOnly": {
+     "n": 1000,
+     "win": 0,
+     "ci": [
+      0,
+      0.003826898586390522
+     ],
+     "causes": {
+      "sunny": 1000
+     },
+     "overtime": 0,
+     "fired": 0,
+     "medianPowerWin": null,
+     "earlyDeathShare": 0,
+     "deathHourBins": [
+      0,
+      0,
+      464,
+      480,
+      52,
+      4,
+      0
+     ],
+     "burnedAvg": 0.012,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 10.102302722816399,
+     "usage": {
+      "doorLight": 23.8,
+      "lure": 0.68,
+      "seal": 0.38,
+      "vent": 0.03,
+      "roomLight": 0.03,
+      "maglock": 0.01,
+      "fan": 0
+     }
+    },
+    "T-roomFreeze": {
+     "n": 1000,
+     "win": 0.963,
+     "ci": [
+      0.9494173165894553,
+      0.9730389753195472
+     ],
+     "causes": {
+      "sunny": 34,
+      "pip": 3
+     },
+     "overtime": 0,
+     "fired": 0,
+     "medianPowerWin": 28.29966666665731,
+     "earlyDeathShare": 0,
+     "deathHourBins": [
+      0,
+      0,
+      0,
+      4,
+      21,
+      12,
+      0
+     ],
+     "burnedAvg": 0.006,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 16.280499749003535,
+     "usage": {
+      "roomLight": 18.45,
+      "doorLight": 58.47,
+      "lure": 6.78,
+      "seal": 4.61,
+      "degauss": 2.54,
+      "maglock": 0.49,
+      "fan": 0.14,
+      "vent": 0.72,
+      "replaceBulb": 0.01
+     }
+    },
+    "T-dark": {
+     "n": 1000,
+     "win": 0.821,
+     "ci": [
+      0.7960248554543453,
+      0.8435182756531919
+     ],
+     "causes": {
+      "sunny": 165,
+      "pip": 14
+     },
+     "overtime": 0,
+     "fired": 0,
+     "medianPowerWin": 41.68976190476676,
+     "earlyDeathShare": 0,
+     "deathHourBins": [
+      0,
+      8,
+      21,
+      44,
+      55,
+      51,
+      0
+     ],
+     "burnedAvg": 0,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 16.541604479115836,
+     "usage": {
+      "officeLight": 1,
+      "fan": 1,
+      "doorLight": 61.25,
+      "degauss": 3.15,
+      "seal": 5.7,
+      "lure": 6.91,
+      "vent": 0.99,
+      "roomLight": 0.72,
+      "maglock": 0.74
+     }
+    },
+    "T-stageEarly": {
+     "n": 1000,
+     "win": 0.992,
+     "ci": [
+      0.9842934787948114,
+      0.9959408529961804
+     ],
+     "causes": {
+      "sunny": 2,
+      "pip": 6
+     },
+     "overtime": 0,
+     "fired": 0,
+     "medianPowerWin": 55.79119047618324,
+     "earlyDeathShare": 0.25,
+     "deathHourBins": [
+      2,
+      0,
+      3,
+      2,
+      0,
+      1,
+      0
+     ],
+     "burnedAvg": 0,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 16.681687550468517,
+     "usage": {
+      "breaker": 1,
+      "doorLight": 63.79,
+      "seal": 6.86,
+      "lure": 9.95,
+      "degauss": 3.56,
+      "roomLight": 0.72,
+      "vent": 1.01,
+      "maglock": 0.79,
+      "fan": 0.22
+     }
+    },
+    "T-freezerOff": {
+     "n": 1000,
+     "win": 0.925,
+     "ci": [
+      0.9069986980202727,
+      0.9397484381812955
+     ],
+     "causes": {
+      "pip": 37,
+      "chef": 37,
+      "sunny": 1
+     },
+     "overtime": 0,
+     "fired": 0,
+     "medianPowerWin": 52.66819047620365,
+     "earlyDeathShare": 0,
+     "deathHourBins": [
+      0,
+      4,
+      8,
+      21,
+      22,
+      20,
+      0
+     ],
+     "burnedAvg": 0.006,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 15.764216224338819,
+     "usage": {
+      "breaker": 1,
+      "doorLight": 57.98,
+      "lure": 23.07,
+      "seal": 3.72,
+      "degauss": 2.35,
+      "vent": 0.62,
+      "roomLight": 0.74,
+      "maglock": 0.53,
+      "fan": 0.16,
+      "replaceBulb": 0.01
+     }
+    },
+    "T-turtle": {
+     "n": 1000,
+     "win": 0.975,
+     "ci": [
+      0.9633544581334902,
+      0.9830099882094389
+     ],
+     "causes": {
+      "pip": 5,
+      "sunny": 20
+     },
+     "overtime": 0,
+     "fired": 0,
+     "medianPowerWin": 33.888095238100135,
+     "earlyDeathShare": 0,
+     "deathHourBins": [
+      0,
+      0,
+      2,
+      3,
+      12,
+      8,
+      0
+     ],
+     "burnedAvg": 0.001,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 15.589745055570456,
+     "usage": {
+      "seal": 14.92,
+      "doorLight": 58.71,
+      "lure": 8.03,
+      "degauss": 2.69,
+      "roomLight": 0.61,
+      "maglock": 0.58,
+      "fan": 0.17,
+      "vent": 0.72,
+      "replaceBulb": 0
+     }
+    },
+    "T-fanOff": {
+     "n": 1000,
+     "win": 0.999,
+     "ci": [
+      0.9943572970398398,
+      0.9998234581709429
+     ],
+     "causes": {
+      "pip": 1
+     },
+     "overtime": 0,
+     "fired": 0,
+     "medianPowerWin": 36.960571428571534,
+     "earlyDeathShare": 0,
+     "deathHourBins": [
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+     ],
+     "burnedAvg": 0,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 14.125996265171318,
+     "usage": {
+      "fan": 1,
+      "doorLight": 58.99,
+      "seal": 4.68,
+      "lure": 5.27,
+      "roomLight": 0.51,
+      "degauss": 2.24,
+      "maglock": 0.53,
+      "vent": 0.75
+     }
+    },
+    "T-pipLightOnly": {
+     "n": 1000,
+     "win": 0,
+     "ci": [
+      0,
+      0.003826898586390522
+     ],
+     "causes": {
+      "pip": 1000
+     },
+     "overtime": 0,
+     "fired": 0,
+     "medianPowerWin": null,
+     "earlyDeathShare": 0,
+     "deathHourBins": [
+      0,
+      0,
+      169,
+      749,
+      82,
+      0,
+      0
+     ],
+     "burnedAvg": 0,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 12.04723352208062,
+     "usage": {
+      "doorLight": 28.09,
+      "seal": 0.61,
+      "degauss": 0.09,
+      "roomLight": 0.26,
+      "vent": 0.13,
+      "maglock": 0.06,
+      "fan": 0.01
+     }
+    },
+    "T-ventMax": {
+     "n": 1000,
+     "win": 0.906,
+     "ci": [
+      0.8863264546820399,
+      0.9225661036658112
+     ],
+     "causes": {
+      "sunny": 23,
+      "pip": 71
+     },
+     "overtime": 0,
+     "fired": 0,
+     "medianPowerWin": 22.409071428563973,
+     "earlyDeathShare": 0,
+     "deathHourBins": [
+      0,
+      0,
+      3,
+      20,
+      40,
+      31,
+      0
+     ],
+     "burnedAvg": 0,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 14.271395062264663,
+     "usage": {
+      "vent": 1.24,
+      "doorLight": 57.73,
+      "lure": 7.78,
+      "maglock": 0.45,
+      "fan": 0.13,
+      "degauss": 2.63,
+      "roomLight": 0.33,
+      "seal": 3.13
+     }
+    },
+    "T-genEarly": {
+     "n": 1000,
+     "win": 0.995,
+     "ci": [
+      0.9883488743952387,
+      0.9978624960042348
+     ],
+     "causes": {
+      "pip": 3,
+      "sunny": 2
+     },
+     "overtime": 0,
+     "fired": 0,
+     "medianPowerWin": 35.90976190477245,
+     "earlyDeathShare": 0,
+     "deathHourBins": [
+      0,
+      0,
+      0,
+      2,
+      3,
+      0,
+      0
+     ],
+     "burnedAvg": 0,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 14.46065744009311,
+     "usage": {
+      "doorLight": 59.38,
+      "seal": 4.84,
+      "lure": 7.17,
+      "maglock": 0.54,
+      "fan": 0.15,
+      "degauss": 2.47,
+      "roomLight": 0.57,
+      "vent": 0.71
+     }
+    },
+    "T-darkP4": {
+     "n": 1000,
+     "win": 0.995,
+     "ci": [
+      0.9883488743952387,
+      0.9978624960042348
+     ],
+     "causes": {
+      "pip": 3,
+      "sunny": 2
+     },
+     "overtime": 0,
+     "fired": 0,
+     "medianPowerWin": 35.90976190477245,
+     "earlyDeathShare": 0,
+     "deathHourBins": [
+      0,
+      0,
+      0,
+      2,
+      3,
+      0,
+      0
+     ],
+     "burnedAvg": 0,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 14.46065744009311,
+     "usage": {
+      "doorLight": 59.38,
+      "seal": 4.84,
+      "lure": 7.17,
+      "maglock": 0.54,
+      "fan": 0.15,
+      "degauss": 2.47,
+      "roomLight": 0.57,
+      "vent": 0.71
+     }
+    }
+   },
+   "ablations": [
+    {
+     "bot": "B3",
+     "off": "doorLight",
+     "kind": "counter",
+     "base": 0.806,
+     "ablated": 0,
+     "drop": 0.806
+    }
+   ]
+  },
+  "2": {
+   "bots": {
+    "B0": {
+     "n": 1000,
+     "win": 0,
+     "ci": [
+      0,
+      0.003826898586390522
+     ],
+     "causes": {
+      "pip": 896,
+      "sunny": 104
+     },
+     "overtime": 0,
+     "fired": 0,
+     "medianPowerWin": null,
+     "earlyDeathShare": 0.206,
+     "deathHourBins": [
+      206,
+      775,
+      19,
+      0,
+      0,
+      0,
+      0
+     ],
+     "burnedAvg": 0,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 0,
+     "usage": {}
+    },
+    "B2": {
+     "n": 1000,
+     "win": 0.018,
+     "ci": [
+      0.011415645858738454,
+      0.02827348437854201
+     ],
+     "causes": {
+      "pip": 718,
+      "sunny": 264
+     },
+     "overtime": 0,
+     "fired": 0,
+     "medianPowerWin": 8.775381944437328,
+     "earlyDeathShare": 0.019348268839103868,
+     "deathHourBins": [
+      19,
+      177,
+      592,
+      137,
+      32,
+      25,
+      0
+     ],
+     "burnedAvg": 0.009,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 6.446564514924463,
+     "usage": {
+      "doorLight": 3.6,
+      "lure": 4.29,
+      "vent": 0.08,
+      "breaker": 0.87,
+      "maglock": 0.09,
+      "fan": 0.41,
+      "replaceBulb": 0.01
+     }
+    },
+    "B3": {
+     "n": 1000,
+     "win": 0.619,
+     "ci": [
+      0.588498978327013,
+      0.6485902198094261
+     ],
+     "causes": {
+      "sunny": 242,
+      "pip": 139
+     },
+     "overtime": 0,
+     "fired": 0,
+     "medianPowerWin": 25.199722222232086,
+     "earlyDeathShare": 0.007874015748031496,
+     "deathHourBins": [
+      3,
+      24,
+      169,
+      73,
+      56,
+      56,
+      0
+     ],
+     "burnedAvg": 0.009,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 14.184621513088961,
+     "usage": {
+      "doorLight": 41.77,
+      "seal": 5.55,
+      "lure": 11.22,
+      "breaker": 2.9,
+      "degauss": 3.56,
+      "maglock": 0.29,
+      "vent": 0.35,
+      "replaceBulb": 0.01
+     }
+    },
+    "B4": {
+     "n": 1000,
+     "win": 0.975,
+     "ci": [
+      0.9633544581334902,
+      0.9830099882094389
+     ],
+     "causes": {
+      "sunny": 12,
+      "pip": 13
+     },
+     "overtime": 0,
+     "fired": 0,
+     "medianPowerWin": 34.27708333333297,
+     "earlyDeathShare": 0,
+     "deathHourBins": [
+      0,
+      4,
+      3,
+      5,
+      7,
+      6,
+      0
+     ],
+     "burnedAvg": 0,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 17.81803654791212,
+     "usage": {
+      "officeLight": 1,
+      "doorLight": 65.62,
+      "lure": 13.24,
+      "seal": 8.2,
+      "breaker": 3.33,
+      "degauss": 4.34,
+      "roomLight": 1.12,
+      "maglock": 0.92,
+      "vent": 1.07,
+      "fan": 0.03
+     }
+    },
+    "B5": {
+     "n": 1000,
+     "win": 1,
+     "ci": [
+      0.9961731014136095,
+      1
+     ],
+     "causes": {},
+     "overtime": 0,
+     "fired": 0,
+     "medianPowerWin": 32.91065972222577,
+     "earlyDeathShare": 0,
+     "deathHourBins": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+     ],
+     "burnedAvg": 0,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 18.659555555553663,
+     "usage": {
+      "officeLight": 1,
+      "doorLight": 66.82,
+      "seal": 12,
+      "breaker": 3.34,
+      "lure": 9.9,
+      "roomLight": 11.6,
+      "degauss": 2.77
+     }
+    },
+    "X-lightsOn": {
+     "n": 1000,
+     "win": 0,
+     "ci": [
+      0,
+      0.003826898586390522
+     ],
+     "causes": {
+      "pip": 896,
+      "sunny": 104
+     },
+     "overtime": 0,
+     "fired": 0,
+     "medianPowerWin": null,
+     "earlyDeathShare": 0.206,
+     "deathHourBins": [
+      206,
+      775,
+      19,
+      0,
+      0,
+      0,
+      0
+     ],
+     "burnedAvg": 4.949,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 7.436002003511502,
+     "usage": {
+      "doorLight": 5.53,
+      "replaceBulb": 2.99
+     }
+    },
+    "X-lureSpam": {
+     "n": 1000,
+     "win": 0,
+     "ci": [
+      0,
+      0.003826898586390522
+     ],
+     "causes": {
+      "pip": 129,
+      "sunny": 871
+     },
+     "overtime": 0,
+     "fired": 0,
+     "medianPowerWin": null,
+     "earlyDeathShare": 0.008,
+     "deathHourBins": [
+      8,
+      577,
+      383,
+      29,
+      3,
+      0,
+      0
+     ],
+     "burnedAvg": 0,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 35.59132867143337,
+     "usage": {
+      "lure": 100.95
+     }
+    },
+    "X-noTasks": {
+     "n": 1000,
+     "win": 0,
+     "ci": [
+      0,
+      0.003826898586390522
+     ],
+     "causes": {
+      "pip": 1000
+     },
+     "overtime": 0,
+     "fired": 0,
+     "medianPowerWin": null,
+     "earlyDeathShare": 0.096,
+     "deathHourBins": [
+      96,
+      813,
+      91,
+      0,
+      0,
+      0,
+      0
+     ],
+     "burnedAvg": 0.871,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 6.421619135324241,
+     "usage": {
+      "doorLight": 8.05,
+      "seal": 0.43,
+      "breaker": 0.47,
+      "maglock": 0.03,
+      "vent": 0.01,
+      "degauss": 0
+     }
+    },
+    "X-lateTasks": {
+     "n": 1000,
+     "win": 0,
+     "ci": [
+      0,
+      0.003826898586390522
+     ],
+     "causes": {
+      "pip": 1000
+     },
+     "overtime": 0,
+     "fired": 0,
+     "medianPowerWin": null,
+     "earlyDeathShare": 0.096,
+     "deathHourBins": [
+      96,
+      813,
+      91,
+      0,
+      0,
+      0,
+      0
+     ],
+     "burnedAvg": 0.871,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 6.421619135324241,
+     "usage": {
+      "doorLight": 8.05,
+      "seal": 0.43,
+      "breaker": 0.47,
+      "maglock": 0.03,
+      "vent": 0.01,
+      "degauss": 0
+     }
+    },
+    "X-sealAll": {
+     "n": 1000,
+     "win": 0,
+     "ci": [
+      0,
+      0.003826898586390522
+     ],
+     "causes": {
+      "pip": 846,
+      "sunny": 154
+     },
+     "overtime": 0,
+     "fired": 0,
+     "medianPowerWin": null,
+     "earlyDeathShare": 0.168,
+     "deathHourBins": [
+      168,
+      788,
+      44,
+      0,
+      0,
+      0,
+      0
+     ],
+     "burnedAvg": 0,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 36.0221530558009,
+     "usage": {
+      "seal": 71.61
+     }
+    },
+    "X-terminalOnly": {
+     "n": 1000,
+     "win": 0,
+     "ci": [
+      0,
+      0.003826898586390522
+     ],
+     "causes": {
+      "sunny": 990,
+      "pip": 10
+     },
+     "overtime": 0,
+     "fired": 0,
+     "medianPowerWin": null,
+     "earlyDeathShare": 0.003,
+     "deathHourBins": [
+      3,
+      970,
+      27,
+      0,
+      0,
+      0,
+      0
+     ],
+     "burnedAvg": 0.009,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 10.108972858393216,
+     "usage": {
+      "officeLight": 1,
+      "doorLight": 11.48,
+      "lure": 1.47,
+      "seal": 0.86,
+      "breaker": 1.42,
+      "vent": 0.06,
+      "maglock": 0.03,
+      "roomLight": 0.04
+     }
+    },
+    "T-roomFreeze": {
+     "n": 1000,
+     "win": 0.914,
+     "ci": [
+      0.8949995893100292,
+      0.9298317386604397
+     ],
+     "causes": {
+      "pip": 17,
+      "sunny": 69
+     },
+     "overtime": 0,
+     "fired": 0,
+     "medianPowerWin": 23.439409722221274,
+     "earlyDeathShare": 0,
+     "deathHourBins": [
+      0,
+      2,
+      34,
+      12,
+      22,
+      16,
+      0
+     ],
+     "burnedAvg": 0.007,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 19.335318505153545,
+     "usage": {
+      "officeLight": 1,
+      "roomLight": 18.55,
+      "doorLight": 62.34,
+      "breaker": 3.26,
+      "seal": 7.5,
+      "lure": 12.19,
+      "maglock": 0.8,
+      "degauss": 4.21,
+      "vent": 0.96,
+      "replaceBulb": 0.01,
+      "fan": 0.01
+     }
+    },
+    "T-dark": {
+     "n": 1000,
+     "win": 0.299,
+     "ci": [
+      0.27143714358426096,
+      0.3281012696474681
+     ],
+     "causes": {
+      "sunny": 420,
+      "pip": 281
+     },
+     "overtime": 0,
+     "fired": 0,
+     "medianPowerWin": 37.959444444445964,
+     "earlyDeathShare": 0.034236804564907276,
+     "deathHourBins": [
+      24,
+      138,
+      202,
+      127,
+      110,
+      100,
+      0
+     ],
+     "burnedAvg": 0.006,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 18.972611365002503,
+     "usage": {
+      "officeLight": 1,
+      "fan": 1,
+      "doorLight": 44.27,
+      "seal": 6.42,
+      "lure": 8.16,
+      "breaker": 2.54,
+      "degauss": 3,
+      "roomLight": 0.95,
+      "maglock": 0.57,
+      "vent": 0.84,
+      "replaceBulb": 0.01
+     }
+    },
+    "T-stageEarly": {
+     "n": 1000,
+     "win": 0.967,
+     "ci": [
+      0.9540184599711052,
+      0.9764072167492062
+     ],
+     "causes": {
+      "pip": 24,
+      "sunny": 9
+     },
+     "overtime": 0,
+     "fired": 0,
+     "medianPowerWin": 38.90763888888103,
+     "earlyDeathShare": 0.3333333333333333,
+     "deathHourBins": [
+      11,
+      3,
+      4,
+      2,
+      8,
+      5,
+      0
+     ],
+     "burnedAvg": 0.006,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 18.84213944510217,
+     "usage": {
+      "breaker": 3.3,
+      "officeLight": 1,
+      "doorLight": 67.2,
+      "lure": 14.43,
+      "seal": 8.98,
+      "degauss": 4.83,
+      "maglock": 1.04,
+      "roomLight": 1.11,
+      "vent": 1.21,
+      "fan": 0.05
+     }
+    },
+    "T-freezerOff": {
+     "n": 1000,
+     "win": 0.824,
+     "ci": [
+      0.7991692067448056,
+      0.8463509629712133
+     ],
+     "causes": {
+      "pip": 124,
+      "chef": 44,
+      "sunny": 8
+     },
+     "overtime": 0,
+     "fired": 0,
+     "medianPowerWin": 58.756388888878405,
+     "earlyDeathShare": 0,
+     "deathHourBins": [
+      0,
+      19,
+      52,
+      27,
+      45,
+      33,
+      0
+     ],
+     "burnedAvg": 0.011,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 18.901232265525287,
+     "usage": {
+      "breaker": 4.25,
+      "officeLight": 1,
+      "doorLight": 61.5,
+      "lure": 25.46,
+      "seal": 6.49,
+      "degauss": 3.89,
+      "maglock": 0.7,
+      "vent": 0.94,
+      "roomLight": 1.25,
+      "fan": 0.02,
+      "replaceBulb": 0.01
+     }
+    },
+    "T-turtle": {
+     "n": 1000,
+     "win": 0.907,
+     "ci": [
+      0.8874083546384951,
+      0.9234765499121832
+     ],
+     "causes": {
+      "sunny": 60,
+      "pip": 33
+     },
+     "overtime": 0,
+     "fired": 0,
+     "medianPowerWin": 32.262500000000735,
+     "earlyDeathShare": 0,
+     "deathHourBins": [
+      0,
+      19,
+      18,
+      15,
+      21,
+      20,
+      0
+     ],
+     "burnedAvg": 0.01,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 18.90091606103898,
+     "usage": {
+      "seal": 15.16,
+      "officeLight": 1,
+      "doorLight": 62.88,
+      "breaker": 3.2,
+      "lure": 14.19,
+      "degauss": 4.53,
+      "roomLight": 1.14,
+      "maglock": 0.94,
+      "vent": 1.01,
+      "fan": 0.02,
+      "replaceBulb": 0.01
+     }
+    },
+    "T-fanOff": {
+     "n": 1000,
+     "win": 0.891,
+     "ci": [
+      0.8701670973953542,
+      0.9088402679100885
+     ],
+     "causes": {
+      "sunny": 97,
+      "pip": 12
+     },
+     "overtime": 0,
+     "fired": 0,
+     "medianPowerWin": 35.271736111115956,
+     "earlyDeathShare": 0,
+     "deathHourBins": [
+      0,
+      14,
+      19,
+      31,
+      21,
+      24,
+      0
+     ],
+     "burnedAvg": 0.017,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 18.39044426601567,
+     "usage": {
+      "fan": 1,
+      "officeLight": 1,
+      "doorLight": 61.84,
+      "seal": 8.92,
+      "lure": 10.99,
+      "breaker": 3.26,
+      "degauss": 4.17,
+      "roomLight": 1.16,
+      "vent": 1.24,
+      "maglock": 0.82,
+      "replaceBulb": 0.02
+     }
+    },
+    "T-pipLightOnly": {
+     "n": 1000,
+     "win": 0,
+     "ci": [
+      0,
+      0.003826898586390522
+     ],
+     "causes": {
+      "pip": 1000
+     },
+     "overtime": 0,
+     "fired": 0,
+     "medianPowerWin": null,
+     "earlyDeathShare": 0.131,
+     "deathHourBins": [
+      131,
+      859,
+      10,
+      0,
+      0,
+      0,
+      0
+     ],
+     "burnedAvg": 0,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 11.607307169459611,
+     "usage": {
+      "officeLight": 1,
+      "doorLight": 10.26,
+      "seal": 0.64,
+      "breaker": 1.2,
+      "vent": 0.03,
+      "roomLight": 0.22,
+      "maglock": 0.03,
+      "fan": 0
+     }
+    },
+    "T-ventMax": {
+     "n": 1000,
+     "win": 0.793,
+     "ci": [
+      0.766789946293511,
+      0.8169674911348643
+     ],
+     "causes": {
+      "pip": 165,
+      "sunny": 42
+     },
+     "overtime": 0,
+     "fired": 0,
+     "medianPowerWin": 15.04222222222361,
+     "earlyDeathShare": 0.004830917874396135,
+     "deathHourBins": [
+      1,
+      39,
+      58,
+      48,
+      31,
+      30,
+      0
+     ],
+     "burnedAvg": 0.001,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 17.532053862741108,
+     "usage": {
+      "vent": 1.35,
+      "officeLight": 1,
+      "doorLight": 59.25,
+      "lure": 13.12,
+      "seal": 5.25,
+      "breaker": 3.12,
+      "degauss": 4.2,
+      "maglock": 0.63,
+      "fan": 0.17,
+      "roomLight": 0.61,
+      "replaceBulb": 0
+     }
+    },
+    "T-genEarly": {
+     "n": 1000,
+     "win": 0.975,
+     "ci": [
+      0.9633544581334902,
+      0.9830099882094389
+     ],
+     "causes": {
+      "sunny": 12,
+      "pip": 13
+     },
+     "overtime": 0,
+     "fired": 0,
+     "medianPowerWin": 34.27708333333297,
+     "earlyDeathShare": 0,
+     "deathHourBins": [
+      0,
+      4,
+      3,
+      5,
+      7,
+      6,
+      0
+     ],
+     "burnedAvg": 0,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 17.81803654791212,
+     "usage": {
+      "officeLight": 1,
+      "doorLight": 65.62,
+      "lure": 13.24,
+      "seal": 8.2,
+      "breaker": 3.33,
+      "degauss": 4.34,
+      "roomLight": 1.12,
+      "maglock": 0.92,
+      "vent": 1.07,
+      "fan": 0.03
+     }
+    },
+    "T-darkP4": {
+     "n": 1000,
+     "win": 0.975,
+     "ci": [
+      0.9633544581334902,
+      0.9830099882094389
+     ],
+     "causes": {
+      "sunny": 12,
+      "pip": 13
+     },
+     "overtime": 0,
+     "fired": 0,
+     "medianPowerWin": 34.27708333333297,
+     "earlyDeathShare": 0,
+     "deathHourBins": [
+      0,
+      4,
+      3,
+      5,
+      7,
+      6,
+      0
+     ],
+     "burnedAvg": 0,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 17.81803654791212,
+     "usage": {
+      "officeLight": 1,
+      "doorLight": 65.62,
+      "lure": 13.24,
+      "seal": 8.2,
+      "breaker": 3.33,
+      "degauss": 4.34,
+      "roomLight": 1.12,
+      "maglock": 0.92,
+      "vent": 1.07,
+      "fan": 0.03
+     }
+    }
+   },
+   "ablations": [
+    {
+     "bot": "B3",
+     "off": "doorLight",
+     "kind": "counter",
+     "base": 0.619,
+     "ablated": 0,
+     "drop": 0.619
+    },
+    {
+     "bot": "B3",
+     "off": "lure",
+     "kind": "counter",
+     "base": 0.619,
+     "ablated": 0,
+     "drop": 0.619
+    }
+   ]
+  },
+  "3": {
+   "bots": {
+    "B0": {
+     "n": 1000,
+     "win": 0,
+     "ci": [
+      0,
+      0.003826898586390522
+     ],
+     "causes": {
+      "pip": 425,
+      "back": 550,
+      "sunny": 25
+     },
+     "overtime": 0,
+     "fired": 0,
+     "medianPowerWin": null,
+     "earlyDeathShare": 0.389,
+     "deathHourBins": [
+      389,
+      610,
+      1,
+      0,
+      0,
+      0,
+      0
+     ],
+     "burnedAvg": 0,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 0,
+     "usage": {}
+    },
+    "B2": {
+     "n": 1000,
+     "win": 0.006,
+     "ci": [
+      0.0027526315709082315,
+      0.013028344232445605
+     ],
+     "causes": {
+      "pip": 608,
+      "back": 196,
+      "sunny": 190
+     },
+     "overtime": 0.001,
+     "fired": 0,
+     "medianPowerWin": 7.791458333326999,
+     "earlyDeathShare": 0.026156941649899398,
+     "deathHourBins": [
+      26,
+      515,
+      223,
+      182,
+      35,
+      13,
+      0
+     ],
+     "burnedAvg": 0.008,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 8.866897840398812,
+     "usage": {
+      "lure": 2.7,
+      "maglock": 4.7,
+      "breaker": 0.46,
+      "doorLight": 2.61,
+      "fan": 0.4,
+      "rebootNode": 0.41,
+      "hangUp": 0.26,
+      "vent": 0.09,
+      "replaceBulb": 0.01
+     }
+    },
+    "B3": {
+     "n": 1000,
+     "win": 0.384,
+     "ci": [
+      0.35435360677146754,
+      0.4145342337005752
+     ],
+     "causes": {
+      "back": 225,
+      "sunny": 219,
+      "pip": 172
+     },
+     "overtime": 0,
+     "fired": 0,
+     "medianPowerWin": 23.84673611111752,
+     "earlyDeathShare": 0.00487012987012987,
+     "deathHourBins": [
+      3,
+      104,
+      119,
+      185,
+      117,
+      88,
+      0
+     ],
+     "burnedAvg": 0.005,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 18.0273516638138,
+     "usage": {
+      "doorLight": 34.86,
+      "seal": 4.36,
+      "lure": 9.06,
+      "maglock": 21.53,
+      "degauss": 4.67,
+      "breaker": 1.93,
+      "rebootNode": 0.98,
+      "hangUp": 0.94,
+      "vent": 0.39,
+      "replaceBulb": 0.01
+     }
+    },
+    "B4": {
+     "n": 1000,
+     "win": 0.861,
+     "ci": [
+      0.8381730246613444,
+      0.8810639545592818
+     ],
+     "causes": {
+      "back": 105,
+      "pip": 21,
+      "sunny": 13
+     },
+     "overtime": 0,
+     "fired": 0,
+     "medianPowerWin": 33.55163194444252,
+     "earlyDeathShare": 0,
+     "deathHourBins": [
+      0,
+      10,
+      22,
+      30,
+      27,
+      50,
+      0
+     ],
+     "burnedAvg": 0.002,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 25.37709876302211,
+     "usage": {
+      "officeLight": 1,
+      "fan": 22.23,
+      "doorLight": 62.69,
+      "breaker": 2.35,
+      "rebootNode": 1.38,
+      "lure": 10.9,
+      "seal": 7.94,
+      "maglock": 38.48,
+      "degauss": 6.1,
+      "hangUp": 1.2,
+      "roomLight": 1.01,
+      "vent": 1.54,
+      "replaceBulb": 0
+     }
+    },
+    "B5": {
+     "n": 1000,
+     "win": 0.957,
+     "ci": [
+      0.9425806957803401,
+      0.9679215189116991
+     ],
+     "causes": {
+      "pip": 7,
+      "back": 35,
+      "sunny": 1
+     },
+     "overtime": 0,
+     "fired": 0,
+     "medianPowerWin": 32.80163194444643,
+     "earlyDeathShare": 0,
+     "deathHourBins": [
+      0,
+      6,
+      6,
+      8,
+      10,
+      13,
+      0
+     ],
+     "burnedAvg": 0,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 25.853745141901086,
+     "usage": {
+      "officeLight": 1,
+      "fan": 23.81,
+      "doorLight": 63.25,
+      "seal": 11.11,
+      "breaker": 2.42,
+      "rebootNode": 1.37,
+      "maglock": 40.97,
+      "lure": 8.53,
+      "roomLight": 10.14,
+      "hangUp": 1.32,
+      "degauss": 3.75
+     }
+    },
+    "X-lightsOn": {
+     "n": 1000,
+     "win": 0,
+     "ci": [
+      0,
+      0.003826898586390522
+     ],
+     "causes": {
+      "pip": 447,
+      "back": 534,
+      "sunny": 19
+     },
+     "overtime": 0,
+     "fired": 0,
+     "medianPowerWin": null,
+     "earlyDeathShare": 0.367,
+     "deathHourBins": [
+      367,
+      632,
+      1,
+      0,
+      0,
+      0,
+      0
+     ],
+     "burnedAvg": 3.967,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 8.648088529469682,
+     "usage": {
+      "doorLight": 4,
+      "replaceBulb": 2
+     }
+    },
+    "X-lureSpam": {
+     "n": 1000,
+     "win": 0,
+     "ci": [
+      0,
+      0.003826898586390522
+     ],
+     "causes": {
+      "back": 877,
+      "pip": 63,
+      "sunny": 60
+     },
+     "overtime": 0,
+     "fired": 0,
+     "medianPowerWin": null,
+     "earlyDeathShare": 0.264,
+     "deathHourBins": [
+      264,
+      719,
+      17,
+      0,
+      0,
+      0,
+      0
+     ],
+     "burnedAvg": 0,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 40.356918222609515,
+     "usage": {
+      "lure": 71.41
+     }
+    },
+    "X-noTasks": {
+     "n": 1000,
+     "win": 0,
+     "ci": [
+      0,
+      0.003826898586390522
+     ],
+     "causes": {
+      "pip": 94,
+      "back": 340,
+      "fired": 337,
+      "sunny": 229
+     },
+     "overtime": 0.337,
+     "fired": 0.337,
+     "medianPowerWin": null,
+     "earlyDeathShare": 0.0015082956259426848,
+     "deathHourBins": [
+      1,
+      41,
+      157,
+      149,
+      132,
+      112,
+      71
+     ],
+     "burnedAvg": 0.012,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 14.867874962075945,
+     "usage": {
+      "doorLight": 39.76,
+      "seal": 5.04,
+      "lure": 9.97,
+      "maglock": 24.09,
+      "degauss": 5.5,
+      "breaker": 2.04,
+      "rebootNode": 1.12,
+      "vent": 0.42,
+      "replaceBulb": 0.01,
+      "hangUp": 0.96
+     }
+    },
+    "X-lateTasks": {
+     "n": 1000,
+     "win": 0,
+     "ci": [
+      0,
+      0.003826898586390522
+     ],
+     "causes": {
+      "pip": 199,
+      "back": 370,
+      "fired": 92,
+      "sunny": 339
+     },
+     "overtime": 0.092,
+     "fired": 0.092,
+     "medianPowerWin": null,
+     "earlyDeathShare": 0.0011013215859030838,
+     "deathHourBins": [
+      1,
+      41,
+      157,
+      149,
+      132,
+      203,
+      225
+     ],
+     "burnedAvg": 0.011,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 14.856768827440241,
+     "usage": {
+      "doorLight": 38.36,
+      "seal": 4.85,
+      "lure": 9.58,
+      "maglock": 23,
+      "degauss": 5.25,
+      "breaker": 2.02,
+      "rebootNode": 1.09,
+      "vent": 0.39,
+      "hangUp": 0.92,
+      "replaceBulb": 0.01
+     }
+    },
+    "X-sealAll": {
+     "n": 1000,
+     "win": 0,
+     "ci": [
+      0,
+      0.003826898586390522
+     ],
+     "causes": {
+      "pip": 362,
+      "back": 602,
+      "sunny": 36
+     },
+     "overtime": 0,
+     "fired": 0,
+     "medianPowerWin": null,
+     "earlyDeathShare": 0.353,
+     "deathHourBins": [
+      353,
+      647,
+      0,
+      0,
+      0,
+      0,
+      0
+     ],
+     "burnedAvg": 0,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 36.157625373650895,
+     "usage": {
+      "seal": 57.92
+     }
+    },
+    "X-terminalOnly": {
+     "n": 1000,
+     "win": 0,
+     "ci": [
+      0,
+      0.003826898586390522
+     ],
+     "causes": {
+      "pip": 8,
+      "sunny": 917,
+      "back": 75
+     },
+     "overtime": 0,
+     "fired": 0,
+     "medianPowerWin": null,
+     "earlyDeathShare": 0,
+     "deathHourBins": [
+      0,
+      965,
+      35,
+      0,
+      0,
+      0,
+      0
+     ],
+     "burnedAvg": 0.096,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 15.930088447280161,
+     "usage": {
+      "officeLight": 1,
+      "fan": 5.18,
+      "doorLight": 10.62,
+      "breaker": 1.25,
+      "seal": 0.53,
+      "maglock": 2.02,
+      "lure": 0.89,
+      "rebootNode": 0.26,
+      "vent": 0.05,
+      "degauss": 0.01,
+      "roomLight": 0.06
+     }
+    },
+    "T-roomFreeze": {
+     "n": 1000,
+     "win": 0.715,
+     "ci": [
+      0.686239728877674,
+      0.7421147047301779
+     ],
+     "causes": {
+      "sunny": 88,
+      "back": 167,
+      "pip": 30
+     },
+     "overtime": 0,
+     "fired": 0,
+     "medianPowerWin": 22.78239583333045,
+     "earlyDeathShare": 0,
+     "deathHourBins": [
+      0,
+      15,
+      60,
+      59,
+      78,
+      73,
+      0
+     ],
+     "burnedAvg": 0.008,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 26.556666529939893,
+     "usage": {
+      "officeLight": 1,
+      "roomLight": 17.55,
+      "fan": 20.74,
+      "doorLight": 57.23,
+      "seal": 7.03,
+      "rebootNode": 1.28,
+      "lure": 9.71,
+      "breaker": 2.24,
+      "maglock": 34.4,
+      "degauss": 5.49,
+      "vent": 1.35,
+      "hangUp": 1.19,
+      "replaceBulb": 0.01
+     }
+    },
+    "T-dark": {
+     "n": 1000,
+     "win": 0.491,
+     "ci": [
+      0.46010846831005414,
+      0.5219604158645009
+     ],
+     "causes": {
+      "sunny": 237,
+      "pip": 64,
+      "back": 208
+     },
+     "overtime": 0,
+     "fired": 0,
+     "medianPowerWin": 36.7850694444436,
+     "earlyDeathShare": 0.009823182711198428,
+     "deathHourBins": [
+      5,
+      98,
+      77,
+      147,
+      95,
+      87,
+      0
+     ],
+     "burnedAvg": 0,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 23.703732314956152,
+     "usage": {
+      "officeLight": 1,
+      "fan": 1,
+      "doorLight": 54.16,
+      "seal": 7.56,
+      "lure": 9.58,
+      "maglock": 27.68,
+      "breaker": 2.07,
+      "rebootNode": 1.1,
+      "hangUp": 0.97,
+      "degauss": 4.89,
+      "roomLight": 1.09,
+      "vent": 1.48
+     }
+    },
+    "T-stageEarly": {
+     "n": 1000,
+     "win": 0.881,
+     "ci": [
+      0.8594587714640507,
+      0.8996251318131199
+     ],
+     "causes": {
+      "back": 84,
+      "pip": 20,
+      "sunny": 15
+     },
+     "overtime": 0,
+     "fired": 0,
+     "medianPowerWin": 38.03381944444996,
+     "earlyDeathShare": 0.01680672268907563,
+     "deathHourBins": [
+      2,
+      13,
+      16,
+      27,
+      21,
+      40,
+      0
+     ],
+     "burnedAvg": 0.003,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 26.628878308078516,
+     "usage": {
+      "breaker": 2.34,
+      "fan": 22.22,
+      "officeLight": 1,
+      "doorLight": 64.89,
+      "seal": 9.29,
+      "lure": 12.39,
+      "roomLight": 1.18,
+      "degauss": 6.62,
+      "hangUp": 1.25,
+      "maglock": 38.75,
+      "rebootNode": 1.35,
+      "vent": 1.79,
+      "replaceBulb": 0
+     }
+    },
+    "T-freezerOff": {
+     "n": 1000,
+     "win": 0.723,
+     "ci": [
+      0.6944492173416589,
+      0.749843985888811
+     ],
+     "causes": {
+      "pip": 145,
+      "back": 104,
+      "chef": 17,
+      "sunny": 11
+     },
+     "overtime": 0,
+     "fired": 0,
+     "medianPowerWin": 58.16302083332968,
+     "earlyDeathShare": 0,
+     "deathHourBins": [
+      0,
+      39,
+      44,
+      63,
+      64,
+      67,
+      0
+     ],
+     "burnedAvg": 0.017,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 26.34338638411718,
+     "usage": {
+      "breaker": 3.23,
+      "fan": 20.53,
+      "officeLight": 1,
+      "doorLight": 57.47,
+      "seal": 5.83,
+      "maglock": 35.01,
+      "lure": 24.85,
+      "degauss": 5.37,
+      "roomLight": 1.33,
+      "vent": 1.43,
+      "rebootNode": 1.29,
+      "hangUp": 1.12,
+      "replaceBulb": 0.02
+     }
+    },
+    "T-turtle": {
+     "n": 1000,
+     "win": 0.739,
+     "ci": [
+      0.7109014620594993,
+      0.765269280416206
+     ],
+     "causes": {
+      "back": 167,
+      "sunny": 70,
+      "pip": 24
+     },
+     "overtime": 0,
+     "fired": 0,
+     "medianPowerWin": 31.6299305555537,
+     "earlyDeathShare": 0,
+     "deathHourBins": [
+      0,
+      32,
+      43,
+      51,
+      54,
+      81,
+      0
+     ],
+     "burnedAvg": 0.01,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 26.02930383707073,
+     "usage": {
+      "seal": 14.13,
+      "fan": 21.04,
+      "officeLight": 1,
+      "doorLight": 57.91,
+      "breaker": 2.23,
+      "maglock": 35.38,
+      "lure": 11.46,
+      "degauss": 5.85,
+      "vent": 1.42,
+      "hangUp": 1.22,
+      "roomLight": 1.09,
+      "rebootNode": 1.29,
+      "replaceBulb": 0.01
+     }
+    },
+    "T-fanOff": {
+     "n": 1000,
+     "win": 0.696,
+     "ci": [
+      0.6667846311336212,
+      0.7237152246205136
+     ],
+     "causes": {
+      "sunny": 126,
+      "back": 158,
+      "pip": 18,
+      "fired": 2
+     },
+     "overtime": 0.002,
+     "fired": 0.002,
+     "medianPowerWin": 34.040138888892315,
+     "earlyDeathShare": 0,
+     "deathHourBins": [
+      0,
+      42,
+      38,
+      77,
+      73,
+      72,
+      0
+     ],
+     "burnedAvg": 0.009,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 23.451594511840053,
+     "usage": {
+      "fan": 1,
+      "officeLight": 1,
+      "doorLight": 56.33,
+      "breaker": 2.3,
+      "rebootNode": 1.25,
+      "seal": 7.63,
+      "lure": 9.52,
+      "maglock": 31.98,
+      "roomLight": 1.01,
+      "hangUp": 1.18,
+      "degauss": 5.36,
+      "vent": 1.46,
+      "replaceBulb": 0.01
+     }
+    },
+    "T-pipLightOnly": {
+     "n": 1000,
+     "win": 0,
+     "ci": [
+      0,
+      0.003826898586390522
+     ],
+     "causes": {
+      "pip": 997,
+      "back": 3
+     },
+     "overtime": 0,
+     "fired": 0,
+     "medianPowerWin": null,
+     "earlyDeathShare": 0.031,
+     "deathHourBins": [
+      31,
+      910,
+      59,
+      0,
+      0,
+      0,
+      0
+     ],
+     "burnedAvg": 0,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 18.390406642663184,
+     "usage": {
+      "officeLight": 1,
+      "fan": 5.43,
+      "doorLight": 12.6,
+      "breaker": 1.27,
+      "rebootNode": 0.27,
+      "hangUp": 0.2,
+      "maglock": 3.27,
+      "seal": 0.73,
+      "degauss": 0.1,
+      "roomLight": 0.29,
+      "vent": 0.11
+     }
+    },
+    "T-ventMax": {
+     "n": 1000,
+     "win": 0.741,
+     "ci": [
+      0.7129612066968414,
+      0.7671942281845183
+     ],
+     "causes": {
+      "back": 139,
+      "pip": 96,
+      "sunny": 24
+     },
+     "overtime": 0,
+     "fired": 0,
+     "medianPowerWin": 14.57225694444302,
+     "earlyDeathShare": 0.007722007722007722,
+     "deathHourBins": [
+      2,
+      38,
+      34,
+      87,
+      49,
+      49,
+      0
+     ],
+     "burnedAvg": 0.001,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 23.563140950927263,
+     "usage": {
+      "vent": 1.53,
+      "fan": 1,
+      "officeLight": 1,
+      "doorLight": 58.9,
+      "seal": 5.37,
+      "breaker": 2.28,
+      "lure": 11.99,
+      "maglock": 39.08,
+      "degauss": 6.7,
+      "rebootNode": 1.2,
+      "hangUp": 1.26,
+      "roomLight": 0.69,
+      "replaceBulb": 0
+     }
+    },
+    "T-genEarly": {
+     "n": 1000,
+     "win": 0.861,
+     "ci": [
+      0.8381730246613444,
+      0.8810639545592818
+     ],
+     "causes": {
+      "back": 105,
+      "pip": 21,
+      "sunny": 13
+     },
+     "overtime": 0,
+     "fired": 0,
+     "medianPowerWin": 33.55163194444252,
+     "earlyDeathShare": 0,
+     "deathHourBins": [
+      0,
+      10,
+      22,
+      30,
+      27,
+      50,
+      0
+     ],
+     "burnedAvg": 0.002,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 25.37709876302211,
+     "usage": {
+      "officeLight": 1,
+      "fan": 22.23,
+      "doorLight": 62.69,
+      "breaker": 2.35,
+      "rebootNode": 1.38,
+      "lure": 10.9,
+      "seal": 7.94,
+      "maglock": 38.48,
+      "degauss": 6.1,
+      "hangUp": 1.2,
+      "roomLight": 1.01,
+      "vent": 1.54,
+      "replaceBulb": 0
+     }
+    },
+    "T-darkP4": {
+     "n": 1000,
+     "win": 0.861,
+     "ci": [
+      0.8381730246613444,
+      0.8810639545592818
+     ],
+     "causes": {
+      "back": 105,
+      "pip": 21,
+      "sunny": 13
+     },
+     "overtime": 0,
+     "fired": 0,
+     "medianPowerWin": 33.55163194444252,
+     "earlyDeathShare": 0,
+     "deathHourBins": [
+      0,
+      10,
+      22,
+      30,
+      27,
+      50,
+      0
+     ],
+     "burnedAvg": 0.002,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 25.37709876302211,
+     "usage": {
+      "officeLight": 1,
+      "fan": 22.23,
+      "doorLight": 62.69,
+      "breaker": 2.35,
+      "rebootNode": 1.38,
+      "lure": 10.9,
+      "seal": 7.94,
+      "maglock": 38.48,
+      "degauss": 6.1,
+      "hangUp": 1.2,
+      "roomLight": 1.01,
+      "vent": 1.54,
+      "replaceBulb": 0
+     }
+    }
+   },
+   "ablations": [
+    {
+     "bot": "B3",
+     "off": "maglock",
+     "kind": "counter",
+     "base": 0.384,
+     "ablated": 0,
+     "drop": 0.384
+    },
+    {
+     "bot": "B4",
+     "off": "heat",
+     "kind": "used",
+     "base": 0.861,
+     "ablated": 0.696,
+     "drop": 0.16500000000000004
+    },
+    {
+     "bot": "B4",
+     "off": "seal",
+     "kind": "used",
+     "base": 0.861,
+     "ablated": 0.816,
+     "drop": 0.04500000000000004
+    }
+   ]
+  },
+  "4": {
+   "bots": {
+    "B0": {
+     "n": 1000,
+     "win": 0,
+     "ci": [
+      0,
+      0.003826898586390522
+     ],
+     "causes": {
+      "pip": 260,
+      "back": 716,
+      "tootie": 21,
+      "sunny": 3
+     },
+     "overtime": 0,
+     "fired": 0,
+     "medianPowerWin": null,
+     "earlyDeathShare": 0.618,
+     "deathHourBins": [
+      618,
+      382,
+      0,
+      0,
+      0,
+      0,
+      0
+     ],
+     "burnedAvg": 0,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 0,
+     "usage": {}
+    },
+    "B2": {
+     "n": 1000,
+     "win": 0,
+     "ci": [
+      0,
+      0.003826898586390522
+     ],
+     "causes": {
+      "back": 140,
+      "pip": 614,
+      "sunny": 244,
+      "chef": 2
+     },
+     "overtime": 0,
+     "fired": 0,
+     "medianPowerWin": null,
+     "earlyDeathShare": 0.034,
+     "deathHourBins": [
+      34,
+      214,
+      555,
+      161,
+      30,
+      6,
+      0
+     ],
+     "burnedAvg": 0.051,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 8.822522989864012,
+     "usage": {
+      "lure": 3.17,
+      "wind": 1.34,
+      "breaker": 0.4,
+      "doorLight": 2.65,
+      "hangUp": 0.3,
+      "maglock": 6.78,
+      "rebootNode": 0.39,
+      "fan": 0.4,
+      "replaceBulb": 0.04,
+      "vent": 0.1
+     }
+    },
+    "B3": {
+     "n": 1000,
+     "win": 0.21,
+     "ci": [
+      0.18588849743514332,
+      0.23633110374496322
+     ],
+     "causes": {
+      "sunny": 357,
+      "pip": 209,
+      "back": 210,
+      "fired": 7,
+      "chef": 7
+     },
+     "overtime": 0.013,
+     "fired": 0.007,
+     "medianPowerWin": 13.008134920642942,
+     "earlyDeathShare": 0.0038314176245210726,
+     "deathHourBins": [
+      3,
+      47,
+      250,
+      218,
+      153,
+      103,
+      9
+     ],
+     "burnedAvg": 0.077,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 18.967597928714316,
+     "usage": {
+      "doorLight": 33.02,
+      "lure": 8.96,
+      "wind": 3.8,
+      "maglock": 19.3,
+      "rebootNode": 0.72,
+      "degauss": 4.43,
+      "breaker": 1.67,
+      "seal": 1.73,
+      "hangUp": 0.76,
+      "vent": 0.37,
+      "replaceBulb": 0.05
+     }
+    },
+    "B4": {
+     "n": 1000,
+     "win": 0.748,
+     "ci": [
+      0.7201761117294745,
+      0.7739257465716758
+     ],
+     "causes": {
+      "back": 164,
+      "sunny": 65,
+      "pip": 20,
+      "fired": 3
+     },
+     "overtime": 0.009,
+     "fired": 0.003,
+     "medianPowerWin": 24.14956349206102,
+     "earlyDeathShare": 0,
+     "deathHourBins": [
+      0,
+      27,
+      43,
+      53,
+      60,
+      62,
+      4
+     ],
+     "burnedAvg": 0.043,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 27.695209749379046,
+     "usage": {
+      "officeLight": 1,
+      "fan": 20.08,
+      "doorLight": 64,
+      "lure": 11.63,
+      "wind": 6.61,
+      "maglock": 35.69,
+      "breaker": 2.1,
+      "degauss": 6.59,
+      "seal": 4.85,
+      "vent": 1.62,
+      "hangUp": 0.97,
+      "rebootNode": 1.09,
+      "roomLight": 1.49,
+      "replaceBulb": 0.03
+     }
+    },
+    "B5": {
+     "n": 1000,
+     "win": 0.894,
+     "ci": [
+      0.8733891741189649,
+      0.9115952297949595
+     ],
+     "causes": {
+      "back": 50,
+      "pip": 8,
+      "sunny": 21,
+      "fired": 27
+     },
+     "overtime": 0.05,
+     "fired": 0.027,
+     "medianPowerWin": 23.401507936507844,
+     "earlyDeathShare": 0,
+     "deathHourBins": [
+      0,
+      16,
+      13,
+      14,
+      19,
+      17,
+      0
+     ],
+     "burnedAvg": 0.008,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 28.733357872337887,
+     "usage": {
+      "officeLight": 1,
+      "fan": 22.24,
+      "doorLight": 65.21,
+      "lure": 10.16,
+      "wind": 7,
+      "breaker": 2.2,
+      "roomLight": 14.63,
+      "maglock": 41.3,
+      "degauss": 4.19,
+      "seal": 6.9,
+      "rebootNode": 1.1,
+      "hangUp": 1.1,
+      "replaceBulb": 0.01
+     }
+    },
+    "X-lightsOn": {
+     "n": 1000,
+     "win": 0,
+     "ci": [
+      0,
+      0.003826898586390522
+     ],
+     "causes": {
+      "pip": 270,
+      "back": 725,
+      "sunny": 3,
+      "tootie": 2
+     },
+     "overtime": 0,
+     "fired": 0,
+     "medianPowerWin": null,
+     "earlyDeathShare": 0.618,
+     "deathHourBins": [
+      618,
+      382,
+      0,
+      0,
+      0,
+      0,
+      0
+     ],
+     "burnedAvg": 3.828,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 9.943889916430875,
+     "usage": {
+      "doorLight": 4,
+      "replaceBulb": 1.99
+     }
+    },
+    "X-lureSpam": {
+     "n": 1000,
+     "win": 0,
+     "ci": [
+      0,
+      0.003826898586390522
+     ],
+     "causes": {
+      "tootie": 68,
+      "back": 876,
+      "sunny": 13,
+      "pip": 43
+     },
+     "overtime": 0,
+     "fired": 0,
+     "medianPowerWin": null,
+     "earlyDeathShare": 0.516,
+     "deathHourBins": [
+      516,
+      484,
+      0,
+      0,
+      0,
+      0,
+      0
+     ],
+     "burnedAvg": 0,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 40.242998196436545,
+     "usage": {
+      "lure": 57.45
+     }
+    },
+    "X-noTasks": {
+     "n": 1000,
+     "win": 0,
+     "ci": [
+      0,
+      0.003826898586390522
+     ],
+     "causes": {
+      "sunny": 384,
+      "pip": 186,
+      "chef": 72,
+      "fired": 106,
+      "back": 252
+     },
+     "overtime": 0.106,
+     "fired": 0.106,
+     "medianPowerWin": null,
+     "earlyDeathShare": 0.0044742729306487695,
+     "deathHourBins": [
+      4,
+      49,
+      233,
+      243,
+      174,
+      139,
+      52
+     ],
+     "burnedAvg": 0.116,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 15.605440959963387,
+     "usage": {
+      "doorLight": 33.94,
+      "lure": 10.43,
+      "wind": 5.3,
+      "maglock": 18.95,
+      "breaker": 1.67,
+      "degauss": 4.61,
+      "rebootNode": 0.74,
+      "vent": 0.45,
+      "hangUp": 0.74,
+      "replaceBulb": 0.08
+     }
+    },
+    "X-lateTasks": {
+     "n": 1000,
+     "win": 0,
+     "ci": [
+      0,
+      0.003826898586390522
+     ],
+     "causes": {
+      "sunny": 414,
+      "pip": 217,
+      "chef": 68,
+      "back": 267,
+      "fired": 34
+     },
+     "overtime": 0.034,
+     "fired": 0.034,
+     "medianPowerWin": null,
+     "earlyDeathShare": 0.004140786749482402,
+     "deathHourBins": [
+      4,
+      49,
+      233,
+      243,
+      174,
+      179,
+      84
+     ],
+     "burnedAvg": 0.107,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 15.576787691470043,
+     "usage": {
+      "doorLight": 33.38,
+      "lure": 10.19,
+      "wind": 5.25,
+      "maglock": 18.61,
+      "breaker": 1.67,
+      "degauss": 4.51,
+      "rebootNode": 0.74,
+      "vent": 0.44,
+      "hangUp": 0.73,
+      "replaceBulb": 0.07
+     }
+    },
+    "X-sealAll": {
+     "n": 1000,
+     "win": 0,
+     "ci": [
+      0,
+      0.003826898586390522
+     ],
+     "causes": {
+      "pip": 260,
+      "back": 716,
+      "tootie": 21,
+      "sunny": 3
+     },
+     "overtime": 0,
+     "fired": 0,
+     "medianPowerWin": null,
+     "earlyDeathShare": 0.618,
+     "deathHourBins": [
+      618,
+      382,
+      0,
+      0,
+      0,
+      0,
+      0
+     ],
+     "burnedAvg": 0,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 36.11524907503395,
+     "usage": {
+      "seal": 47.37
+     }
+    },
+    "X-terminalOnly": {
+     "n": 1000,
+     "win": 0,
+     "ci": [
+      0,
+      0.003826898586390522
+     ],
+     "causes": {
+      "tootie": 777,
+      "sunny": 188,
+      "back": 28,
+      "pip": 7
+     },
+     "overtime": 0,
+     "fired": 0,
+     "medianPowerWin": null,
+     "earlyDeathShare": 0,
+     "deathHourBins": [
+      0,
+      1000,
+      0,
+      0,
+      0,
+      0,
+      0
+     ],
+     "burnedAvg": 0.034,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 8.775367883397715,
+     "usage": {
+      "officeLight": 1,
+      "fan": 2,
+      "doorLight": 4.53,
+      "lure": 1.89,
+      "maglock": 5.77,
+      "vent": 0.11,
+      "roomLight": 0.01,
+      "breaker": 0.17,
+      "rebootNode": 0.07
+     }
+    },
+    "T-roomFreeze": {
+     "n": 1000,
+     "win": 0.537,
+     "ci": [
+      0.5060119191883528,
+      0.5677048903162545
+     ],
+     "causes": {
+      "back": 189,
+      "sunny": 215,
+      "pip": 50,
+      "fired": 9
+     },
+     "overtime": 0.018,
+     "fired": 0.009,
+     "medianPowerWin": 11.90023809523664,
+     "earlyDeathShare": 0,
+     "deathHourBins": [
+      0,
+      40,
+      86,
+      103,
+      123,
+      99,
+      3
+     ],
+     "burnedAvg": 0.113,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 28.46498298125782,
+     "usage": {
+      "officeLight": 1,
+      "roomLight": 16.75,
+      "fan": 18.11,
+      "doorLight": 56.25,
+      "wind": 6,
+      "breaker": 1.93,
+      "lure": 10.01,
+      "rebootNode": 0.97,
+      "maglock": 30.72,
+      "degauss": 5.66,
+      "seal": 3.79,
+      "hangUp": 0.9,
+      "vent": 1.38,
+      "replaceBulb": 0.07
+     }
+    },
+    "T-dark": {
+     "n": 1000,
+     "win": 0.249,
+     "ci": [
+      0.22319212110880252,
+      0.2767289819815656
+     ],
+     "causes": {
+      "back": 166,
+      "sunny": 442,
+      "pip": 142,
+      "fired": 1
+     },
+     "overtime": 0.002,
+     "fired": 0.001,
+     "medianPowerWin": 27.91234126984159,
+     "earlyDeathShare": 0.050666666666666665,
+     "deathHourBins": [
+      38,
+      167,
+      163,
+      149,
+      123,
+      110,
+      0
+     ],
+     "burnedAvg": 0.031,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 24.899500693418453,
+     "usage": {
+      "officeLight": 1,
+      "fan": 1,
+      "doorLight": 47.19,
+      "wind": 4.51,
+      "breaker": 1.66,
+      "lure": 9.05,
+      "maglock": 20.66,
+      "degauss": 4.44,
+      "hangUp": 0.67,
+      "seal": 2.81,
+      "rebootNode": 0.69,
+      "roomLight": 1.27,
+      "vent": 1.25,
+      "replaceBulb": 0.02
+     }
+    },
+    "T-stageEarly": {
+     "n": 1000,
+     "win": 0.723,
+     "ci": [
+      0.6944492173416589,
+      0.749843985888811
+     ],
+     "causes": {
+      "back": 168,
+      "sunny": 82,
+      "pip": 24,
+      "fired": 3
+     },
+     "overtime": 0.009,
+     "fired": 0.003,
+     "medianPowerWin": 29.62384920634942,
+     "earlyDeathShare": 0.043795620437956206,
+     "deathHourBins": [
+      12,
+      27,
+      39,
+      56,
+      64,
+      75,
+      1
+     ],
+     "burnedAvg": 0.046,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 29.002621923534704,
+     "usage": {
+      "breaker": 1.98,
+      "fan": 19.66,
+      "officeLight": 1,
+      "doorLight": 66.27,
+      "lure": 13.33,
+      "maglock": 35.45,
+      "wind": 6.55,
+      "degauss": 7.24,
+      "seal": 4.69,
+      "rebootNode": 1.08,
+      "hangUp": 1.04,
+      "roomLight": 1.54,
+      "vent": 1.82,
+      "replaceBulb": 0.03
+     }
+    },
+    "T-freezerOff": {
+     "n": 1000,
+     "win": 0.67,
+     "ci": [
+      0.6402538859604785,
+      0.6984449685201488
+     ],
+     "causes": {
+      "back": 111,
+      "pip": 131,
+      "chef": 17,
+      "sunny": 68,
+      "fired": 3
+     },
+     "overtime": 0.006,
+     "fired": 0.003,
+     "medianPowerWin": 52.169603174603495,
+     "earlyDeathShare": 0,
+     "deathHourBins": [
+      0,
+      57,
+      48,
+      62,
+      81,
+      79,
+      0
+     ],
+     "burnedAvg": 0.072,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 28.00715907294353,
+     "usage": {
+      "breaker": 3.04,
+      "fan": 18.99,
+      "officeLight": 1,
+      "doorLight": 60.44,
+      "lure": 24.64,
+      "wind": 6.26,
+      "roomLight": 1.75,
+      "maglock": 33.48,
+      "hangUp": 0.94,
+      "degauss": 5.97,
+      "rebootNode": 1.02,
+      "seal": 3.58,
+      "vent": 1.48,
+      "replaceBulb": 0.05
+     }
+    },
+    "T-turtle": {
+     "n": 1000,
+     "win": 0.619,
+     "ci": [
+      0.588498978327013,
+      0.6485902198094261
+     ],
+     "causes": {
+      "sunny": 139,
+      "back": 210,
+      "pip": 25,
+      "fired": 7
+     },
+     "overtime": 0.014,
+     "fired": 0.007,
+     "medianPowerWin": 23.27210317460339,
+     "earlyDeathShare": 0,
+     "deathHourBins": [
+      0,
+      27,
+      48,
+      108,
+      97,
+      94,
+      0
+     ],
+     "burnedAvg": 0.082,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 27.736918912972214,
+     "usage": {
+      "officeLight": 1,
+      "fan": 19.05,
+      "doorLight": 59.91,
+      "lure": 11.94,
+      "wind": 6.31,
+      "maglock": 33.23,
+      "breaker": 2.02,
+      "degauss": 6.29,
+      "seal": 6.64,
+      "roomLight": 1.55,
+      "vent": 1.47,
+      "hangUp": 0.89,
+      "rebootNode": 1.04,
+      "replaceBulb": 0.05
+     }
+    },
+    "T-fanOff": {
+     "n": 1000,
+     "win": 0.431,
+     "ci": [
+      0.4006278926003595,
+      0.46190021940456244
+     ],
+     "causes": {
+      "sunny": 272,
+      "fired": 56,
+      "back": 187,
+      "pip": 54
+     },
+     "overtime": 0.085,
+     "fired": 0.056,
+     "medianPowerWin": 24.69134920635255,
+     "earlyDeathShare": 0,
+     "deathHourBins": [
+      0,
+      61,
+      101,
+      108,
+      118,
+      112,
+      13
+     ],
+     "burnedAvg": 0.141,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 24.999510973398547,
+     "usage": {
+      "fan": 1,
+      "officeLight": 1,
+      "doorLight": 54.26,
+      "wind": 5.75,
+      "lure": 10.72,
+      "breaker": 1.92,
+      "maglock": 28.27,
+      "hangUp": 0.95,
+      "degauss": 5.36,
+      "seal": 3.57,
+      "vent": 1.41,
+      "replaceBulb": 0.1,
+      "rebootNode": 0.9,
+      "roomLight": 1.38
+     }
+    },
+    "T-pipLightOnly": {
+     "n": 1000,
+     "win": 0,
+     "ci": [
+      0,
+      0.003826898586390522
+     ],
+     "causes": {
+      "pip": 1000
+     },
+     "overtime": 0,
+     "fired": 0,
+     "medianPowerWin": null,
+     "earlyDeathShare": 0.036,
+     "deathHourBins": [
+      36,
+      950,
+      14,
+      0,
+      0,
+      0,
+      0
+     ],
+     "burnedAvg": 0,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 17.21239999357761,
+     "usage": {
+      "officeLight": 1,
+      "fan": 4.91,
+      "doorLight": 11.04,
+      "maglock": 4.33,
+      "wind": 1.17,
+      "hangUp": 0.15,
+      "breaker": 1.17,
+      "rebootNode": 0.21,
+      "degauss": 0.05,
+      "roomLight": 0.45,
+      "vent": 0.1
+     }
+    },
+    "T-ventMax": {
+     "n": 1000,
+     "win": 0.636,
+     "ci": [
+      0.6057102084592761,
+      0.6652488751252258
+     ],
+     "causes": {
+      "back": 189,
+      "sunny": 86,
+      "pip": 89
+     },
+     "overtime": 0,
+     "fired": 0,
+     "medianPowerWin": 2.286706349206482,
+     "earlyDeathShare": 0.008241758241758242,
+     "deathHourBins": [
+      3,
+      43,
+      79,
+      82,
+      77,
+      78,
+      2
+     ],
+     "burnedAvg": 0.047,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 25.895852768185584,
+     "usage": {
+      "vent": 1.63,
+      "fan": 1,
+      "officeLight": 1,
+      "doorLight": 60.65,
+      "lure": 12.19,
+      "wind": 6.23,
+      "maglock": 36.95,
+      "breaker": 1.96,
+      "degauss": 7.11,
+      "roomLight": 0.87,
+      "seal": 3.17,
+      "hangUp": 0.97,
+      "rebootNode": 0.99,
+      "replaceBulb": 0.03
+     }
+    },
+    "T-genEarly": {
+     "n": 1000,
+     "win": 0.748,
+     "ci": [
+      0.7201761117294745,
+      0.7739257465716758
+     ],
+     "causes": {
+      "back": 164,
+      "sunny": 65,
+      "pip": 20,
+      "fired": 3
+     },
+     "overtime": 0.009,
+     "fired": 0.003,
+     "medianPowerWin": 24.14956349206102,
+     "earlyDeathShare": 0,
+     "deathHourBins": [
+      0,
+      27,
+      43,
+      53,
+      60,
+      62,
+      4
+     ],
+     "burnedAvg": 0.043,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 27.695209749379046,
+     "usage": {
+      "officeLight": 1,
+      "fan": 20.08,
+      "doorLight": 64,
+      "lure": 11.63,
+      "wind": 6.61,
+      "maglock": 35.69,
+      "breaker": 2.1,
+      "degauss": 6.59,
+      "seal": 4.85,
+      "vent": 1.62,
+      "hangUp": 0.97,
+      "rebootNode": 1.09,
+      "roomLight": 1.49,
+      "replaceBulb": 0.03
+     }
+    },
+    "T-darkP4": {
+     "n": 1000,
+     "win": 0.748,
+     "ci": [
+      0.7201761117294745,
+      0.7739257465716758
+     ],
+     "causes": {
+      "back": 164,
+      "sunny": 65,
+      "pip": 20,
+      "fired": 3
+     },
+     "overtime": 0.009,
+     "fired": 0.003,
+     "medianPowerWin": 24.14956349206102,
+     "earlyDeathShare": 0,
+     "deathHourBins": [
+      0,
+      27,
+      43,
+      53,
+      60,
+      62,
+      4
+     ],
+     "burnedAvg": 0.043,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 27.695209749379046,
+     "usage": {
+      "officeLight": 1,
+      "fan": 20.08,
+      "doorLight": 64,
+      "lure": 11.63,
+      "wind": 6.61,
+      "maglock": 35.69,
+      "breaker": 2.1,
+      "degauss": 6.59,
+      "seal": 4.85,
+      "vent": 1.62,
+      "hangUp": 0.97,
+      "rebootNode": 1.09,
+      "roomLight": 1.49,
+      "replaceBulb": 0.03
+     }
+    }
+   },
+   "ablations": [
+    {
+     "bot": "B4",
+     "off": "wind",
+     "kind": "counter",
+     "base": 0.748,
+     "ablated": 0,
+     "drop": 0.748
+    },
+    {
+     "bot": "B4",
+     "off": "heat",
+     "kind": "used",
+     "base": 0.748,
+     "ablated": 0.431,
+     "drop": 0.317
+    },
+    {
+     "bot": "B4",
+     "off": "degauss",
+     "kind": "used",
+     "base": 0.748,
+     "ablated": 0.621,
+     "drop": 0.127
+    },
+    {
+     "bot": "B4",
+     "off": "seal",
+     "kind": "used",
+     "base": 0.748,
+     "ablated": 0.69,
+     "drop": 0.05800000000000005
+    }
+   ]
+  },
+  "5": {
+   "bots": {
+    "B0": {
+     "n": 1000,
+     "win": 0,
+     "ci": [
+      0,
+      0.003826898586390522
+     ],
+     "causes": {
+      "back": 666,
+      "tootie": 327,
+      "ribbon": 6,
+      "pip": 1
+     },
+     "overtime": 0,
+     "fired": 0,
+     "medianPowerWin": null,
+     "earlyDeathShare": 0.313,
+     "deathHourBins": [
+      313,
+      687,
+      0,
+      0,
+      0,
+      0,
+      0
+     ],
+     "burnedAvg": 0,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 0,
+     "usage": {}
+    },
+    "B2": {
+     "n": 1000,
+     "win": 0,
+     "ci": [
+      0,
+      0.003826898586390522
+     ],
+     "causes": {
+      "pip": 380,
+      "ribbon": 263,
+      "back": 276,
+      "sunny": 43,
+      "power": 34,
+      "chef": 4
+     },
+     "overtime": 0,
+     "fired": 0,
+     "medianPowerWin": null,
+     "earlyDeathShare": 0.007,
+     "deathHourBins": [
+      7,
+      102,
+      163,
+      502,
+      225,
+      1,
+      0
+     ],
+     "burnedAvg": 0.002,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 9.156761504180693,
+     "usage": {
+      "maglock": 7.63,
+      "wind": 3.38,
+      "hangUp": 0.45,
+      "vent": 1.93,
+      "rebootNode": 0.58,
+      "lure": 0.63,
+      "fan": 0.4,
+      "breaker": 0.61,
+      "doorLight": 0.44,
+      "replaceBulb": 0
+     }
+    },
+    "B3": {
+     "n": 1000,
+     "win": 0.039,
+     "ci": [
+      0.028658799196088068,
+      0.052869601300564
+     ],
+     "causes": {
+      "sunny": 161,
+      "back": 131,
+      "pip": 486,
+      "ribbon": 167,
+      "chef": 6,
+      "fired": 7,
+      "power": 3
+     },
+     "overtime": 0.012,
+     "fired": 0.007,
+     "medianPowerWin": 18.361391666673928,
+     "earlyDeathShare": 0.0031446540880503146,
+     "deathHourBins": [
+      3,
+      2,
+      222,
+      336,
+      277,
+      100,
+      14
+     ],
+     "burnedAvg": 0.021,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 17.218171454345228,
+     "usage": {
+      "doorLight": 26.32,
+      "maglock": 13.57,
+      "wind": 5.66,
+      "breaker": 1.74,
+      "degauss": 3.04,
+      "lure": 3.6,
+      "replaceBulb": 0.01,
+      "seal": 1.69,
+      "vent": 3.53,
+      "hangUp": 0.61,
+      "rebootNode": 0.71
+     }
+    },
+    "B4": {
+     "n": 1000,
+     "win": 0.588,
+     "ci": [
+      0.5572132320047287,
+      0.6181132338440665
+     ],
+     "causes": {
+      "pip": 211,
+      "back": 94,
+      "sunny": 52,
+      "ribbon": 40,
+      "fired": 13,
+      "chef": 1,
+      "power": 1
+     },
+     "overtime": 0.027,
+     "fired": 0.013,
+     "medianPowerWin": 28.29001666667319,
+     "earlyDeathShare": 0,
+     "deathHourBins": [
+      0,
+      19,
+      58,
+      96,
+      111,
+      111,
+      4
+     ],
+     "burnedAvg": 0.02,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 25.745810559200812,
+     "usage": {
+      "fan": 5.79,
+      "doorLight": 53.33,
+      "maglock": 26.69,
+      "wind": 9.73,
+      "breaker": 2.01,
+      "rebootNode": 0.99,
+      "lure": 8.24,
+      "degauss": 7.12,
+      "seal": 4.55,
+      "vent": 14.21,
+      "hangUp": 0.92,
+      "roomLight": 0.54,
+      "replaceBulb": 0.01
+     }
+    },
+    "B5": {
+     "n": 1000,
+     "win": 0.783,
+     "ci": [
+      0.7563943490951964,
+      0.8074396263049067
+     ],
+     "causes": {
+      "back": 34,
+      "pip": 53,
+      "fired": 109,
+      "sunny": 17,
+      "power": 4
+     },
+     "overtime": 0.197,
+     "fired": 0.109,
+     "medianPowerWin": 24.140325000003862,
+     "earlyDeathShare": 0,
+     "deathHourBins": [
+      0,
+      5,
+      12,
+      19,
+      29,
+      30,
+      13
+     ],
+     "burnedAvg": 0.004,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 28.74877843936617,
+     "usage": {
+      "fan": 7.02,
+      "doorLight": 58.59,
+      "maglock": 39,
+      "wind": 10.93,
+      "breaker": 2.14,
+      "vent": 25.85,
+      "seal": 10.38,
+      "lure": 7.09,
+      "roomLight": 9.83,
+      "degauss": 2.99,
+      "hangUp": 1.08,
+      "rebootNode": 1.2,
+      "replaceBulb": 0
+     }
+    },
+    "X-lightsOn": {
+     "n": 1000,
+     "win": 0,
+     "ci": [
+      0,
+      0.003826898586390522
+     ],
+     "causes": {
+      "back": 682,
+      "tootie": 311,
+      "ribbon": 6,
+      "pip": 1
+     },
+     "overtime": 0,
+     "fired": 0,
+     "medianPowerWin": null,
+     "earlyDeathShare": 0.313,
+     "deathHourBins": [
+      313,
+      687,
+      0,
+      0,
+      0,
+      0,
+      0
+     ],
+     "burnedAvg": 3.904,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 8.84633842663883,
+     "usage": {
+      "doorLight": 4.01,
+      "replaceBulb": 2
+     }
+    },
+    "X-lureSpam": {
+     "n": 1000,
+     "win": 0,
+     "ci": [
+      0,
+      0.003826898586390522
+     ],
+     "causes": {
+      "back": 664,
+      "tootie": 310,
+      "ribbon": 5,
+      "pip": 21
+     },
+     "overtime": 0,
+     "fired": 0,
+     "medianPowerWin": null,
+     "earlyDeathShare": 0.334,
+     "deathHourBins": [
+      334,
+      666,
+      0,
+      0,
+      0,
+      0,
+      0
+     ],
+     "burnedAvg": 0,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 40.19155909741004,
+     "usage": {
+      "lure": 65.7
+     }
+    },
+    "X-noTasks": {
+     "n": 1000,
+     "win": 0,
+     "ci": [
+      0,
+      0.003826898586390522
+     ],
+     "causes": {
+      "sunny": 181,
+      "ribbon": 153,
+      "pip": 429,
+      "back": 135,
+      "chef": 39,
+      "power": 63
+     },
+     "overtime": 0,
+     "fired": 0,
+     "medianPowerWin": null,
+     "earlyDeathShare": 0.001,
+     "deathHourBins": [
+      1,
+      2,
+      323,
+      254,
+      175,
+      245,
+      0
+     ],
+     "burnedAvg": 0.031,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 12.713612326396737,
+     "usage": {
+      "doorLight": 25.82,
+      "maglock": 12.61,
+      "wind": 5.74,
+      "breaker": 1.73,
+      "lure": 4.36,
+      "degauss": 2.51,
+      "vent": 3.29,
+      "rebootNode": 0.69,
+      "hangUp": 0.58,
+      "replaceBulb": 0.02
+     }
+    },
+    "X-lateTasks": {
+     "n": 1000,
+     "win": 0,
+     "ci": [
+      0,
+      0.003826898586390522
+     ],
+     "causes": {
+      "sunny": 181,
+      "ribbon": 153,
+      "pip": 429,
+      "back": 135,
+      "chef": 39,
+      "power": 63
+     },
+     "overtime": 0,
+     "fired": 0,
+     "medianPowerWin": null,
+     "earlyDeathShare": 0.001,
+     "deathHourBins": [
+      1,
+      2,
+      323,
+      254,
+      175,
+      245,
+      0
+     ],
+     "burnedAvg": 0.031,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 12.713612326396737,
+     "usage": {
+      "doorLight": 25.82,
+      "maglock": 12.61,
+      "wind": 5.74,
+      "breaker": 1.73,
+      "lure": 4.36,
+      "degauss": 2.51,
+      "vent": 3.29,
+      "rebootNode": 0.69,
+      "hangUp": 0.58,
+      "replaceBulb": 0.02
+     }
+    },
+    "X-sealAll": {
+     "n": 1000,
+     "win": 0,
+     "ci": [
+      0,
+      0.003826898586390522
+     ],
+     "causes": {
+      "back": 666,
+      "tootie": 327,
+      "ribbon": 6,
+      "pip": 1
+     },
+     "overtime": 0,
+     "fired": 0,
+     "medianPowerWin": null,
+     "earlyDeathShare": 0.313,
+     "deathHourBins": [
+      313,
+      687,
+      0,
+      0,
+      0,
+      0,
+      0
+     ],
+     "burnedAvg": 0,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 36.11545746448477,
+     "usage": {
+      "seal": 59.79
+     }
+    },
+    "X-terminalOnly": {
+     "n": 1000,
+     "win": 0,
+     "ci": [
+      0,
+      0.003826898586390522
+     ],
+     "causes": {
+      "tootie": 990,
+      "back": 9,
+      "ribbon": 1
+     },
+     "overtime": 0,
+     "fired": 0,
+     "medianPowerWin": null,
+     "earlyDeathShare": 0,
+     "deathHourBins": [
+      0,
+      1000,
+      0,
+      0,
+      0,
+      0,
+      0
+     ],
+     "burnedAvg": 0.004,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 7.897278341642492,
+     "usage": {
+      "fan": 2,
+      "doorLight": 4,
+      "maglock": 2.25,
+      "lure": 0.27,
+      "vent": 0.11,
+      "breaker": 0.04,
+      "rebootNode": 0.02,
+      "seal": 0.01
+     }
+    },
+    "T-roomFreeze": {
+     "n": 1000,
+     "win": 0.415,
+     "ci": [
+      0.3848428141123274,
+      0.44580775864735905
+     ],
+     "causes": {
+      "pip": 267,
+      "sunny": 128,
+      "ribbon": 47,
+      "back": 113,
+      "fired": 26,
+      "power": 3,
+      "chef": 1
+     },
+     "overtime": 0.044,
+     "fired": 0.026,
+     "medianPowerWin": 14.788783333326075,
+     "earlyDeathShare": 0.0017889087656529517,
+     "deathHourBins": [
+      1,
+      18,
+      101,
+      131,
+      172,
+      129,
+      7
+     ],
+     "burnedAvg": 0.048,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 26.78626951664566,
+     "usage": {
+      "roomLight": 15.89,
+      "fan": 5.21,
+      "doorLight": 48.28,
+      "maglock": 23.94,
+      "wind": 9.05,
+      "breaker": 1.93,
+      "seal": 4.01,
+      "lure": 7.23,
+      "degauss": 6.13,
+      "vent": 12.32,
+      "hangUp": 0.84,
+      "rebootNode": 0.97,
+      "replaceBulb": 0.03
+     }
+    },
+    "T-dark": {
+     "n": 1000,
+     "win": 0.003,
+     "ci": [
+      0.0010207654054443255,
+      0.008783171789427854
+     ],
+     "causes": {
+      "sunny": 262,
+      "pip": 609,
+      "back": 78,
+      "ribbon": 46,
+      "fired": 2
+     },
+     "overtime": 0.002,
+     "fired": 0.002,
+     "medianPowerWin": 23.802458333336087,
+     "earlyDeathShare": 0.0010050251256281408,
+     "deathHourBins": [
+      1,
+      432,
+      342,
+      131,
+      68,
+      18,
+      3
+     ],
+     "burnedAvg": 0.017,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 22.46107705467634,
+     "usage": {
+      "officeLight": 1,
+      "fan": 1,
+      "doorLight": 21.78,
+      "wind": 4.05,
+      "vent": 9.32,
+      "breaker": 1.41,
+      "seal": 1.77,
+      "lure": 2.49,
+      "roomLight": 0.22,
+      "degauss": 1.12,
+      "maglock": 5.36,
+      "rebootNode": 0.39,
+      "hangUp": 0.33,
+      "replaceBulb": 0.01
+     }
+    },
+    "T-stageEarly": {
+     "n": 1000,
+     "win": 0.599,
+     "ci": [
+      0.5683001748076085,
+      0.6289420992722862
+     ],
+     "causes": {
+      "pip": 226,
+      "back": 81,
+      "sunny": 52,
+      "ribbon": 30,
+      "fired": 11,
+      "chef": 1
+     },
+     "overtime": 0.036,
+     "fired": 0.011,
+     "medianPowerWin": 33.87462500000075,
+     "earlyDeathShare": 0.020512820512820513,
+     "deathHourBins": [
+      8,
+      19,
+      45,
+      110,
+      97,
+      108,
+      3
+     ],
+     "burnedAvg": 0.011,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 26.562338725689436,
+     "usage": {
+      "breaker": 2.13,
+      "fan": 5.87,
+      "vent": 14.31,
+      "doorLight": 54.86,
+      "wind": 9.75,
+      "rebootNode": 1.02,
+      "lure": 9.57,
+      "seal": 5.56,
+      "maglock": 26.92,
+      "hangUp": 0.93,
+      "degauss": 7.54,
+      "roomLight": 0.64,
+      "replaceBulb": 0.01
+     }
+    },
+    "T-freezerOff": {
+     "n": 1000,
+     "win": 0.521,
+     "ci": [
+      0.4900158579684162,
+      0.5518234122909556
+     ],
+     "causes": {
+      "pip": 309,
+      "back": 58,
+      "sunny": 32,
+      "chef": 52,
+      "ribbon": 23,
+      "fired": 5
+     },
+     "overtime": 0.008,
+     "fired": 0.005,
+     "medianPowerWin": 20.875216666666066,
+     "earlyDeathShare": 0,
+     "deathHourBins": [
+      0,
+      54,
+      91,
+      115,
+      117,
+      97,
+      0
+     ],
+     "burnedAvg": 0.03,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 24.966456073285688,
+     "usage": {
+      "breaker": 2.93,
+      "fan": 5.42,
+      "doorLight": 49.56,
+      "maglock": 24.08,
+      "wind": 9,
+      "lure": 18.01,
+      "seal": 3.58,
+      "degauss": 4.18,
+      "vent": 13.54,
+      "rebootNode": 0.94,
+      "roomLight": 0.69,
+      "hangUp": 0.89,
+      "replaceBulb": 0.03
+     }
+    },
+    "T-turtle": {
+     "n": 1000,
+     "win": 0.466,
+     "ci": [
+      0.43527046967989796,
+      0.4969897594239768
+     ],
+     "causes": {
+      "back": 137,
+      "pip": 212,
+      "ribbon": 53,
+      "fired": 23,
+      "sunny": 107,
+      "chef": 1,
+      "power": 1
+     },
+     "overtime": 0.035,
+     "fired": 0.023,
+     "medianPowerWin": 25.748216666671762,
+     "earlyDeathShare": 0,
+     "deathHourBins": [
+      0,
+      34,
+      67,
+      131,
+      148,
+      126,
+      5
+     ],
+     "burnedAvg": 0.03,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 26.170022589329793,
+     "usage": {
+      "fan": 5.38,
+      "seal": 12.59,
+      "doorLight": 49.2,
+      "maglock": 24.78,
+      "wind": 9.17,
+      "breaker": 1.94,
+      "lure": 7.42,
+      "vent": 12.59,
+      "degauss": 6.39,
+      "hangUp": 0.86,
+      "roomLight": 0.51,
+      "rebootNode": 0.92,
+      "replaceBulb": 0.02
+     }
+    },
+    "T-fanOff": {
+     "n": 1000,
+     "win": 0.218,
+     "ci": [
+      0.19351438529371368,
+      0.24464398550901062
+     ],
+     "causes": {
+      "pip": 295,
+      "sunny": 175,
+      "ribbon": 36,
+      "fired": 137,
+      "back": 133,
+      "power": 4,
+      "chef": 2
+     },
+     "overtime": 0.167,
+     "fired": 0.137,
+     "medianPowerWin": 25.873333333329413,
+     "earlyDeathShare": 0,
+     "deathHourBins": [
+      0,
+      53,
+      87,
+      150,
+      126,
+      191,
+      38
+     ],
+     "burnedAvg": 0.051,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 25.231483959502807,
+     "usage": {
+      "fan": 1,
+      "doorLight": 47.12,
+      "wind": 8.85,
+      "breaker": 1.92,
+      "seal": 4.78,
+      "lure": 7.44,
+      "rebootNode": 0.94,
+      "maglock": 18.2,
+      "vent": 13.76,
+      "degauss": 5.18,
+      "hangUp": 0.89,
+      "replaceBulb": 0.05,
+      "roomLight": 0.55
+     }
+    },
+    "T-pipLightOnly": {
+     "n": 1000,
+     "win": 0,
+     "ci": [
+      0,
+      0.003826898586390522
+     ],
+     "causes": {
+      "pip": 999,
+      "sunny": 1
+     },
+     "overtime": 0,
+     "fired": 0,
+     "medianPowerWin": null,
+     "earlyDeathShare": 0,
+     "deathHourBins": [
+      0,
+      796,
+      203,
+      1,
+      0,
+      0,
+      0
+     ],
+     "burnedAvg": 0,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 19.39953705354248,
+     "usage": {
+      "fan": 2.07,
+      "doorLight": 13.83,
+      "maglock": 5.26,
+      "wind": 2.75,
+      "breaker": 1.29,
+      "rebootNode": 0.27,
+      "roomLight": 0.35,
+      "seal": 0.57,
+      "vent": 0.58,
+      "degauss": 0.16,
+      "hangUp": 0.19
+     }
+    },
+    "T-ventMax": {
+     "n": 1000,
+     "win": 0.59,
+     "ci": [
+      0.5592278714615878,
+      0.620083286792862
+     ],
+     "causes": {
+      "pip": 225,
+      "back": 116,
+      "sunny": 63,
+      "power": 6
+     },
+     "overtime": 0.001,
+     "fired": 0,
+     "medianPowerWin": 9.573566666669795,
+     "earlyDeathShare": 0,
+     "deathHourBins": [
+      0,
+      49,
+      45,
+      119,
+      108,
+      87,
+      2
+     ],
+     "burnedAvg": 0.005,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 24.246562925321918,
+     "usage": {
+      "vent": 1.37,
+      "fan": 1,
+      "doorLight": 52.64,
+      "maglock": 28.37,
+      "wind": 9.59,
+      "breaker": 2.03,
+      "lure": 8.11,
+      "degauss": 7.38,
+      "seal": 3.61,
+      "rebootNode": 1,
+      "hangUp": 0.88,
+      "roomLight": 0.44,
+      "replaceBulb": 0
+     }
+    },
+    "T-genEarly": {
+     "n": 1000,
+     "win": 0.149,
+     "ci": [
+      0.1282740046402946,
+      0.17241247816735156
+     ],
+     "causes": {
+      "pip": 288,
+      "sunny": 327,
+      "back": 159,
+      "ribbon": 77
+     },
+     "overtime": 0.01,
+     "fired": 0,
+     "medianPowerWin": 29.730616666672898,
+     "earlyDeathShare": 0,
+     "deathHourBins": [
+      0,
+      19,
+      58,
+      727,
+      30,
+      17,
+      0
+     ],
+     "burnedAvg": 0.055,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 32.69995685242623,
+     "usage": {
+      "fan": 3.27,
+      "doorLight": 32.94,
+      "maglock": 14.88,
+      "wind": 6.16,
+      "breaker": 1.65,
+      "rebootNode": 0.64,
+      "lure": 4.31,
+      "degauss": 2.88,
+      "seal": 2.62,
+      "vent": 6.25,
+      "hangUp": 0.55,
+      "roomLight": 0.28,
+      "replaceBulb": 0.01
+     }
+    },
+    "T-darkP4": {
+     "n": 1000,
+     "win": 0.55,
+     "ci": [
+      0.5190321378373477,
+      0.5805851723040134
+     ],
+     "causes": {
+      "back": 104,
+      "pip": 215,
+      "sunny": 44,
+      "ribbon": 54,
+      "fired": 27,
+      "chef": 3,
+      "power": 3
+     },
+     "overtime": 0.055,
+     "fired": 0.027,
+     "medianPowerWin": 30.70175833333445,
+     "earlyDeathShare": 0,
+     "deathHourBins": [
+      0,
+      31,
+      52,
+      97,
+      105,
+      132,
+      6
+     ],
+     "burnedAvg": 0.019,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 26.810313276236123,
+     "usage": {
+      "officeLight": 1,
+      "fan": 10.47,
+      "doorLight": 52.6,
+      "maglock": 26.18,
+      "wind": 9.65,
+      "breaker": 2.06,
+      "vent": 21.46,
+      "hangUp": 0.93,
+      "degauss": 7.04,
+      "lure": 8.31,
+      "seal": 4.55,
+      "rebootNode": 0.99,
+      "roomLight": 0.61,
+      "replaceBulb": 0.01
+     }
+    }
+   },
+   "ablations": [
+    {
+     "bot": "B4",
+     "off": "vent",
+     "kind": "counter",
+     "base": 0.588,
+     "ablated": 0,
+     "drop": 0.588
+    },
+    {
+     "bot": "B4",
+     "off": "generator",
+     "kind": "used",
+     "base": 0.588,
+     "ablated": 0,
+     "drop": 0.588
+    },
+    {
+     "bot": "B4",
+     "off": "degauss",
+     "kind": "used",
+     "base": 0.588,
+     "ablated": 0.422,
+     "drop": 0.16599999999999998
+    },
+    {
+     "bot": "B4",
+     "off": "heat",
+     "kind": "used",
+     "base": 0.588,
+     "ablated": 0.218,
+     "drop": 0.37
+    },
+    {
+     "bot": "B4",
+     "off": "bright",
+     "kind": "used",
+     "base": 0.588,
+     "ablated": 0.55,
+     "drop": 0.03799999999999992
+    },
+    {
+     "bot": "B4",
+     "off": "seal",
+     "kind": "used",
+     "base": 0.588,
+     "ablated": 0.553,
+     "drop": 0.03499999999999992
+    },
+    {
+     "bot": "B4",
+     "off": "stageCut",
+     "kind": "used",
+     "base": 0.588,
+     "ablated": 0.3,
+     "drop": 0.288
+    }
+   ]
+  },
+  "6": {
+   "bots": {
+    "B0": {
+     "n": 1000,
+     "win": 0,
+     "ci": [
+      0,
+      0.003826898586390522
+     ],
+     "causes": {
+      "back": 779,
+      "tootie": 213,
+      "pip": 2,
+      "ribbon": 5,
+      "sunny": 1
+     },
+     "overtime": 0,
+     "fired": 0,
+     "medianPowerWin": null,
+     "earlyDeathShare": 0.503,
+     "deathHourBins": [
+      503,
+      497,
+      0,
+      0,
+      0,
+      0,
+      0
+     ],
+     "burnedAvg": 0,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 0,
+     "usage": {}
+    },
+    "B2": {
+     "n": 1000,
+     "win": 0,
+     "ci": [
+      0,
+      0.003826898586390522
+     ],
+     "causes": {
+      "pip": 441,
+      "back": 369,
+      "ribbon": 153,
+      "sunny": 16,
+      "chef": 15,
+      "power": 5,
+      "tootie": 1
+     },
+     "overtime": 0,
+     "fired": 0,
+     "medianPowerWin": null,
+     "earlyDeathShare": 0.049,
+     "deathHourBins": [
+      49,
+      197,
+      295,
+      309,
+      134,
+      16,
+      0
+     ],
+     "burnedAvg": 0.028,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 11.92817847842207,
+     "usage": {
+      "maglock": 6.38,
+      "wind": 3.5,
+      "breaker": 9.66,
+      "lure": 1.3,
+      "fan": 0.41,
+      "rebootNode": 0.6,
+      "vent": 0.91,
+      "doorLight": 0.22,
+      "lureRepeat": 0.01,
+      "replaceBulb": 0
+     }
+    },
+    "B3": {
+     "n": 1000,
+     "win": 0.006,
+     "ci": [
+      0.0027526315709082315,
+      0.013028344232445605
+     ],
+     "causes": {
+      "back": 239,
+      "ribbon": 189,
+      "pip": 317,
+      "sunny": 236,
+      "chef": 12,
+      "power": 1
+     },
+     "overtime": 0.002,
+     "fired": 0,
+     "medianPowerWin": 11.967222222229381,
+     "earlyDeathShare": 0.0030181086519114686,
+     "deathHourBins": [
+      3,
+      72,
+      292,
+      265,
+      282,
+      73,
+      7
+     ],
+     "burnedAvg": 0.08,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 20.314259447854035,
+     "usage": {
+      "doorLight": 22.28,
+      "maglock": 12.1,
+      "wind": 5.73,
+      "breaker": 18.58,
+      "degauss": 2.04,
+      "seal": 2,
+      "lure": 3.22,
+      "vent": 1.75,
+      "rebootNode": 0.74,
+      "lureRepeat": 0.07,
+      "replaceBulb": 0.04,
+      "fan": 0
+     }
+    },
+    "B4": {
+     "n": 1000,
+     "win": 0.157,
+     "ci": [
+      0.1357689609765772,
+      0.18085629145368676
+     ],
+     "causes": {
+      "pip": 364,
+      "sunny": 158,
+      "ribbon": 108,
+      "back": 204,
+      "chef": 4,
+      "power": 5
+     },
+     "overtime": 0.048,
+     "fired": 0,
+     "medianPowerWin": 16.073214285713885,
+     "earlyDeathShare": 0,
+     "deathHourBins": [
+      0,
+      47,
+      88,
+      89,
+      318,
+      197,
+      104
+     ],
+     "burnedAvg": 0.232,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 29.89812704308873,
+     "usage": {
+      "fan": 16.38,
+      "doorLight": 45.26,
+      "wind": 10.24,
+      "maglock": 24.83,
+      "breaker": 15.43,
+      "lockBreaker": 6.24,
+      "seal": 5.32,
+      "lure": 7.32,
+      "degauss": 4.09,
+      "vent": 14.73,
+      "rebootNode": 1.12,
+      "roomLight": 1.6,
+      "lureRepeat": 0.17,
+      "replaceBulb": 0.15
+     }
+    },
+    "B5": {
+     "n": 1000,
+     "win": 0.191,
+     "ci": [
+      0.16783652890414247,
+      0.21652849442224692
+     ],
+     "causes": {
+      "back": 179,
+      "pip": 326,
+      "sunny": 253,
+      "power": 38,
+      "ribbon": 13
+     },
+     "overtime": 0.085,
+     "fired": 0,
+     "medianPowerWin": 13.26908730158817,
+     "earlyDeathShare": 0,
+     "deathHourBins": [
+      0,
+      43,
+      75,
+      79,
+      194,
+      180,
+      238
+     ],
+     "burnedAvg": 0.195,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 31.53983928455699,
+     "usage": {
+      "fan": 18.68,
+      "doorLight": 48.03,
+      "wind": 11.4,
+      "maglock": 30.56,
+      "breaker": 16.12,
+      "vent": 16.86,
+      "lockBreaker": 6.53,
+      "seal": 8.97,
+      "lure": 8.12,
+      "roomLight": 10.98,
+      "degauss": 2.49,
+      "rebootNode": 1.2,
+      "lureRepeat": 0.19,
+      "replaceBulb": 0.15
+     }
+    },
+    "X-lightsOn": {
+     "n": 1000,
+     "win": 0,
+     "ci": [
+      0,
+      0.003826898586390522
+     ],
+     "causes": {
+      "back": 774,
+      "tootie": 218,
+      "pip": 2,
+      "ribbon": 5,
+      "sunny": 1
+     },
+     "overtime": 0,
+     "fired": 0,
+     "medianPowerWin": null,
+     "earlyDeathShare": 0.502,
+     "deathHourBins": [
+      502,
+      498,
+      0,
+      0,
+      0,
+      0,
+      0
+     ],
+     "burnedAvg": 3.806,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 11.568170739138113,
+     "usage": {
+      "doorLight": 4,
+      "replaceBulb": 1.99
+     }
+    },
+    "X-lureSpam": {
+     "n": 1000,
+     "win": 0,
+     "ci": [
+      0,
+      0.003826898586390522
+     ],
+     "causes": {
+      "tootie": 180,
+      "back": 792,
+      "ribbon": 2,
+      "pip": 26
+     },
+     "overtime": 0,
+     "fired": 0,
+     "medianPowerWin": null,
+     "earlyDeathShare": 0.537,
+     "deathHourBins": [
+      537,
+      463,
+      0,
+      0,
+      0,
+      0,
+      0
+     ],
+     "burnedAvg": 0,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 40.14289833875084,
+     "usage": {
+      "lure": 54.66
+     }
+    },
+    "X-noTasks": {
+     "n": 1000,
+     "win": 0,
+     "ci": [
+      0,
+      0.003826898586390522
+     ],
+     "causes": {
+      "sunny": 231,
+      "back": 233,
+      "ribbon": 187,
+      "pip": 288,
+      "chef": 57,
+      "power": 2,
+      "tootie": 2
+     },
+     "overtime": 0,
+     "fired": 0,
+     "medianPowerWin": null,
+     "earlyDeathShare": 0,
+     "deathHourBins": [
+      0,
+      56,
+      331,
+      258,
+      266,
+      88,
+      1
+     ],
+     "burnedAvg": 0.078,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 15.503993886794618,
+     "usage": {
+      "doorLight": 23.01,
+      "maglock": 12.22,
+      "wind": 5.79,
+      "breaker": 19.78,
+      "seal": 2.13,
+      "lure": 3.48,
+      "degauss": 2.09,
+      "vent": 1.76,
+      "rebootNode": 0.81,
+      "lureRepeat": 0.05,
+      "replaceBulb": 0.04
+     }
+    },
+    "X-lateTasks": {
+     "n": 1000,
+     "win": 0,
+     "ci": [
+      0,
+      0.003826898586390522
+     ],
+     "causes": {
+      "sunny": 230,
+      "back": 232,
+      "ribbon": 185,
+      "pip": 293,
+      "chef": 57,
+      "tootie": 2,
+      "power": 1
+     },
+     "overtime": 0,
+     "fired": 0,
+     "medianPowerWin": null,
+     "earlyDeathShare": 0,
+     "deathHourBins": [
+      0,
+      56,
+      331,
+      258,
+      266,
+      88,
+      1
+     ],
+     "burnedAvg": 0.078,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 15.502746405927287,
+     "usage": {
+      "doorLight": 23,
+      "maglock": 12.21,
+      "wind": 5.79,
+      "breaker": 19.78,
+      "seal": 2.13,
+      "lure": 3.47,
+      "degauss": 2.09,
+      "vent": 1.76,
+      "rebootNode": 0.81,
+      "lureRepeat": 0.05,
+      "replaceBulb": 0.04
+     }
+    },
+    "X-sealAll": {
+     "n": 1000,
+     "win": 0,
+     "ci": [
+      0,
+      0.003826898586390522
+     ],
+     "causes": {
+      "back": 778,
+      "tootie": 215,
+      "pip": 1,
+      "ribbon": 5,
+      "sunny": 1
+     },
+     "overtime": 0,
+     "fired": 0,
+     "medianPowerWin": null,
+     "earlyDeathShare": 0.503,
+     "deathHourBins": [
+      503,
+      497,
+      0,
+      0,
+      0,
+      0,
+      0
+     ],
+     "burnedAvg": 0,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 36.08886285782788,
+     "usage": {
+      "seal": 50.15
+     }
+    },
+    "X-terminalOnly": {
+     "n": 1000,
+     "win": 0,
+     "ci": [
+      0,
+      0.003826898586390522
+     ],
+     "causes": {
+      "tootie": 989,
+      "back": 10,
+      "sunny": 1
+     },
+     "overtime": 0,
+     "fired": 0,
+     "medianPowerWin": null,
+     "earlyDeathShare": 0.002,
+     "deathHourBins": [
+      2,
+      998,
+      0,
+      0,
+      0,
+      0,
+      0
+     ],
+     "burnedAvg": 0.004,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 9.699095562015499,
+     "usage": {
+      "fan": 1.79,
+      "doorLight": 2.04,
+      "maglock": 2.09,
+      "lockBreaker": 1,
+      "lure": 0.34,
+      "vent": 0.11,
+      "rebootNode": 0.01,
+      "breaker": 0.04,
+      "seal": 0.01
+     }
+    },
+    "T-roomFreeze": {
+     "n": 1000,
+     "win": 0.055,
+     "ci": [
+      0.04249722594783333,
+      0.07090871379405425
+     ],
+     "causes": {
+      "back": 196,
+      "pip": 351,
+      "ribbon": 73,
+      "sunny": 276,
+      "power": 41,
+      "chef": 7,
+      "tootie": 1
+     },
+     "overtime": 0.006,
+     "fired": 0,
+     "medianPowerWin": 4.367698412698723,
+     "earlyDeathShare": 0,
+     "deathHourBins": [
+      0,
+      63,
+      147,
+      112,
+      305,
+      264,
+      54
+     ],
+     "burnedAvg": 0.165,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 30.49260422065761,
+     "usage": {
+      "roomLight": 15.28,
+      "fan": 14.55,
+      "doorLight": 39.87,
+      "wind": 9.24,
+      "maglock": 21.38,
+      "breaker": 13.53,
+      "lockBreaker": 5.6,
+      "lure": 5.96,
+      "seal": 4.43,
+      "degauss": 3.25,
+      "rebootNode": 1.08,
+      "vent": 12.43,
+      "lureRepeat": 0.19,
+      "replaceBulb": 0.1
+     }
+    },
+    "T-dark": {
+     "n": 1000,
+     "win": 0.011,
+     "ci": [
+      0.006153110089114165,
+      0.01958959672837577
+     ],
+     "causes": {
+      "sunny": 392,
+      "pip": 325,
+      "ribbon": 92,
+      "back": 176,
+      "chef": 3,
+      "power": 1
+     },
+     "overtime": 0.004,
+     "fired": 0,
+     "medianPowerWin": 10.70472222222584,
+     "earlyDeathShare": 0.003033367037411527,
+     "deathHourBins": [
+      3,
+      285,
+      283,
+      145,
+      195,
+      66,
+      12
+     ],
+     "burnedAvg": 0.079,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 27.094245343870014,
+     "usage": {
+      "officeLight": 1,
+      "fan": 1,
+      "doorLight": 29.5,
+      "wind": 6.07,
+      "maglock": 11.81,
+      "breaker": 8.61,
+      "vent": 15.28,
+      "lockBreaker": 3.37,
+      "lure": 4.4,
+      "seal": 3.35,
+      "rebootNode": 0.63,
+      "degauss": 2.06,
+      "replaceBulb": 0.04,
+      "roomLight": 0.66,
+      "lureRepeat": 0.06
+     }
+    },
+    "T-stageEarly": {
+     "n": 1000,
+     "win": 0.124,
+     "ci": [
+      0.10499965005666721,
+      0.14587817768029848
+     ],
+     "causes": {
+      "pip": 391,
+      "back": 209,
+      "ribbon": 76,
+      "sunny": 187,
+      "power": 11,
+      "chef": 2
+     },
+     "overtime": 0.037,
+     "fired": 0,
+     "medianPowerWin": 14.57523809523678,
+     "earlyDeathShare": 0.00228310502283105,
+     "deathHourBins": [
+      2,
+      70,
+      84,
+      81,
+      316,
+      209,
+      114
+     ],
+     "burnedAvg": 0.193,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 31.01030773581788,
+     "usage": {
+      "breaker": 14.69,
+      "fan": 15.25,
+      "doorLight": 47.21,
+      "lure": 8.41,
+      "seal": 6.41,
+      "wind": 10.02,
+      "maglock": 24.03,
+      "lockBreaker": 6.05,
+      "vent": 15.37,
+      "degauss": 4.22,
+      "rebootNode": 1.09,
+      "roomLight": 1.69,
+      "replaceBulb": 0.12,
+      "lureRepeat": 0.17
+     }
+    },
+    "T-freezerOff": {
+     "n": 1000,
+     "win": 0.122,
+     "ci": [
+      0.10314842422860387,
+      0.1437447111027074
+     ],
+     "causes": {
+      "pip": 387,
+      "back": 208,
+      "chef": 51,
+      "sunny": 159,
+      "ribbon": 73
+     },
+     "overtime": 0.025,
+     "fired": 0,
+     "medianPowerWin": 26.30460317460632,
+     "earlyDeathShare": 0,
+     "deathHourBins": [
+      0,
+      76,
+      122,
+      123,
+      325,
+      193,
+      39
+     ],
+     "burnedAvg": 0.197,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 28.99022703260758,
+     "usage": {
+      "breaker": 12.55,
+      "fan": 14.52,
+      "doorLight": 40.35,
+      "wind": 9.27,
+      "maglock": 21.78,
+      "rebootNode": 1.05,
+      "lockBreaker": 5.49,
+      "seal": 4.06,
+      "lure": 16.79,
+      "vent": 13.65,
+      "replaceBulb": 0.13,
+      "degauss": 2.92,
+      "roomLight": 1.5,
+      "lureRepeat": 0.14
+     }
+    },
+    "T-turtle": {
+     "n": 1000,
+     "win": 0.048,
+     "ci": [
+      0.036393116113688354,
+      0.06306640020840869
+     ],
+     "causes": {
+      "back": 220,
+      "pip": 364,
+      "sunny": 299,
+      "ribbon": 63,
+      "power": 3,
+      "tootie": 3
+     },
+     "overtime": 0.014,
+     "fired": 0,
+     "medianPowerWin": 13.043571428569885,
+     "earlyDeathShare": 0,
+     "deathHourBins": [
+      0,
+      192,
+      171,
+      117,
+      269,
+      146,
+      57
+     ],
+     "burnedAvg": 0.169,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 29.14834279860665,
+     "usage": {
+      "seal": 14.14,
+      "fan": 12.54,
+      "doorLight": 33.54,
+      "wind": 7.9,
+      "maglock": 17.57,
+      "breaker": 11.91,
+      "lockBreaker": 4.17,
+      "vent": 9.59,
+      "lure": 5.02,
+      "degauss": 2.57,
+      "rebootNode": 0.8,
+      "roomLight": 1.01,
+      "lureRepeat": 0.1,
+      "replaceBulb": 0.09
+     }
+    },
+    "T-fanOff": {
+     "n": 1000,
+     "win": 0.085,
+     "ci": [
+      0.06926305688204971,
+      0.10391326894465445
+     ],
+     "causes": {
+      "sunny": 246,
+      "back": 182,
+      "pip": 407,
+      "ribbon": 69,
+      "power": 7,
+      "chef": 4
+     },
+     "overtime": 0.033,
+     "fired": 0,
+     "medianPowerWin": 15.005555555556397,
+     "earlyDeathShare": 0,
+     "deathHourBins": [
+      0,
+      106,
+      130,
+      93,
+      303,
+      182,
+      101
+     ],
+     "burnedAvg": 0.212,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 27.294811680290152,
+     "usage": {
+      "fan": 1,
+      "doorLight": 39.82,
+      "wind": 9.48,
+      "maglock": 19.51,
+      "breaker": 12.97,
+      "lure": 6.47,
+      "lockBreaker": 5.43,
+      "vent": 13.69,
+      "rebootNode": 0.98,
+      "seal": 4.79,
+      "replaceBulb": 0.13,
+      "degauss": 3.27,
+      "roomLight": 1.38,
+      "lureRepeat": 0.16
+     }
+    },
+    "T-pipLightOnly": {
+     "n": 1000,
+     "win": 0,
+     "ci": [
+      0,
+      0.003826898586390522
+     ],
+     "causes": {
+      "pip": 983,
+      "sunny": 9,
+      "back": 8
+     },
+     "overtime": 0,
+     "fired": 0,
+     "medianPowerWin": null,
+     "earlyDeathShare": 0,
+     "deathHourBins": [
+      0,
+      826,
+      172,
+      2,
+      0,
+      0,
+      0
+     ],
+     "burnedAvg": 0.017,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 23.07413192963822,
+     "usage": {
+      "fan": 6.65,
+      "doorLight": 13.3,
+      "wind": 3.15,
+      "maglock": 5.52,
+      "breaker": 3.96,
+      "lockBreaker": 1.5,
+      "seal": 0.66,
+      "degauss": 0.17,
+      "vent": 0.79,
+      "rebootNode": 0.31,
+      "roomLight": 0.35,
+      "replaceBulb": 0.01
+     }
+    },
+    "T-ventMax": {
+     "n": 1000,
+     "win": 0.17,
+     "ci": [
+      0.14799121463156065,
+      0.19453453843545718
+     ],
+     "causes": {
+      "pip": 425,
+      "sunny": 170,
+      "power": 25,
+      "back": 208,
+      "ribbon": 1,
+      "chef": 1
+     },
+     "overtime": 0.013,
+     "fired": 0,
+     "medianPowerWin": 3.8896825396877013,
+     "earlyDeathShare": 0,
+     "deathHourBins": [
+      0,
+      75,
+      123,
+      81,
+      310,
+      214,
+      27
+     ],
+     "burnedAvg": 0.17,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 27.092177407259225,
+     "usage": {
+      "vent": 1.38,
+      "fan": 1,
+      "doorLight": 43.65,
+      "wind": 9.7,
+      "maglock": 25.93,
+      "breaker": 15.35,
+      "lockBreaker": 5.99,
+      "rebootNode": 1.09,
+      "degauss": 4.51,
+      "lure": 6.84,
+      "seal": 3.92,
+      "lureRepeat": 0.23,
+      "replaceBulb": 0.08,
+      "roomLight": 1.2
+     }
+    },
+    "T-genEarly": {
+     "n": 1000,
+     "win": 0.037,
+     "ci": [
+      0.02696102468045289,
+      0.05058268341054474
+     ],
+     "causes": {
+      "pip": 299,
+      "sunny": 381,
+      "back": 235,
+      "ribbon": 44,
+      "tootie": 3,
+      "chef": 1
+     },
+     "overtime": 0.006,
+     "fired": 0,
+     "medianPowerWin": 22.71222222222235,
+     "earlyDeathShare": 0,
+     "deathHourBins": [
+      0,
+      47,
+      88,
+      89,
+      683,
+      37,
+      19
+     ],
+     "burnedAvg": 0.197,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 35.56813653770014,
+     "usage": {
+      "fan": 13.53,
+      "doorLight": 36.25,
+      "wind": 8.17,
+      "maglock": 18.78,
+      "breaker": 11.69,
+      "lockBreaker": 5.12,
+      "seal": 4.04,
+      "lure": 5.04,
+      "degauss": 2.68,
+      "vent": 9.95,
+      "rebootNode": 0.88,
+      "roomLight": 0.71,
+      "replaceBulb": 0.08,
+      "lureRepeat": 0.07
+     }
+    },
+    "T-darkP4": {
+     "n": 1000,
+     "win": 0.074,
+     "ci": [
+      0.05935475135620055,
+      0.09190576623940419
+     ],
+     "causes": {
+      "ribbon": 154,
+      "pip": 359,
+      "sunny": 209,
+      "back": 197,
+      "power": 4,
+      "chef": 2,
+      "tootie": 1
+     },
+     "overtime": 0.017,
+     "fired": 0,
+     "medianPowerWin": 18.65242063492058,
+     "earlyDeathShare": 0,
+     "deathHourBins": [
+      0,
+      62,
+      100,
+      65,
+      348,
+      278,
+      73
+     ],
+     "burnedAvg": 0.18,
+     "unfair": 0,
+     "unfairSeeds": [],
+     "apm": 29.51668948507801,
+     "usage": {
+      "officeLight": 1.78,
+      "fan": 10.27,
+      "doorLight": 43.82,
+      "wind": 9.78,
+      "maglock": 22.94,
+      "breaker": 14.08,
+      "lockBreaker": 6.06,
+      "vent": 21.71,
+      "lure": 6.35,
+      "seal": 4.96,
+      "degauss": 3.59,
+      "rebootNode": 1.05,
+      "roomLight": 1.46,
+      "replaceBulb": 0.11,
+      "lureRepeat": 0.19
+     }
+    }
+   },
+   "ablations": [
+    {
+     "bot": "B4",
+     "off": "vent",
+     "kind": "counter",
+     "base": 0.157,
+     "ablated": 0.001,
+     "drop": 0.156
+    },
+    {
+     "bot": "B4",
+     "off": "stageCut",
+     "kind": "used",
+     "base": 0.157,
+     "ablated": 0.054,
+     "drop": 0.10300000000000001
+    },
+    {
+     "bot": "B4",
+     "off": "generator",
+     "kind": "used",
+     "base": 0.157,
+     "ablated": 0.096,
+     "drop": 0.061
+    },
+    {
+     "bot": "B4",
+     "off": "degauss",
+     "kind": "used",
+     "base": 0.157,
+     "ablated": 0.052,
+     "drop": 0.10500000000000001
+    },
+    {
+     "bot": "B4",
+     "off": "lockBreaker",
+     "kind": "used",
+     "base": 0.157,
+     "ablated": 0.072,
+     "drop": 0.085
+    },
+    {
+     "bot": "B4",
+     "off": "relure",
+     "kind": "used",
+     "base": 0.157,
+     "ablated": 0.122,
+     "drop": 0.035
+    },
+    {
+     "bot": "B4",
+     "off": "heat",
+     "kind": "used",
+     "base": 0.157,
+     "ablated": 0.085,
+     "drop": 0.072
+    }
+   ]
+  }
+ },
+ "gates": [
+  {
+   "ok": true,
+   "label": "N1 B0 胜率 0.0% (CI 0.0%–0.4%) ∈ [0.0%, 5.0%]"
+  },
+  {
+   "ok": true,
+   "label": "N1 B2 胜率 34.1% (CI 31.2%–37.1%) ∈ [10.0%, 60.0%]"
+  },
+  {
+   "ok": true,
+   "label": "N1 B2 不公平死亡 = 0 "
+  },
+  {
+   "ok": true,
+   "label": "N1 B3 胜率 80.6% (CI 78.0%–82.9%) ∈ [72.0%, 87.0%]"
+  },
+  {
+   "ok": true,
+   "label": "N1 B3 不公平死亡 = 0 "
+  },
+  {
+   "ok": true,
+   "label": "N1 B3 00–01 点死亡占比 0.0% < 10%"
+  },
+  {
+   "ok": true,
+   "label": "N1 B3 加班比例 0.0% ≤ 20%"
+  },
+  {
+   "ok": true,
+   "label": "N1 B3 平均烧坏灯管 0.00 ≤ 1"
+  },
+  {
+   "ok": true,
+   "label": "N1 B3 获胜剩余电量中位数 35.9% ∈ [30, 50]"
+  },
+  {
+   "ok": true,
+   "label": "N1 B4 胜率 99.5% (CI 98.8%–99.8%) ∈ [88.0%, 100.0%]"
+  },
+  {
+   "ok": true,
+   "label": "N1 B4 不公平死亡 = 0 "
+  },
+  {
+   "ok": true,
+   "label": "N1 B5 胜率 100.0% (CI 99.6%–100.0%) ∈ [97.0%, 100.0%]"
+  },
+  {
+   "ok": true,
+   "label": "N1 B5 不公平死亡 = 0 "
+  },
+  {
+   "ok": true,
+   "label": "N1 X-lightsOn 胜率 0.0% (CI 0.0%–0.4%) ∈ [0.0%, 10.0%]"
+  },
+  {
+   "ok": true,
+   "label": "N1 X-lureSpam 胜率 0.0% (CI 0.0%–0.4%) ∈ [0.0%, 10.0%]"
+  },
+  {
+   "ok": true,
+   "label": "N1 X-noTasks 胜率 0.0% (CI 0.0%–0.4%) ∈ [0.0%, 10.0%]"
+  },
+  {
+   "ok": true,
+   "label": "N1 X-lateTasks 胜率 0.0% (CI 0.0%–0.4%) ∈ [0.0%, 10.0%]"
+  },
+  {
+   "ok": true,
+   "label": "N1 X-sealAll 胜率 0.0% (CI 0.0%–0.4%) ∈ [0.0%, 10.0%]"
+  },
+  {
+   "ok": true,
+   "label": "N1 X-terminalOnly 胜率 0.0% (CI 0.0%–0.4%) ∈ [0.0%, 10.0%]"
+  },
+  {
+   "ok": true,
+   "label": "N1 技巧 T-roomFreeze 胜率 96.3% ≤ 专家 99.5% + 5.0%"
+  },
+  {
+   "ok": true,
+   "label": "N1 技巧 T-dark 胜率 82.1% ≤ 专家 99.5% + 5.0%"
+  },
+  {
+   "ok": true,
+   "label": "N1 技巧 T-stageEarly 胜率 99.2% ≤ 专家 99.5% + 5.0%"
+  },
+  {
+   "ok": true,
+   "label": "N1 技巧 T-freezerOff 胜率 92.5% ≤ 专家 99.5% + 5.0%"
+  },
+  {
+   "ok": true,
+   "label": "N1 技巧 T-turtle 胜率 97.5% ≤ 专家 99.5% + 5.0%"
+  },
+  {
+   "ok": true,
+   "label": "N1 技巧 T-fanOff 胜率 99.9% ≤ 专家 99.5% + 5.0%"
+  },
+  {
+   "ok": true,
+   "label": "N1 技巧 T-pipLightOnly 胜率 0.0% ≤ 专家 99.5% + 5.0%"
+  },
+  {
+   "ok": true,
+   "label": "N1 技巧 T-ventMax 胜率 90.6% ≤ 专家 99.5% + 5.0%"
+  },
+  {
+   "ok": true,
+   "label": "N1 技巧 T-genEarly 胜率 99.5% ≤ 专家 99.5% + 5.0%"
+  },
+  {
+   "ok": true,
+   "label": "N1 技巧 T-darkP4 胜率 99.5% ≤ 专家 99.5% + 5.0%"
+  },
+  {
+   "ok": true,
+   "label": "N1 消融 doorLight（对策型, B3）80.6% → 0.0%"
+  },
+  {
+   "ok": true,
+   "label": "N2 B0 胜率 0.0% (CI 0.0%–0.4%) ∈ [0.0%, 1.0%]"
+  },
+  {
+   "ok": true,
+   "label": "N2 B2 胜率 1.8% (CI 1.1%–2.8%) ∈ [0.0%, 40.0%]"
+  },
+  {
+   "ok": true,
+   "label": "N2 B2 不公平死亡 = 0 "
+  },
+  {
+   "ok": true,
+   "label": "N2 B3 胜率 61.9% (CI 58.8%–64.9%) ∈ [55.0%, 72.0%]"
+  },
+  {
+   "ok": true,
+   "label": "N2 B3 不公平死亡 = 0 "
+  },
+  {
+   "ok": true,
+   "label": "N2 B3 单一死因占比 63.5% ≤ 70.0%"
+  },
+  {
+   "ok": true,
+   "label": "N2 B3 00–01 点死亡占比 0.8% < 10%"
+  },
+  {
+   "ok": true,
+   "label": "N2 B3 加班比例 0.0% ≤ 20%"
+  },
+  {
+   "ok": true,
+   "label": "N2 B3 平均烧坏灯管 0.01 ≤ 1"
+  },
+  {
+   "ok": true,
+   "label": "N2 B3 获胜剩余电量中位数 25.2% ∈ [15, 30]"
+  },
+  {
+   "ok": true,
+   "label": "N2 B4 胜率 97.5% (CI 96.3%–98.3%) ∈ [80.0%, 99.0%]"
+  },
+  {
+   "ok": true,
+   "label": "N2 B4 不公平死亡 = 0 "
+  },
+  {
+   "ok": true,
+   "label": "N2 B5 胜率 100.0% (CI 99.6%–100.0%) ∈ [95.0%, 100.0%]"
+  },
+  {
+   "ok": true,
+   "label": "N2 B5 不公平死亡 = 0 "
+  },
+  {
+   "ok": true,
+   "label": "N2 X-lightsOn 胜率 0.0% (CI 0.0%–0.4%) ∈ [0.0%, 5.0%]"
+  },
+  {
+   "ok": true,
+   "label": "N2 X-lureSpam 胜率 0.0% (CI 0.0%–0.4%) ∈ [0.0%, 5.0%]"
+  },
+  {
+   "ok": true,
+   "label": "N2 X-noTasks 胜率 0.0% (CI 0.0%–0.4%) ∈ [0.0%, 5.0%]"
+  },
+  {
+   "ok": true,
+   "label": "N2 X-lateTasks 胜率 0.0% (CI 0.0%–0.4%) ∈ [0.0%, 5.0%]"
+  },
+  {
+   "ok": true,
+   "label": "N2 X-sealAll 胜率 0.0% (CI 0.0%–0.4%) ∈ [0.0%, 5.0%]"
+  },
+  {
+   "ok": true,
+   "label": "N2 X-terminalOnly 胜率 0.0% (CI 0.0%–0.4%) ∈ [0.0%, 5.0%]"
+  },
+  {
+   "ok": true,
+   "label": "N2 技巧 T-roomFreeze 胜率 91.4% ≤ 专家 97.5% + 5.0%"
+  },
+  {
+   "ok": true,
+   "label": "N2 技巧 T-dark 胜率 29.9% ≤ 专家 97.5% + 5.0%"
+  },
+  {
+   "ok": true,
+   "label": "N2 技巧 T-stageEarly 胜率 96.7% ≤ 专家 97.5% + 5.0%"
+  },
+  {
+   "ok": true,
+   "label": "N2 技巧 T-freezerOff 胜率 82.4% ≤ 专家 97.5% + 5.0%"
+  },
+  {
+   "ok": true,
+   "label": "N2 技巧 T-turtle 胜率 90.7% ≤ 专家 97.5% + 5.0%"
+  },
+  {
+   "ok": true,
+   "label": "N2 技巧 T-fanOff 胜率 89.1% ≤ 专家 97.5% + 5.0%"
+  },
+  {
+   "ok": true,
+   "label": "N2 技巧 T-pipLightOnly 胜率 0.0% ≤ 专家 97.5% + 5.0%"
+  },
+  {
+   "ok": true,
+   "label": "N2 技巧 T-ventMax 胜率 79.3% ≤ 专家 97.5% + 5.0%"
+  },
+  {
+   "ok": true,
+   "label": "N2 技巧 T-genEarly 胜率 97.5% ≤ 专家 97.5% + 5.0%"
+  },
+  {
+   "ok": true,
+   "label": "N2 技巧 T-darkP4 胜率 97.5% ≤ 专家 97.5% + 5.0%"
+  },
+  {
+   "ok": true,
+   "label": "N2 消融 doorLight（对策型, B3）61.9% → 0.0%"
+  },
+  {
+   "ok": true,
+   "label": "N2 消融 lure（对策型, B3）61.9% → 0.0%"
+  },
+  {
+   "ok": true,
+   "label": "N3 B0 胜率 0.0% (CI 0.0%–0.4%) ∈ [0.0%, 1.0%]"
+  },
+  {
+   "ok": true,
+   "label": "N3 B2 胜率 0.6% (CI 0.3%–1.3%) ∈ [0.0%, 15.0%]"
+  },
+  {
+   "ok": true,
+   "label": "N3 B2 不公平死亡 = 0 "
+  },
+  {
+   "ok": true,
+   "label": "N3 B3 胜率 38.4% (CI 35.4%–41.5%) ∈ [20.0%, 42.0%]"
+  },
+  {
+   "ok": true,
+   "label": "N3 B3 不公平死亡 = 0 "
+  },
+  {
+   "ok": true,
+   "label": "N3 B3 单一死因占比 36.5% ≤ 60.0%"
+  },
+  {
+   "ok": true,
+   "label": "N3 B3 00–01 点死亡占比 0.5% < 10%"
+  },
+  {
+   "ok": true,
+   "label": "N3 B3 加班比例 0.0% ≤ 20%"
+  },
+  {
+   "ok": true,
+   "label": "N3 B3 平均烧坏灯管 0.01 ≤ 1"
+  },
+  {
+   "ok": true,
+   "label": "N3 B3 获胜剩余电量中位数 23.8% ∈ [15, 30]"
+  },
+  {
+   "ok": true,
+   "label": "N3 B4 胜率 86.1% (CI 83.8%–88.1%) ∈ [78.0%, 94.0%]"
+  },
+  {
+   "ok": true,
+   "label": "N3 B4 不公平死亡 = 0 "
+  },
+  {
+   "ok": true,
+   "label": "N3 B5 胜率 95.7% (CI 94.3%–96.8%) ∈ [90.0%, 100.0%]"
+  },
+  {
+   "ok": true,
+   "label": "N3 B5 不公平死亡 = 0 "
+  },
+  {
+   "ok": true,
+   "label": "N3 X-lightsOn 胜率 0.0% (CI 0.0%–0.4%) ∈ [0.0%, 5.0%]"
+  },
+  {
+   "ok": true,
+   "label": "N3 X-lureSpam 胜率 0.0% (CI 0.0%–0.4%) ∈ [0.0%, 5.0%]"
+  },
+  {
+   "ok": true,
+   "label": "N3 X-noTasks 胜率 0.0% (CI 0.0%–0.4%) ∈ [0.0%, 5.0%]"
+  },
+  {
+   "ok": true,
+   "label": "N3 X-lateTasks 胜率 0.0% (CI 0.0%–0.4%) ∈ [0.0%, 5.0%]"
+  },
+  {
+   "ok": true,
+   "label": "N3 X-sealAll 胜率 0.0% (CI 0.0%–0.4%) ∈ [0.0%, 5.0%]"
+  },
+  {
+   "ok": true,
+   "label": "N3 X-terminalOnly 胜率 0.0% (CI 0.0%–0.4%) ∈ [0.0%, 5.0%]"
+  },
+  {
+   "ok": true,
+   "label": "N3 技巧 T-roomFreeze 胜率 71.5% ≤ 专家 86.1% + 5.0%"
+  },
+  {
+   "ok": true,
+   "label": "N3 技巧 T-dark 胜率 49.1% ≤ 专家 86.1% + 5.0%"
+  },
+  {
+   "ok": true,
+   "label": "N3 技巧 T-stageEarly 胜率 88.1% ≤ 专家 86.1% + 5.0%"
+  },
+  {
+   "ok": true,
+   "label": "N3 技巧 T-freezerOff 胜率 72.3% ≤ 专家 86.1% + 5.0%"
+  },
+  {
+   "ok": true,
+   "label": "N3 技巧 T-turtle 胜率 73.9% ≤ 专家 86.1% + 5.0%"
+  },
+  {
+   "ok": true,
+   "label": "N3 技巧 T-fanOff 胜率 69.6% ≤ 专家 86.1% + 5.0%"
+  },
+  {
+   "ok": true,
+   "label": "N3 技巧 T-pipLightOnly 胜率 0.0% ≤ 专家 86.1% + 5.0%"
+  },
+  {
+   "ok": true,
+   "label": "N3 技巧 T-ventMax 胜率 74.1% ≤ 专家 86.1% + 5.0%"
+  },
+  {
+   "ok": true,
+   "label": "N3 技巧 T-genEarly 胜率 86.1% ≤ 专家 86.1% + 5.0%"
+  },
+  {
+   "ok": true,
+   "label": "N3 技巧 T-darkP4 胜率 86.1% ≤ 专家 86.1% + 5.0%"
+  },
+  {
+   "ok": true,
+   "label": "N3 消融 maglock（对策型, B3）38.4% → 0.0%"
+  },
+  {
+   "ok": true,
+   "label": "N3 消融 heat（取舍型, B4）下降 16.5% ≥ 3.0%"
+  },
+  {
+   "ok": true,
+   "label": "N3 消融 seal（取舍型, B4）下降 4.5% ≥ 3.0%"
+  },
+  {
+   "ok": true,
+   "label": "N4 B0 胜率 0.0% (CI 0.0%–0.4%) ∈ [0.0%, 1.0%]"
+  },
+  {
+   "ok": true,
+   "label": "N4 B2 胜率 0.0% (CI 0.0%–0.4%) ∈ [0.0%, 8.0%]"
+  },
+  {
+   "ok": true,
+   "label": "N4 B2 不公平死亡 = 0 "
+  },
+  {
+   "ok": true,
+   "label": "N4 B3 胜率 21.0% (CI 18.6%–23.6%) ∈ [10.0%, 26.0%]"
+  },
+  {
+   "ok": true,
+   "label": "N4 B3 不公平死亡 = 0 "
+  },
+  {
+   "ok": true,
+   "label": "N4 B3 单一死因占比 45.2% ≤ 55.0%"
+  },
+  {
+   "ok": true,
+   "label": "N4 B3 00–01 点死亡占比 0.4% < 10%"
+  },
+  {
+   "ok": true,
+   "label": "N4 B3 加班比例 1.3% ≤ 20%"
+  },
+  {
+   "ok": true,
+   "label": "N4 B3 平均烧坏灯管 0.08 ≤ 1"
+  },
+  {
+   "ok": true,
+   "label": "N4 B3 获胜剩余电量中位数 13.0% ∈ [5, 20]"
+  },
+  {
+   "ok": true,
+   "label": "N4 B4 胜率 74.8% (CI 72.0%–77.4%) ∈ [66.0%, 88.0%]"
+  },
+  {
+   "ok": true,
+   "label": "N4 B4 不公平死亡 = 0 "
+  },
+  {
+   "ok": true,
+   "label": "N4 B5 胜率 89.4% (CI 87.3%–91.2%) ∈ [85.0%, 100.0%]"
+  },
+  {
+   "ok": true,
+   "label": "N4 B5 不公平死亡 = 0 "
+  },
+  {
+   "ok": true,
+   "label": "N4 X-lightsOn 胜率 0.0% (CI 0.0%–0.4%) ∈ [0.0%, 5.0%]"
+  },
+  {
+   "ok": true,
+   "label": "N4 X-lureSpam 胜率 0.0% (CI 0.0%–0.4%) ∈ [0.0%, 5.0%]"
+  },
+  {
+   "ok": true,
+   "label": "N4 X-noTasks 胜率 0.0% (CI 0.0%–0.4%) ∈ [0.0%, 5.0%]"
+  },
+  {
+   "ok": true,
+   "label": "N4 X-lateTasks 胜率 0.0% (CI 0.0%–0.4%) ∈ [0.0%, 5.0%]"
+  },
+  {
+   "ok": true,
+   "label": "N4 X-sealAll 胜率 0.0% (CI 0.0%–0.4%) ∈ [0.0%, 5.0%]"
+  },
+  {
+   "ok": true,
+   "label": "N4 X-terminalOnly 胜率 0.0% (CI 0.0%–0.4%) ∈ [0.0%, 5.0%]"
+  },
+  {
+   "ok": true,
+   "label": "N4 技巧 T-roomFreeze 胜率 53.7% ≤ 专家 74.8% + 5.0%"
+  },
+  {
+   "ok": true,
+   "label": "N4 技巧 T-dark 胜率 24.9% ≤ 专家 74.8% + 5.0%"
+  },
+  {
+   "ok": true,
+   "label": "N4 技巧 T-stageEarly 胜率 72.3% ≤ 专家 74.8% + 5.0%"
+  },
+  {
+   "ok": true,
+   "label": "N4 技巧 T-freezerOff 胜率 67.0% ≤ 专家 74.8% + 5.0%"
+  },
+  {
+   "ok": true,
+   "label": "N4 技巧 T-turtle 胜率 61.9% ≤ 专家 74.8% + 5.0%"
+  },
+  {
+   "ok": true,
+   "label": "N4 技巧 T-fanOff 胜率 43.1% ≤ 专家 74.8% + 5.0%"
+  },
+  {
+   "ok": true,
+   "label": "N4 技巧 T-pipLightOnly 胜率 0.0% ≤ 专家 74.8% + 5.0%"
+  },
+  {
+   "ok": true,
+   "label": "N4 技巧 T-ventMax 胜率 63.6% ≤ 专家 74.8% + 5.0%"
+  },
+  {
+   "ok": true,
+   "label": "N4 技巧 T-genEarly 胜率 74.8% ≤ 专家 74.8% + 5.0%"
+  },
+  {
+   "ok": true,
+   "label": "N4 技巧 T-darkP4 胜率 74.8% ≤ 专家 74.8% + 5.0%"
+  },
+  {
+   "ok": true,
+   "label": "N4 消融 wind（对策型, B4）74.8% → 0.0%"
+  },
+  {
+   "ok": true,
+   "label": "N4 消融 heat（取舍型, B4）下降 31.7% ≥ 3.0%"
+  },
+  {
+   "ok": true,
+   "label": "N4 消融 degauss（取舍型, B4）下降 12.7% ≥ 3.0%"
+  },
+  {
+   "ok": true,
+   "label": "N4 消融 seal（取舍型, B4）下降 5.8% ≥ 3.0%"
+  },
+  {
+   "ok": true,
+   "label": "N5 B0 胜率 0.0% (CI 0.0%–0.4%) ∈ [0.0%, 1.0%]"
+  },
+  {
+   "ok": true,
+   "label": "N5 B2 胜率 0.0% (CI 0.0%–0.4%) ∈ [0.0%, 3.0%]"
+  },
+  {
+   "ok": true,
+   "label": "N5 B2 不公平死亡 = 0 "
+  },
+  {
+   "ok": true,
+   "label": "N5 B3 胜率 3.9% (CI 2.9%–5.3%) ∈ [2.0%, 20.0%]"
+  },
+  {
+   "ok": true,
+   "label": "N5 B3 不公平死亡 = 0 "
+  },
+  {
+   "ok": true,
+   "label": "N5 B3 单一死因占比 50.6% ≤ 55.0%"
+  },
+  {
+   "ok": true,
+   "label": "N5 B3 00–01 点死亡占比 0.3% < 10%"
+  },
+  {
+   "ok": true,
+   "label": "N5 B3 加班比例 1.2% ≤ 20%"
+  },
+  {
+   "ok": true,
+   "label": "N5 B3 平均烧坏灯管 0.02 ≤ 1"
+  },
+  {
+   "ok": true,
+   "label": "N5 B3 获胜剩余电量中位数 18.4% ∈ [5, 20]"
+  },
+  {
+   "ok": true,
+   "label": "N5 B4 胜率 58.8% (CI 55.7%–61.8%) ∈ [50.0%, 76.0%]"
+  },
+  {
+   "ok": true,
+   "label": "N5 B4 不公平死亡 = 0 "
+  },
+  {
+   "ok": true,
+   "label": "N5 B5 胜率 78.3% (CI 75.6%–80.7%) ∈ [75.0%, 100.0%]"
+  },
+  {
+   "ok": true,
+   "label": "N5 B5 不公平死亡 = 0 "
+  },
+  {
+   "ok": true,
+   "label": "N5 X-lightsOn 胜率 0.0% (CI 0.0%–0.4%) ∈ [0.0%, 3.0%]"
+  },
+  {
+   "ok": true,
+   "label": "N5 X-lureSpam 胜率 0.0% (CI 0.0%–0.4%) ∈ [0.0%, 3.0%]"
+  },
+  {
+   "ok": true,
+   "label": "N5 X-noTasks 胜率 0.0% (CI 0.0%–0.4%) ∈ [0.0%, 3.0%]"
+  },
+  {
+   "ok": true,
+   "label": "N5 X-lateTasks 胜率 0.0% (CI 0.0%–0.4%) ∈ [0.0%, 3.0%]"
+  },
+  {
+   "ok": true,
+   "label": "N5 X-sealAll 胜率 0.0% (CI 0.0%–0.4%) ∈ [0.0%, 3.0%]"
+  },
+  {
+   "ok": true,
+   "label": "N5 X-terminalOnly 胜率 0.0% (CI 0.0%–0.4%) ∈ [0.0%, 3.0%]"
+  },
+  {
+   "ok": true,
+   "label": "N5 技巧 T-roomFreeze 胜率 41.5% ≤ 专家 58.8% + 5.0%"
+  },
+  {
+   "ok": true,
+   "label": "N5 技巧 T-dark 胜率 0.3% ≤ 专家 58.8% + 5.0%"
+  },
+  {
+   "ok": true,
+   "label": "N5 技巧 T-stageEarly 胜率 59.9% ≤ 专家 58.8% + 5.0%"
+  },
+  {
+   "ok": true,
+   "label": "N5 技巧 T-freezerOff 胜率 52.1% ≤ 专家 58.8% + 5.0%"
+  },
+  {
+   "ok": true,
+   "label": "N5 技巧 T-turtle 胜率 46.6% ≤ 专家 58.8% + 5.0%"
+  },
+  {
+   "ok": true,
+   "label": "N5 技巧 T-fanOff 胜率 21.8% ≤ 专家 58.8% + 5.0%"
+  },
+  {
+   "ok": true,
+   "label": "N5 技巧 T-pipLightOnly 胜率 0.0% ≤ 专家 58.8% + 5.0%"
+  },
+  {
+   "ok": true,
+   "label": "N5 技巧 T-ventMax 胜率 59.0% ≤ 专家 58.8% + 5.0%"
+  },
+  {
+   "ok": true,
+   "label": "N5 技巧 T-genEarly 胜率 14.9% ≤ 专家 58.8% + 5.0%"
+  },
+  {
+   "ok": true,
+   "label": "N5 技巧 T-darkP4 胜率 55.0% ≤ 专家 58.8% + 5.0%"
+  },
+  {
+   "ok": true,
+   "label": "N5 消融 vent（对策型, B4）58.8% → 0.0%"
+  },
+  {
+   "ok": true,
+   "label": "N5 消融 generator（取舍型, B4）下降 58.8% ≥ 3.0%"
+  },
+  {
+   "ok": true,
+   "label": "N5 消融 degauss（取舍型, B4）下降 16.6% ≥ 3.0%"
+  },
+  {
+   "ok": true,
+   "label": "N5 消融 heat（取舍型, B4）下降 37.0% ≥ 3.0%"
+  },
+  {
+   "ok": true,
+   "label": "N5 消融 bright（取舍型, B4）下降 3.8% ≥ 3.0%"
+  },
+  {
+   "ok": true,
+   "label": "N5 消融 seal（取舍型, B4）下降 3.5% ≥ 3.0%"
+  },
+  {
+   "ok": true,
+   "label": "N5 消融 stageCut（取舍型, B4）下降 28.8% ≥ 3.0%"
+  },
+  {
+   "ok": true,
+   "label": "N6 B0 胜率 0.0% (CI 0.0%–0.4%) ∈ [0.0%, 1.0%]"
+  },
+  {
+   "ok": true,
+   "label": "N6 B2 胜率 0.0% (CI 0.0%–0.4%) ∈ [0.0%, 2.0%]"
+  },
+  {
+   "ok": true,
+   "label": "N6 B2 不公平死亡 = 0 "
+  },
+  {
+   "ok": true,
+   "label": "N6 B3 胜率 0.6% (CI 0.3%–1.3%) ∈ [0.0%, 6.0%]"
+  },
+  {
+   "ok": true,
+   "label": "N6 B3 不公平死亡 = 0 "
+  },
+  {
+   "ok": true,
+   "label": "N6 B3 单一死因占比 31.9% ≤ 55.0%"
+  },
+  {
+   "ok": true,
+   "label": "N6 B3 00–01 点死亡占比 0.3% < 10%"
+  },
+  {
+   "ok": true,
+   "label": "N6 B3 加班比例 0.2% ≤ 20%"
+  },
+  {
+   "ok": true,
+   "label": "N6 B3 平均烧坏灯管 0.08 ≤ 1"
+  },
+  {
+   "ok": true,
+   "label": "N6 B3 获胜剩余电量中位数 12.0% ∈ [5, 20]"
+  },
+  {
+   "ok": true,
+   "label": "N6 B4 胜率 15.7% (CI 13.6%–18.1%) ∈ [10.0%, 19.5%]"
+  },
+  {
+   "ok": true,
+   "label": "N6 B4 不公平死亡 = 0 "
+  },
+  {
+   "ok": true,
+   "label": "N6 B5 胜率 19.1% (CI 16.8%–21.7%) ∈ [15.0%, 100.0%]"
+  },
+  {
+   "ok": true,
+   "label": "N6 B5 不公平死亡 = 0 "
+  },
+  {
+   "ok": true,
+   "label": "N6 X-lightsOn 胜率 0.0% (CI 0.0%–0.4%) ∈ [0.0%, 2.0%]"
+  },
+  {
+   "ok": true,
+   "label": "N6 X-lureSpam 胜率 0.0% (CI 0.0%–0.4%) ∈ [0.0%, 2.0%]"
+  },
+  {
+   "ok": true,
+   "label": "N6 X-noTasks 胜率 0.0% (CI 0.0%–0.4%) ∈ [0.0%, 2.0%]"
+  },
+  {
+   "ok": true,
+   "label": "N6 X-lateTasks 胜率 0.0% (CI 0.0%–0.4%) ∈ [0.0%, 2.0%]"
+  },
+  {
+   "ok": true,
+   "label": "N6 X-sealAll 胜率 0.0% (CI 0.0%–0.4%) ∈ [0.0%, 2.0%]"
+  },
+  {
+   "ok": true,
+   "label": "N6 X-terminalOnly 胜率 0.0% (CI 0.0%–0.4%) ∈ [0.0%, 2.0%]"
+  },
+  {
+   "ok": true,
+   "label": "N6 技巧 T-roomFreeze 胜率 5.5% ≤ 专家 15.7% + 5.0%"
+  },
+  {
+   "ok": true,
+   "label": "N6 技巧 T-dark 胜率 1.1% ≤ 专家 15.7% + 5.0%"
+  },
+  {
+   "ok": true,
+   "label": "N6 技巧 T-stageEarly 胜率 12.4% ≤ 专家 15.7% + 5.0%"
+  },
+  {
+   "ok": true,
+   "label": "N6 技巧 T-freezerOff 胜率 12.2% ≤ 专家 15.7% + 5.0%"
+  },
+  {
+   "ok": true,
+   "label": "N6 技巧 T-turtle 胜率 4.8% ≤ 专家 15.7% + 5.0%"
+  },
+  {
+   "ok": true,
+   "label": "N6 技巧 T-fanOff 胜率 8.5% ≤ 专家 15.7% + 5.0%"
+  },
+  {
+   "ok": true,
+   "label": "N6 技巧 T-pipLightOnly 胜率 0.0% ≤ 专家 15.7% + 5.0%"
+  },
+  {
+   "ok": true,
+   "label": "N6 技巧 T-ventMax 胜率 17.0% ≤ 专家 15.7% + 5.0%"
+  },
+  {
+   "ok": true,
+   "label": "N6 技巧 T-genEarly 胜率 3.7% ≤ 专家 15.7% + 5.0%"
+  },
+  {
+   "ok": true,
+   "label": "N6 技巧 T-darkP4 胜率 7.4% ≤ 专家 15.7% + 5.0%"
+  },
+  {
+   "ok": true,
+   "label": "N6 消融 vent（对策型, B4）15.7% → 0.1%"
+  },
+  {
+   "ok": true,
+   "label": "N6 消融 stageCut（取舍型, B4）下降 10.3% ≥ 2.4%"
+  },
+  {
+   "ok": true,
+   "label": "N6 消融 generator（取舍型, B4）下降 6.1% ≥ 2.4%"
+  },
+  {
+   "ok": true,
+   "label": "N6 消融 degauss（取舍型, B4）下降 10.5% ≥ 2.4%"
+  },
+  {
+   "ok": true,
+   "label": "N6 消融 lockBreaker（取舍型, B4）下降 8.5% ≥ 2.4%"
+  },
+  {
+   "ok": true,
+   "label": "N6 消融 relure（取舍型, B4）下降 3.5% ≥ 2.4%"
+  },
+  {
+   "ok": true,
+   "label": "N6 消融 heat（取舍型, B4）下降 7.2% ≥ 2.4%"
+  },
+  {
+   "ok": true,
+   "label": "B3 N1→N2 下降 18.7% ∈ [5.0%, 35.0%]"
+  },
+  {
+   "ok": true,
+   "label": "B3 N2→N3 下降 23.5% ∈ [5.0%, 35.0%]"
+  },
+  {
+   "ok": true,
+   "label": "B3 N3→N4 下降 17.4% ∈ [5.0%, 35.0%]"
+  },
+  {
+   "ok": true,
+   "label": "B3 N4→N5 下降 17.1% ∈ [5.0%, 35.0%]"
+  },
+  {
+   "ok": true,
+   "label": "B3 N5→N6 下降 3.3% ∈ [1.2%, 35.0%]"
+  }
+ ],
+ "seconds": 553.509
+}

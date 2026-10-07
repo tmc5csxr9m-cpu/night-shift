@@ -93,14 +93,16 @@ export class Agent {
       const e = w.emi;
       // blotches hide the edges; a hot tube shimmers
       const thr = this.S.emiThreshold + e.magnet * 0.5 + (w.faulty() ? 0.15 : 0);
+      const vis = w.P.emi.visual ?? 1;   // the CRT shows interference faintly
       this.emiSeen = this.emiSeen || { L: 0, R: 0, B: 0, T: 0 };
       const pNotice = 1 - Math.exp(-this.S.emiNotice * w.P.tick);
       const out = { magnet: e.magnet };
       for (const k of ['L', 'R', 'B', 'T']) {
-        if (e[k] > thr) {
-          if (!this.emiSeen[k] && this.rng.chance(pNotice)) this.emiSeen[k] = e[k];
-          if (this.emiSeen[k]) this.emiSeen[k] = Math.max(this.emiSeen[k] * 0.98, e[k]);
-        } else if (e[k] < thr * 0.5) this.emiSeen[k] = 0;
+        const v = e[k] * vis;
+        if (v > thr) {
+          if (!this.emiSeen[k] && this.rng.chance(pNotice)) this.emiSeen[k] = v;
+          if (this.emiSeen[k]) this.emiSeen[k] = Math.max(this.emiSeen[k] * 0.98, v);
+        } else if (v < thr * 0.5) this.emiSeen[k] = 0;
         out[k] = this.emiSeen[k];
       }
       this.emi = out;
@@ -128,14 +130,20 @@ export class Agent {
       musicPlaying: w.musicPlaying(),     // audible anywhere
       tripped: w.power.tripped, powerOut: w.power.out,
       phone: w.phone.state,
+      phoneSpam: w.phone.kind === 'spam',
+      manualWind: !w.night.autoWind,       // a rule of the night (the tutorial says so)
       tasks: w.tasks.map((x) => ({ id: x.id, done: x.done, optional: !!x.optional, open: w.taskOpen(x), progress: this.taskProgress[x.id], need: this.taskNeed[x.id] })),
       circuits: { ...w.circuits },        // known: player sets them (and the log reports trips)
       calibrated: { ...w.calibrated },
       office: { light: w.office.light, fan: w.office.fan, vent: w.office.vent, maglock: w.office.maglock, coilLockout: w.office.coilLockout > 0 },
       shutterBusy: !w.calibrated.seal || Object.values(w.rooms).some((r) => r.sealed) || w.shutterCd > 0,
     };
+    // the music box key is on the shelf, in view when looking ahead
+    if (!this.focused && this.look === 'F') obs.wind = w.musicBox.wind;
     if (this.focused) {
-      obs.power = { pct: w.powerPct(), load: w.power.load };
+      // the power page shows how long the reserve lasts at the current load
+      const rate = (Math.max(0.01, w.power.load) / 60) * (w.generator.gridDown ? w.P.generator.batteryMul : 1);
+      obs.power = { pct: w.powerPct(), load: w.power.load, eta: w.power.reserve / rate };
       obs.emergencies = w.emergencies.map((e) => ({ ...e }));
       obs.wind = w.musicBox.wind;
       obs.autoWind = w.musicBox.auto;
@@ -147,6 +155,8 @@ export class Agent {
       const boss = w.actor('starlight');
       if (boss) {
         obs.bossPending = boss.pending ? boss.pending.id : null;
+        obs.paSoon = boss.paPending > 0;
+        obs.seized = Object.fromEntries(Object.entries(w.seized).filter(([, v]) => v > 0));
         obs.locks = Object.fromEntries(Object.entries(w.locks).map(([k, l]) => [k, { t: l.t, cd: l.cd }]));
         obs.bossPhase = boss.phase;
       }
@@ -223,7 +233,23 @@ export class Agent {
         };
         break;
       }
-      case 'hold': {   // wind music box / replace bulb
+      case 'phys': {   // in the room: leave the terminal, turn, click (or hold)
+        const dir = a.dir || 'F';
+        if (this.focused) cost += S.focus;
+        if (this.look !== dir) cost += dir === 'F' || this.look === 'F' ? S.turn : S.turn * 1.8;
+        cost += this.clickCost() + (a.dur || 0);
+        after = () => {
+          this.focused = false;
+          this.look = dir;
+          this.w.cmd('focus', { on: false });
+          this.w.cmd('look', { dir });
+          if (a.name === 'wind') for (let k = 0; k < a.dur; k += 0.5) this.w.cmd('wind', { dt: Math.min(0.5, a.dur - k) });
+          else this.w.cmd(a.name, a.args || {});
+          this.usage[a.name] = (this.usage[a.name] || 0) + 1;
+        };
+        break;
+      }
+      case 'hold': {   // terminal hold buttons: replace bulb, reboot node
         const page = CMD_PAGE[a.name];
         cost += this.positionCost(true, page) + a.dur;
         after = () => {

@@ -162,17 +162,9 @@ export const facilityPage = {
           ui.text(x + 2, y + 8, fit('别断开 C7!', W - 3), C.dim, bg);
         } else {
           ui.text(x + 2, y + 6, play ? `${Math.round(mb.wind * 100)}% 播放中` : '已停止!', play ? C.fg : C.red, bg);
-          const hov = ui.pushButton('mb-wind', x + 2, y + 8, 13, '↻上发条(按住)', null, {
-            onHold: (dt) => {
-              game.cmd('wind', { dt });
-              this._t = (this._t || 0) + dt;
-              if (this._t > 0.12) {
-                this._t = 0;
-                term.sfx.tick();
-              }
-            },
-          });
-          if (hov && ui.down) ui.text(x + 2, y + 10, '咔哒 咔哒...', C.dim, bg);
+          // the box itself is on the shelf in front of you: leave the terminal
+          ui.text(x + 2, y + 8, fit('离开终端,', W - 3), C.dim, bg);
+          ui.text(x + 2, y + 9, fit('按住架子上的盒子', W - 3), low ? C.yel : C.dim, bg);
         }
       }
     }
