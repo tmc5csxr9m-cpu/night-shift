@@ -1,6 +1,6 @@
 # NIGHT SHIFT 宣传片（Remotion）
 
-约 50 秒、1920×1080、30fps。画面全部是游戏实机录制，字卡的视觉设计先在 Claude Design 画布中完成，再在这里用 Remotion 实现；音效全部取自游戏本身（由 `npm run assets` 从游戏的 `public/audio` 复制）。
+约 50 秒、1920×1080、30fps 的恐怖预告：冷开场 → 开灯的一瞬间它就在门口 → 120 BPM 的短镜头与短句 → 越来越快的蒙太奇 → 静音 → 最后一下惊吓 → 片名 → 彩蛋 → AI 声明与下载。画面全部是游戏实机录制；字卡视觉先在 Claude Design 画布中设计；配乐由 `tools/score.py` 用 numpy 从零合成，并按 `src/timeline.json` 与剪辑逐拍对齐（同一份时间轴驱动画面和音乐），音效取自游戏本身。
 
 ## 1. 录制实机画面
 
@@ -20,6 +20,7 @@ cd trailer && ./tools/encode.sh frames     # -> public/footage/*.mp4
 ```bash
 npm install
 npm run studio               # 预览 / 调整时间线
+python3 tools/score.py       # 配乐 -> public/score.wav (需要 numpy)
 npm run render               # -> out/night-shift-trailer.mp4
 ffmpeg -i out/night-shift-trailer.mp4 -c:v copy -af loudnorm=I=-14:TP=-1.5:LRA=11 -c:a aac -b:a 192k out/night-shift-trailer-final.mp4
 ```
@@ -28,4 +29,4 @@ ffmpeg -i out/night-shift-trailer.mp4 -c:v copy -af loudnorm=I=-14:TP=-1.5:LRA=1
 
 `npm run assets` 会把游戏的字体和音效复制进 `public/`（studio / render 前自动执行）。
 
-`src/Trailer.tsx` 是时间线（每个镜头一个 `Series.Sequence`），`src/Cards.tsx` 是片名、节奏字卡、AI 声明和下载片尾，`src/Clip.tsx` 是实机镜头与字幕条。
+`src/timeline.json` 是剪辑表（每个镜头 / 字卡的起止帧、素材与效果），`src/Trailer.tsx` 按它渲染，`src/Cards.tsx` 里是下载片尾。

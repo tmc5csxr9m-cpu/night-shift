@@ -956,7 +956,8 @@ function updateWorld(dt, t) {
   crt.uniforms.tint.value.set(1 + red * 0.5, 1 - red * 0.55, 1 - red * 0.6);
   room.screenLight.color.setRGB(0.36 + red * 0.6, 0.49 - red * 0.35, 1 - red * 0.75);
   // its eyes light the shelf red in its last seconds
-  headGlow.intensity = bossEnd && !bossEnd.cut ? (calm() ? 2.2 : 1.6 + Math.random() * 1.6) : 0;
+  // (and from 05:30 on, while it plays hide and seek, a dim red glow: it is watching)
+  headGlow.intensity = bossEnd ? (bossEnd.cut ? 0 : calm() ? 2.2 : 1.6 + Math.random() * 1.6) : boss && !w.result && ph === 4 ? 0.7 + (calm() ? 0 : Math.sin(t * 2.3) * 0.25) : 0;
   if (room.headPupil) {
     let pupil = boss ? 0.15 + ph * 0.8 + (ph === 4 && !calm() ? Math.sin(t * 9) * 0.6 : 0) : 0.15;
     if (bossEnd) pupil = bossEnd.cut ? 0 : 3.5 + (calm() ? 0 : Math.random() * 3);
