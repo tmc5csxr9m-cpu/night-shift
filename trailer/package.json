@@ -1,0 +1,26 @@
+{
+  "name": "night-shift-trailer",
+  "private": true,
+  "version": "1.0.0",
+  "description": "NIGHT SHIFT trailer (Remotion). Footage is recorded from the real game, see README.md",
+  "license": "AGPL-3.0-or-later",
+  "scripts": {
+    "assets": "node tools/assets.mjs",
+    "prestudio": "node tools/assets.mjs",
+    "studio": "remotion studio",
+    "prerender": "node tools/assets.mjs",
+    "render": "remotion render Trailer out/night-shift-trailer.mp4 --codec=h264 --crf=18"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.541",
+    "@remotion/media": "4.0.541",
+    "@remotion/transitions": "4.0.541",
+    "react": "19.2.0",
+    "react-dom": "19.2.0",
+    "remotion": "4.0.541"
+  },
+  "devDependencies": {
+    "@types/react": "19.2.2",
+    "typescript": "5.9.3"
+  }
+}

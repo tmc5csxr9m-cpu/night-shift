@@ -2,7 +2,7 @@
 import { C, COLS, fit, strWidth } from '../screen.js';
 import { save } from '../../save.js';
 import { NIGHTS } from '../../sim/index.js';
-import { native, DEBUG_ALLOWED, VERSION } from '../../native.js';
+import { native, DEBUG_ALLOWED, VERSION, CHANNEL } from '../../native.js';
 import { drawManual } from './manual.js';
 
 let view = 'main'; // main | nights | settings | confirm | manual | about
@@ -22,10 +22,6 @@ const LOGO = [
   '██  ███  █  ██ █ ██  ██  ██      ██ ██  ██  █  ██     ██  ',
   '██   ██ ███ ████ ██  ██  ██    ████ ██  ██ ███ ██     ██  ',
 ];
-
-function stars(n) {
-  return '★'.repeat(n) + '☆'.repeat(3 - n);
-}
 
 function btn(ui, term, id, y, label, fn, opts = {}) {
   const w = 30;
@@ -67,7 +63,7 @@ export const menuPage = {
     // footer
     ui.fill(0, 29, COLS, 1, C.bg2);
     ui.text(1, 29, fit(tip || save.warning || '鼠标操作 · 建议佩戴耳机 · 主菜单长按 ESC 退出', 64), save.warning && !tip ? C.yel : C.dim, C.bg2);
-    const ver = `v${VERSION}`;
+    const ver = `v${VERSION}${CHANNEL === 'dev' ? '-dev' : ''}`;
     ui.text(COLS - strWidth(ver) - 1, 29, ver, C.dim2, C.bg2);
   },
 
@@ -93,7 +89,7 @@ export const menuPage = {
     y += step;
     btn(ui, term, 'm-nights', y, '选择夜晚', go('nights'), { tip: dbg ? '调试模式: 所有夜晚可选' : '已通过的夜晚可以重玩' });
     y += step;
-    btn(ui, term, 'm-manual', y, '值班手册', go('manual'), { tip: '各个机制的说明 · 随夜数解锁 · 夜里也能用终端上的 ? 打开' });
+    btn(ui, term, 'm-manual', y, '值班手册', go('manual'), { tip: '各个机制的说明 · 夜里也能用终端上的 ? 打开' });
     y += step;
     btn(ui, term, 'm-settings', y, '设置', go('settings'));
     y += step;
@@ -113,7 +109,7 @@ export const menuPage = {
     for (let n = 1; n <= 6; n++) {
       const rec = d.nights[n];
       ui.text(x, 12 + n, `第${n}夜`, rec?.cleared ? C.fg : C.dim2);
-      ui.text(x + 6, 12 + n, stars(rec?.stars || 0), rec?.cleared ? C.yel : C.dim2);
+      ui.text(x + 6, 12 + n, rec?.cleared ? '√ 通过' : n <= d.progress.currentNight ? '· 未通过' : '  ——', rec?.cleared ? C.ok : C.dim2);
     }
   },
 
@@ -127,9 +123,9 @@ export const menuPage = {
       const y = 12 + row * 4;
       const unlocked = dbg || n <= d.progress.currentNight;
       const rec = d.nights[n];
-      const label = n === 0 ? '空夜 (测试)' : `${NIGHTS[n].name}  ${stars(rec?.stars || 0)}`;
+      const label = n === 0 ? '空夜 (测试)' : `${NIGHTS[n].name}  ${rec?.cleared ? '√' : ''}`;
       const hov = ui.pushButton('n-' + n, x, y, 24, unlocked ? label : `${NIGHTS[n].name}  ▒锁定▒`, () => term.actions.start(n, dbg), { disabled: !unlocked });
-      if (hov) tip = n === 0 ? '没有任何威胁, 用来测试机制和表现' : `储备 ${NIGHTS[n].reserve} · 任务 ${NIGHTS[n].tasks.join(' ')}`;
+      if (hov) tip = n === 0 ? '没有任何威胁, 用来测试机制和表现' : `储备 ${NIGHTS[n].reserve} · 任务 ${NIGHTS[n].tasks.map((t) => (Array.isArray(t) ? t[0] : t)).join(' ')}`;
     });
     ui.pushButton('n-back', 33, 26, 14, '◄ 返回', () => this.back(term));
   },
@@ -153,7 +149,9 @@ export const menuPage = {
       ui.text(20, yy, label, C.fg);
       if (type === 'num') {
         const v = s[k];
-        ui.button(`s-${k}-`, 38, yy, '◄', () => save.setting(k, Math.max(0, Math.round((v - 0.1) * 10) / 10)), {});
+        // brightness never goes fully black (the menu would vanish with it)
+        const lo = k === 'brightness' || k === 'turnSpeed' || k === 'crtIntensity' ? 0.3 : 0;
+        ui.button(`s-${k}-`, 38, yy, '◄', () => save.setting(k, Math.max(lo, Math.round((v - 0.1) * 10) / 10)), {});
         ui.bar(42, yy, 14, Math.min(1, v / (k === 'turnSpeed' || k === 'brightness' ? 2 : 1)), { fg: C.cy });
         ui.button(`s-${k}+`, 57, yy, '►', () => save.setting(k, Math.min(k === 'turnSpeed' || k === 'brightness' ? 2 : 1, Math.round((v + 0.1) * 10) / 10)), {});
         ui.text(62, yy, `${Math.round(v * 100)}%`, C.dim);
@@ -182,13 +180,13 @@ export const menuPage = {
     ui.box(8, 10, 64, 16, { style: 'double', title: '关于 / 版权', shadow: true });
     const lines = [
       ['NIGHT SHIFT · 星光披萨乐园 · 夜班保安', C.hi],
-      [`版本 ${VERSION}`, C.dim],
+      [`版本 ${VERSION}${CHANNEL === 'dev' ? ' (开发版)' : ''}`, C.dim],
       ['', 0],
       ['本作由 AI 制作: 程序、关卡与平衡、3D 场景、音效、', C.fg],
       ['音乐与文字均由 Anthropic 的 Claude 生成。', C.fg],
       ['', 0],
-      ['© 2026 @g_t_u (bilibili)  保留所有权利。', C.yel],
-      ['未经许可, 不得复制、修改或再发布本作品。', C.yel],
+      ['© 2026 @g_t_u (bilibili) · GNU AGPL v3 开源', C.yel],
+      ['源码: github.com/tmc5csxr9m-cpu/night-shift', C.yel],
       ['', 0],
       ['FNAF 同人作品, 与 Scott Cawthon 及 FNAF 官方无关。', C.dim],
       ['开源组件: three.js (MIT) · Electron (MIT) ·', C.dim],
@@ -201,7 +199,7 @@ export const menuPage = {
 
   drawConfirm(term, ui, reset = false) {
     ui.box(20, 12, 40, 9, { style: 'double', fg: C.yel, shadow: true, title: reset ? '清除存档' : '新游戏' });
-    ui.center(14, reset ? '所有夜晚的进度和星级都会被删除.' : '这会清除现有进度 (设置保留).', C.fg, null, 20, 40);
+    ui.center(14, reset ? '所有夜晚的进度都会被删除.' : '这会清除现有进度 (设置保留).', C.fg, null, 20, 40);
     ui.center(15, '确定吗?', C.hi, null, 20, 40);
     ui.pushButton('c-yes', 24, 18, 14, '确定', () => {
       save.reset();

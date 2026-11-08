@@ -2,7 +2,26 @@
 // acts through world.cmd / world.dbg so it uses the same rules as play.
 import { game } from '../game.js';
 import { NODES } from '../sim/graph.js';
-import { ACTOR_NAMES } from '../sim/index.js';
+import { ACTOR_NAMES, NIGHTS } from '../sim/index.js';
+
+// everything shown in the panel is rendered as text: replays are files from anywhere
+const esc = (v) => String(v).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+
+// a replay is { night, seed, commands: [{ tick, name, args }] } with known commands only
+const REPLAY_CMDS = /^(look|focus|page|doorLight|officeLight|fan|oscillate|vent|breaker|resetMain|scan|lure|lureRepeat|roomLight|seal|maglock|wind|degauss|answerPhone|hangUp|taskComplete|rebootNode|replaceBulb|lockBreaker|generator|backfire)$/;
+function validReplay(d) {
+  if (!d || typeof d !== 'object' || !NIGHTS[d.night] || !Number.isInteger(d.seed) || !Array.isArray(d.commands)) return null;
+  const commands = [];
+  for (const c of d.commands) {
+    if (!c || !Number.isInteger(c.tick) || c.tick < 0 || typeof c.name !== 'string' || !REPLAY_CMDS.test(c.name)) return null;
+    const args = c.args && typeof c.args === 'object' && !Array.isArray(c.args) ? c.args : {};
+    for (const v of Object.values(args)) {
+      if (typeof v === 'string' ? !/^[A-Za-z0-9_-]{1,16}$/.test(v) : !(typeof v === 'boolean' || (typeof v === 'number' && Number.isFinite(v)))) return null;
+    }
+    commands.push({ tick: c.tick, name: c.name, args: { ...args } });
+  }
+  return { night: d.night, seed: d.seed, commands };
+}
 
 const CSS = `
 #dbg{position:fixed;top:8px;right:8px;width:430px;max-height:calc(100vh - 16px);overflow:auto;z-index:20;
@@ -134,8 +153,14 @@ export const debugPanel = {
   importReplay() {
     const inp = el('input', { type: 'file', accept: '.json' });
     inp.onchange = async () => {
-      const data = JSON.parse(await inp.files[0].text());
-      this.onReplay?.(data);
+      let data;
+      try {
+        data = validReplay(JSON.parse(await inp.files[0].text()));
+      } catch {
+        data = null;
+      }
+      if (data) this.onReplay?.(data);
+      else alert('不是有效的回放文件');
     };
     inp.click();
   },
@@ -171,7 +196,7 @@ export const debugPanel = {
     let html = '';
     html += '<h3>模拟</h3><table>';
     html += tr('<span class=k>夜</span>', `${game.nightName(game.night)} · 种子 ${w.seed}`, '<span class=k>tick</span>', w.tickN);
-    html += tr('<span class=k>时间</span>', `${w.clock()} ${w.overtime ? '<span class=r>OT</span>' : ''} · 实 ${w.t.toFixed(1)}s`, '<span class=k>小时</span>', w.hour);
+    html += tr('<span class=k>时间</span>', `${w.clock()} ${w.clockStuck ? '<span class=r>停</span>' : ''} · 实 ${w.t.toFixed(1)}s`, '<span class=k>小时</span>', w.hour);
     html += tr('<span class=k>倍率</span>', `${game.timeScale}× ${game.paused ? '<span class=w>暂停</span>' : ''}`, '<span class=k>结果</span>', w.result ? `<span class=w>${w.result.outcome}</span>` : '—');
     html += '</table><h3>电力</h3><table>';
     html += tr('<span class=k>储备</span>', `${pw.reserve.toFixed(2)} / ${pw.max} kW·min (${w.powerPct().toFixed(1)}%)`);
@@ -181,14 +206,14 @@ export const debugPanel = {
     html += '</table><h3>环境</h3><table>';
     html += tr('<span class=k>温度</span>', `室 ${w.temp.room.toFixed(2)} 效 ${w.temp.eff.toFixed(2)} 外 ${w.temp.out} ${w.temp.rebootT > 0 ? '<span class=r>重启</span>' : ''}`);
     html += tr('<span class=k>噪音</span>', `${w.noise.db.toFixed(1)} dB · 兔子 +${w.noiseBonus()} · <span class=d>${noise}</span>`);
-    html += tr('<span class=k>EMI</span>', `L ${w.emi.L.toFixed(2)} R ${w.emi.R.toFixed(2)} B ${w.emi.B.toFixed(2)} T ${w.emi.T.toFixed(2)} · 磁化 ${w.emi.magnet.toFixed(2)}`);
+    html += tr('<span class=k>磁化</span>', `${w.emi.magnet.toFixed(2)}${w.emi.cooldown > 0 ? ' · 消磁冷却' : ''}`);
     html += tr('<span class=k>门灯</span>', ['L', 'R'].map((s) => {
       const d = w.doors[s];
       return `${s}:${w.doorLit(s) ? '<span class=w>亮</span>' : '灭'} 热${d.heat.toFixed(0)}${d.broken ? '<span class=r>坏</span>' : ''}${d.stuckT > 0 ? '<span class=r>卡</span>' : ''}`;
     }).join(' · ') + ` · 备件 ${w.spares}`);
     html += tr('<span class=k>办公室</span>', `灯${w.office.light} 扇${w.office.fan ? '开' : '关'} 风${w.office.vent} 锁${w.office.maglock ? '■' : '□'} 线圈${w.office.coil.toFixed(1)}`);
-    html += tr('<span class=k>音乐盒</span>', `${(w.musicBox.wind * 100).toFixed(1)}% ${w.musicBox.auto ? '自动' : '手动'} ${w.musicPlaying() ? '<span class=g>播放</span>' : '<span class=r>停止</span>'}`);
-    html += tr('<span class=k>电话</span>', `${w.phone.state} ${w.phone.t.toFixed(1)}s · 新威胁闸门 ${Math.max(0, w.callGate - w.t).toFixed(0)}s`);
+    html += tr('<span class=k>音乐盒</span>', `${(w.musicBox.wind * 100).toFixed(1)}% ${w.musicBox.auto ? '自动' : w.musicBox.hand ? '手摇(架子)' : '遥控'} ${w.musicPlaying() ? '<span class=g>播放</span>' : '<span class=r>停止</span>'}`);
+    html += tr('<span class=k>电话</span>', `${w.phone.state} ${w.phone.t.toFixed(1)}s · 新威胁缓冲 ${Math.max(0, w.callGate - w.t).toFixed(0)}s`);
     html += tr('<span class=k>校准</span>', Object.entries(w.calibrated).map(([k, v]) => (v ? `<span class=g>${k}</span>` : `<span class=d>${k}</span>`)).join(' '));
     html += '</table><h3>表演者</h3><table>';
     for (const a of w.actors) {
@@ -204,13 +229,13 @@ export const debugPanel = {
     html += w.tasks.map((t) => (t.done ? `<span class=g>${t.id}√</span>` : `<span class=w>${t.id}</span>`)).join(' ') || '—';
     html += ' · ' + (w.emergencies.map((e) => `<span class=r>${e.id}${e.side || ''}</span>`).join(' ') || '无紧急');
     html += '<h3>声音线索 (听到概率)</h3><div class=tl>';
-    html += w.cues.slice(-12).reverse().map((c) => `${c.t.toFixed(1)} ${c.source} ${c.node}(${c.side}) ${c.db.toFixed(0)}dB p=<span class=${c.p > 0.5 ? 'g' : 'r'}>${c.p.toFixed(2)}</span> ${c.kind}`).join('<br>');
+    html += w.cues.slice(-12).reverse().map((c) => `${c.t.toFixed(1)} ${esc(c.source)} ${esc(c.node)}(${esc(c.side)}) ${c.db.toFixed(0)}dB p=<span class=${c.p > 0.5 ? 'g' : 'r'}>${c.p.toFixed(2)}</span> ${c.kind}`).join('<br>');
     html += '</div><h3>时间线</h3><div class=tl>';
     html += w.timeline.slice(-30).reverse().filter((e) => e.type !== 'cmd' || e.name !== 'page').map((e) => {
       const d = { ...e };
       delete d.type;
       delete d.t;
-      return `${e.t.toFixed(1)} <span class=w>${e.type}</span> <span class=d>${JSON.stringify(d).slice(0, 70)}</span>`;
+      return `${e.t.toFixed(1)} <span class=w>${esc(e.type)}</span> <span class=d>${esc(JSON.stringify(d).slice(0, 70))}</span>`;
     }).join('<br>');
     html += '</div>';
     this.info.innerHTML = html;

@@ -27,29 +27,43 @@ const BENEFIT = {
 };
 let selected = 0;
 
+export function taskName(id) {
+  return GAMES[id]?.name || id;
+}
+
 export const tasksPage = {
   path: 'C:\\SEC\\TASKS>',
 
   reset() {
     selected = 0;
+    this.round = {};
     for (const g of Object.values(GAMES)) g.reset();
   },
 
   update(term, dt) {
-    const tasks = term.world.tasks;
-    // an emergency task jumps to the top of attention
-    const em = tasks.findIndex((x) => x.optional && !x.done);
-    if (em >= 0 && this.lastEm !== em) {
-      this.lastEm = em;
-      GAMES[tasks[em].id]?.reset();
+    const w = term.world;
+    const tasks = w.tasks;
+    // a task that comes back (another compressor fault, the generator
+    // restarted) starts its minigame from scratch
+    this.round = this.round || {};
+    for (const t of tasks) {
+      if ((t.round || 0) !== (this.round[t.id] || 0)) GAMES[t.id]?.reset();
+      this.round[t.id] = t.round || 0;
     }
+    // STARLIGHT holds the page: no work gets done behind ACCESS DENIED
+    if (w.pageLock && w.pageLock.t > 0 && w.pageLock.page === 'tasks') return;
+    if (w.result) return;
     const t = tasks[selected];
-    if (t) GAMES[t.id]?.update?.(term, dt);
+    if (t && !t.done) GAMES[t.id]?.update?.(term, dt);
   },
 
   complete(term, id) {
     const r = term.cmd('taskComplete', { id });
-    if (r.ok === false) return;
+    if (r.ok === false) {
+      // refused (page locked, not open yet): the minigame can be finished again
+      GAMES[id]?.reset();
+      return;
+    }
     term.sfx.success();
     term.toast(`√ ${id} ${GAMES[id].name} 已完成 · ${BENEFIT[id]}`, 'info');
   },
@@ -89,9 +103,14 @@ export const tasksPage = {
     ui.text(3, 22, `进度 ${done}/${req.length}`, C.fg);
     ui.bar(3, 23, 22, done / Math.max(1, req.length), { fg: C.cy, blocky: true });
     ui.text(3, 25, '截止时间', C.dim);
-    ui.text(12, 25, w.overtime ? '已超时!' : '06:00 AM', w.overtime ? C.red : C.yel);
-    ui.text(3, 26, '未完成 = 加班到 06:30', C.dim);
-    ui.text(3, 27, '加班仍未完成 = 解雇', C.dim);
+    ui.text(12, 25, w.clockStuck ? '时间停止!' : '06:00 AM', w.clockStuck ? C.red : C.yel);
+    if (w.night.boss) {
+      ui.text(3, 26, '没做完, 时间会停在 05:59', C.dim);
+      ui.text(3, 27, '直到全部完成为止', C.dim);
+    } else {
+      ui.text(3, 26, '06:00 时没做完 =', C.dim);
+      ui.text(3, 27, '本夜考核不通过', C.dim);
+    }
 
     const t = tasks[selected];
     const g = GAMES[t.id];

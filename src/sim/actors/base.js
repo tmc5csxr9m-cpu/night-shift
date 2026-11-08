@@ -17,20 +17,26 @@ export class Actor {
     return this.w.P.actors[this.id];
   }
 
-  // base aggression from the night table (0 while the tutorial call plays
-  // for threats that are new tonight)
+  // base aggression from the night table (0 during the opening grace period
+  // for threats that are new tonight). Night 6 held at 05:59 keeps the 05:00
+  // value: nothing escalates while the clock is stuck.
   baseA() {
     const w = this.w;
     const table = w.night.A[this.id];
     if (!table) return 0;
     if (w.isNewTonight(this.id) && w.t < w.callGate) return 0;
-    if (w.overtime) return table[5] + 2;
     return table[Math.min(5, w.hour)];
   }
 
   // effective aggression; fills this.mods for the debug panel
+  // tonight's new threat during the opening grace period: nothing moves it
+  inGrace() {
+    return this.w.isNewTonight(this.id) && this.w.t < this.w.callGate;
+  }
+
   aEff() {
     const mods = (this.mods = {});
+    if (this.inGrace()) return 0;
     let a = this.baseA();
     this.modifiers(mods);
     if (a > 0 && this.w.officeDark() && this.w.P.darkBonus[this.id]) mods.dark = this.w.P.darkBonus[this.id];

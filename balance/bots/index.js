@@ -135,7 +135,7 @@ export function trickBot(kind) {
 }
 
 // an expert who never leaves the terminal: everything from the keyboard,
-// lights from the hotbar, never turns round, never touches the shelf or phone
+// lights from the hotbar, never turns round, never touches the shelf
 function terminalOnlyBot() {
   const base = heuristicBot('expert');
   return {

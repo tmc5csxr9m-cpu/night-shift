@@ -27,7 +27,6 @@ export class Agent {
     this.heard = [];            // registered cues
     this.seen = { L: [], R: [], T: [] };
     this.seenAt = { L: -99, R: -99, T: -99 };
-    this.emi = null;
     this.taskProgress = {};
     this.taskNeed = {};
     for (const t of world.tasks) {
@@ -85,28 +84,7 @@ export class Agent {
       this.seen.T = r && (r.node === 'VENT' || r.node === 'D2') ? [{ id: 'ribbon', node: r.node }] : [];
       this.seenAt.T = t;
     }
-    // CRT edge interference, only visible while focused
-    if (this.focused) {
-      // perceived edge distortion; below the skill threshold it is not noticed
-      // a distortion above the skill threshold is noticed at a hazard rate
-      // (attention is on the task, not the screen edge); magnetisation hides it
-      const e = w.emi;
-      // blotches hide the edges; a hot tube shimmers
-      const thr = this.S.emiThreshold + e.magnet * 0.5 + (w.faulty() ? 0.15 : 0);
-      const vis = w.P.emi.visual ?? 1;   // the CRT shows interference faintly
-      this.emiSeen = this.emiSeen || { L: 0, R: 0, B: 0, T: 0 };
-      const pNotice = 1 - Math.exp(-this.S.emiNotice * w.P.tick);
-      const out = { magnet: e.magnet };
-      for (const k of ['L', 'R', 'B', 'T']) {
-        const v = e[k] * vis;
-        if (v > thr) {
-          if (!this.emiSeen[k] && this.rng.chance(pNotice)) this.emiSeen[k] = v;
-          if (this.emiSeen[k]) this.emiSeen[k] = Math.max(this.emiSeen[k] * 0.98, v);
-        } else if (v < thr * 0.5) this.emiSeen[k] = 0;
-        out[k] = this.emiSeen[k];
-      }
-      this.emi = out;
-    } else this.emi = null;
+    // (nothing on the screen reveals an animatronic at a door: no EMI channel)
 
     // tasks that appear mid-night (emergency T-07) or come back undone
     for (const x of w.tasks) {
@@ -117,11 +95,10 @@ export class Agent {
       }
     }
     const obs = {
-      t, hour: w.hour, overtime: w.overtime, night: w.nightIndex,
+      t, hour: w.hour, stuck: w.stuck, night: w.nightIndex,
       look: this.look, focused: this.focused, page: this.page,
       heard: this.heard,
       seen: this.seen, seenAt: this.seenAt,
-      emi: this.emi,
       doors: {
         L: { on: w.doors.L.on, lit: w.doorLit('L'), hot: w.doors.L.heat > w.P.doorLight.warn, broken: w.doors.L.broken, stuck: w.doors.L.stuckT > 0 },
         R: { on: w.doors.R.on, lit: w.doorLit('R'), hot: w.doors.R.heat > w.P.doorLight.warn, broken: w.doors.R.broken, stuck: w.doors.R.stuckT > 0 },
@@ -131,7 +108,8 @@ export class Agent {
       tripped: w.power.tripped, powerOut: w.power.out,
       phone: w.phone.state,
       phoneSpam: w.phone.kind === 'spam',
-      manualWind: !w.night.autoWind,       // a rule of the night (the tutorial says so)
+      manualWind: !w.night.autoWind,       // rules of the night (the manual says so)
+      handWind: !!w.musicBox.hand,
       tasks: w.tasks.map((x) => ({ id: x.id, done: x.done, optional: !!x.optional, open: w.taskOpen(x), progress: this.taskProgress[x.id], need: this.taskNeed[x.id] })),
       circuits: { ...w.circuits },        // known: player sets them (and the log reports trips)
       calibrated: { ...w.calibrated },
@@ -145,9 +123,11 @@ export class Agent {
       const rate = (Math.max(0.01, w.power.load) / 60) * (w.generator.gridDown ? w.P.generator.batteryMul : 1);
       obs.power = { pct: w.powerPct(), load: w.power.load, eta: w.power.reserve / rate };
       obs.emergencies = w.emergencies.map((e) => ({ ...e }));
-      obs.wind = w.musicBox.wind;
+      // page-specific readouts: the spring on the home tile / facility page,
+      // the coil on the facility page, the freezer on the power page
+      if (this.page === 'home' || this.page === 'facility') obs.wind = w.musicBox.wind;
       obs.autoWind = w.musicBox.auto;
-      obs.coil = w.office.coil / w.P.maglock.maxLock;
+      if (this.page === 'facility') obs.coil = w.office.coil / w.P.maglock.maxLock;
       obs.offline = Object.entries(w.rooms).filter(([, r]) => r.offline).map(([id]) => id);
       obs.temp = w.temp.eff;
       obs.pageLock = w.pageLock && w.pageLock.t > 0 ? w.pageLock.page : null;
@@ -157,16 +137,17 @@ export class Agent {
         obs.bossPending = boss.pending ? boss.pending.id : null;
         obs.paSoon = boss.paPending > 0;
         obs.seized = Object.fromEntries(Object.entries(w.seized).filter(([, v]) => v > 0));
-        obs.locks = Object.fromEntries(Object.entries(w.locks).map(([k, l]) => [k, { t: l.t, cd: l.cd }]));
+        if (this.page === 'power') obs.locks = Object.fromEntries(Object.entries(w.locks).map(([k, l]) => [k, { t: l.t, cd: l.cd }]));
         obs.bossPhase = boss.phase;
       }
       obs.faulty = w.faulty();
       obs.magnet = w.emi.magnet;
       const chef = w.actor('chef');
-      if (chef) obs.freezerThaw = chef.thaw;   // shown on the power page
+      if (chef && this.page === 'power') obs.freezerThaw = chef.thaw;   // shown on the power page
       if (this.page === 'map' && w.powered('C6')) {
         obs.rooms = {};
-        for (const [id, r] of Object.entries(w.rooms)) obs.rooms[id] = { noise: r.noise, result: r.result, light: r.light, sealed: r.sealed, scanning: r.scanT > 0, scanCd: r.scanCd };
+        // what the map shows: the (noisy, for 12 delayed) reading and the scan text
+        for (const [id, r] of Object.entries(w.rooms)) obs.rooms[id] = { noise: r.reading, result: r.result ? { count: r.result.count, text: r.result.text } : null, light: r.light, sealed: r.sealed, scanning: r.scanT > 0, scanCd: r.scanCd };
       }
       this.mem.lastFocusObs = obs;
     }
@@ -198,6 +179,7 @@ export class Agent {
     const S = this.S;
     let cost = this.rng.range(S.think[0], S.think[1]);
     let after = null;
+    let windDur = null;
     switch (a.type) {
       case 'wait':
         cost = a.dur;
@@ -237,13 +219,21 @@ export class Agent {
         const dir = a.dir || 'F';
         if (this.focused) cost += S.focus;
         if (this.look !== dir) cost += dir === 'F' || this.look === 'F' ? S.turn : S.turn * 1.8;
-        cost += this.clickCost() + (a.dur || 0);
+        cost += this.clickCost();
+        if (a.name === 'wind') {
+          // turn to the shelf first, then the spring is wound tick by tick
+          windDur = a.dur;
+          cost += a.dur;
+          after = () => (this.usage.wind = (this.usage.wind || 0) + 1);
+          break;
+        }
+        cost += a.dur || 0;
         after = () => {
           this.focused = false;
           this.look = dir;
           this.w.cmd('focus', { on: false });
           this.w.cmd('look', { dir });
-          if (a.name === 'wind') for (let k = 0; k < a.dur; k += 0.5) this.w.cmd('wind', { dt: Math.min(0.5, a.dur - k) });
+          if (a.name === 'wind') for (let k = 0; k < a.dur; k += 0.5) this.w.cmd('wind', { dt: Math.min(0.5, a.dur - k), hand: true });
           else this.w.cmd(a.name, a.args || {});
           this.usage[a.name] = (this.usage[a.name] || 0) + 1;
         };
@@ -251,7 +241,14 @@ export class Agent {
       }
       case 'hold': {   // terminal hold buttons: replace bulb, reboot node
         const page = CMD_PAGE[a.name];
-        cost += this.positionCost(true, page) + a.dur;
+        cost += this.positionCost(true, page);
+        if (a.name === 'wind') {
+          windDur = a.dur;
+          cost += a.dur;
+          after = () => (this.usage.wind = (this.usage.wind || 0) + 1);
+          break;
+        }
+        cost += a.dur;
         after = () => {
           this.enter(page);
           // winding happens continuously while the button is held
@@ -265,10 +262,7 @@ export class Agent {
         cost += this.positionCost(true, 'tasks') + a.dur;
         after = () => {
           this.enter('tasks');
-          // a hot or magnetised terminal makes the work slower
-          const slow = (this.w.faulty() ? 1.6 : 1) * (1 + this.w.emi.magnet);
-          this.taskProgress[a.id] += a.dur / slow;
-          if (this.taskProgress[a.id] >= this.taskNeed[a.id]) this.w.cmd('taskComplete', { id: a.id });
+          this.creditTask(a.id, a.dur);
         };
         break;
       }
@@ -280,8 +274,25 @@ export class Agent {
     // position changes happen at the start (you turn first, then act)
     if (a.type === 'cmd' || a.type === 'hold' || a.type === 'task' || a.type === 'focus') this.preEnter(a);
     this.busy = cost;
-    this.current = { a, after };
+    // the spring is wound during the last windDur seconds of the action
+    this.current = { a, after, windAt: windDur === null ? null : this.w.t + cost - windDur, lost: 0 };
     if (a.type !== 'wait') this.actions++;
+  }
+
+  // task work: slower on a hot or magnetised tube; none at all while the
+  // terminal is unusable (tasks page locked, overheat reboot, power out)
+  terminalDown() {
+    const w = this.w;
+    return (w.pageLock && w.pageLock.t > 0 && w.pageLock.page === 'tasks') || w.temp.rebootT > 0 || w.power.out;
+  }
+
+  creditTask(id, dur) {
+    const w = this.w;
+    dur -= this.current?.lost || 0;
+    if (dur <= 0 || this.terminalDown()) return;
+    const slow = (w.faulty() ? 1.6 : 1) * (1 + w.emi.magnet);
+    this.taskProgress[id] += dur / slow;
+    if (this.taskProgress[id] >= this.taskNeed[id]) w.cmd('taskComplete', { id });
   }
 
   preEnter(a) {
@@ -308,10 +319,28 @@ export class Agent {
     const dt = w.P.tick;
     if (this.busy > 0) {
       this.busy -= dt;
+      // winding: once in position, the spring goes up every tick
+      const cur = this.current;
+      if (cur && cur.windAt !== null && w.t >= cur.windAt) {
+        const hand = cur.a.type === 'phys';
+        if (!cur.positioned) {
+          cur.positioned = true;
+          if (hand) {
+            this.focused = false;
+            this.look = 'F';
+            w.cmd('focus', { on: false });
+            w.cmd('look', { dir: 'F' });
+          }
+        }
+        // the remote winder needs a working terminal
+        if (hand || !(w.temp.rebootT > 0)) w.cmd('wind', { dt, hand });
+      }
+      // task work does not advance while the tasks page is locked or the terminal is down
+      if (cur && cur.a.type === 'task' && this.terminalDown()) cur.lost += dt;
       // a long task chunk can be abandoned when something urgent is heard
       if (this.busy > 0 && this.current?.a.type === 'task' && this.bot.interrupt?.(this.observe(), this)) {
         const done = (this.current.a.dur - this.busy);
-        if (done > 0) this.taskProgress[this.current.a.id] += done;
+        if (done > 0) this.creditTask(this.current.a.id, done);
         this.busy = 0;
         this.current = null;
       }
@@ -336,7 +365,7 @@ export function playNight(World, { night, seed, bot, skill, oracle, params, maxT
     // fairness: a warning counts if it is audible in a quiet office (the
     // player chose any extra noise); deaths after that are avoidable
     const pQuiet = 1 / (1 + Math.exp(-(ev.db - w.P.noise.base - w.P.hearing.offset) / w.P.hearing.slope));
-    if (ev.type === 'cue' && pQuiet >= 0.5 && firstWarn[ev.source] === undefined) firstWarn[ev.source] = ev.t;
+    if (ev.type === 'cue' && !ev.fake && pQuiet >= 0.5 && firstWarn[ev.source] === undefined) firstWarn[ev.source] = ev.t;
     if (ev.type === 'repel' || (ev.type === 'move' && ev.to === '01')) delete firstWarn[ev.actor];
   });
   while (!w.result && w.t < maxT) {
@@ -348,7 +377,6 @@ export function playNight(World, { night, seed, bot, skill, oracle, params, maxT
     outcome: r.outcome,
     cause: r.cause || null,
     t: r.t,
-    overtime: !!r.overtime,
     power: w.powerPct(),
     minPower: w.stats.minPower,
     burned: w.stats.burned,

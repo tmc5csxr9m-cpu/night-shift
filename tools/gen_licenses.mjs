@@ -6,12 +6,20 @@ const read = (p) => readFileSync(p, 'utf8').trim();
 const pkg = JSON.parse(read('package.json'));
 const parts = [
   `NIGHT SHIFT ${pkg.version}
-© 2026 @g_t_u (bilibili). All rights reserved. / 保留所有权利。
+Copyright (C) 2026 @g_t_u (bilibili)
+
+This program is free software: you can redistribute it and/or modify it under
+the terms of the GNU Affero General Public License as published by the Free
+Software Foundation, either version 3 of the License, or (at your option) any
+later version. It is distributed WITHOUT ANY WARRANTY. The full license text
+follows below. Source code: ${pkg.homepage}
+
 本作由 AI (Anthropic Claude) 制作。This game was made with AI (Anthropic Claude).
 FNAF fan game. Not affiliated with Scott Cawthon or Five Nights at Freddy's.
 
 This program includes the third-party components listed below.
 Chromium's own notices are in LICENSES.chromium.html.`,
+  `==== NIGHT SHIFT: GNU Affero General Public License v3 ====\n${read('LICENSE')}`,
   `==== GNU Unifont 18.0.01 (fonts/unifont.otf) ====
 Copyright © 1998-2026 Roman Czyborra, Paul Hardy, Qianqian Fang, Andrew Miller,
 Johnnie Weaver, David Corbett, Ælla Chiana Moskopp, Rebecca Bettencourt, Ho-Seok Ee, et al.

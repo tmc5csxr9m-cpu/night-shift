@@ -1,14 +1,14 @@
 {
   "name": "fnaf-night-shift-demo",
   "private": true,
-  "version": "0.5.0",
+  "version": "0.6.0",
   "type": "module",
   "scripts": {
     "dev": "node tools/dev.mjs",
     "build:web": "vite build",
-    "build:win": "vite build && node tools/gen_licenses.mjs && electron-builder --win --x64 --publish never",
-    "build:linux": "vite build && node tools/gen_licenses.mjs && electron-builder --linux --x64 --publish never",
-    "build": "npm run build:win && npm run build:linux",
+    "build": "node tools/build.mjs all all",
+    "build:win": "node tools/build.mjs win all",
+    "build:linux": "node tools/build.mjs linux all",
     "audio": "python3 tools/gen_audio.py",
     "icon": "python3 tools/gen_icon.py",
     "balance": "node balance/run.js",
@@ -20,16 +20,16 @@
     "vite": "^8.3.2",
     "three": "^0.186.1"
   },
-  "description": "NIGHT SHIFT — FNAF fan game (made with AI)",
+  "description": "NIGHT SHIFT — a survival-horror fan game made entirely with AI (Claude)",
   "author": {
     "name": "@g_t_u (bilibili)"
   },
-  "license": "UNLICENSED",
+  "license": "AGPL-3.0-or-later",
   "main": "electron/main.cjs",
   "build": {
     "appId": "com.gtu.nightshift",
     "productName": "NightShift",
-    "copyright": "© 2026 @g_t_u (bilibili). All rights reserved.",
+    "copyright": "© 2026 @g_t_u (bilibili). Licensed under the GNU AGPL v3 or later.",
     "directories": {
       "output": "release",
       "buildResources": "build"
@@ -79,5 +79,10 @@
       "category": "Game",
       "artifactName": "NightShift-${version}-linux-x86_64.AppImage"
     }
+  },
+  "homepage": "https://github.com/tmc5csxr9m-cpu/night-shift",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tmc5csxr9m-cpu/night-shift.git"
   }
 }

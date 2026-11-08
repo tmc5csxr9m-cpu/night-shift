@@ -4,7 +4,6 @@
 export const DEFAULT_PARAMS = {
   tick: 0.1,                 // seconds per sim step
   nightSeconds: 540,         // 00:00 -> 06:00
-  overtimeSeconds: 45,       // 06:00 -> 06:30
   hourSeconds: 90,
 
   power: {
@@ -28,9 +27,9 @@ export const DEFAULT_PARAMS = {
 
   hearing: { offset: 4, slope: 3 },
 
-  // screen interference only from something AT a door, and faint (visual 0.5)
-  emi: { door: 1.0, adjacent: 0, visual: 0.5, magnetRate: 0.06, degaussCooldown: 4, pulse: 0.35,
-    strength: { sunny: 1.0, pip: 0.7, tootie: 0.85, back: 0.9, chef: 1.0, ribbon: 0.6 } },
+  // the tube magnetises on its own (blotches slow terminal work); nothing on
+  // the screen reacts to animatronics any more
+  emi: { magnetRate: 0.008, degaussCooldown: 4 },
 
   stageShock: { time: 60, bonus: 4 },   // C9 cut with a performer still on stage
 
@@ -53,12 +52,12 @@ export const DEFAULT_PARAMS = {
   musicBox: { windRate: 0.25, resumeAt: 0.3 },
 
   actors: {
-    sunny: { interval: 5.0, attackDelay: [6.6, 6.8, 6.5, 6.5, 6.5, 6.5], retreatLight: 2.0, litSlow: 0.5, rageRate: 1, rageDiv: 4, rageTime: 30, freezeMax: 15, stageOn: -4, stageOff: 2 },
-    pip: { interval: 3.5, attackDelay: [6.2, 6.0, 6, 6.2, 5.2, 6.2], litSlow: 0, poseMax: 10, lureHesitate: 0.5, impatienceDiv: 10, stageOn: -4, stageOff: 2 },
+    sunny: { interval: 5.0, attackDelay: [6.6, 6.8, 6.5, 6.5, 6.5, 6.9], retreatLight: 2.0, litSlow: 0.5, rageRate: 1, rageDiv: 4, rageTime: 30, freezeMax: 15, stageOn: -4, stageOff: 2 },
+    pip: { interval: 3.5, attackDelay: [6.2, 6.0, 6, 6.2, 5.6, 6.2], litSlow: 0, poseMax: 10, lureHesitate: 0.5, impatienceDiv: 10, stageOn: -4, stageOff: 2 },
     tootie: { stepTime: 6.5, attackDelay: 4, returnStep: 2.5 },
     back: { interval: 6, attackDelay: [7, 7, 6.5, 7, 6.5, 6], generator: 1, noiseFrom: 32, noisePerDb: 3, noiseMax: 3 },
-    ribbon: { interval: 5, attackDelay: [7, 7, 7, 7, 7, 6.5], ventMod: -4, brightMod: -2, blowTime: 3 },
-    starlight: { breakerGap: [25, 40], breakerWarn: 3, seizeTime: 8, extraLoad: 2.5, pageLock: 20, ventHijack: 15, paJam: 10, paWarn: 3, paGap: [40, 55], attackGap: 16, telegraph: 3 },
+    ribbon: { interval: 5, attackDelay: [7, 7, 7, 7, 7, 6.5], ventMod: -4, brightMod: -3, blowTime: 3 },
+    starlight: { breakerGap: [25, 40], breakerWarn: 3, seizeTime: 8, extraLoad: 3.0, pageLock: 20, ventHijack: 15, paJam: 10, paWarn: 3, paGap: [40, 55], attackGap: 16, telegraph: 3 },
     chef: { interval: 8, moveChance: 0.55, attackDelay: 10, thawRate: 1.0, refreeze: 0.5, dormantAt: 60, returnStep: 4 },
   },
 
@@ -74,7 +73,7 @@ export const DEFAULT_PARAMS = {
 
   events: { meanGap: 70, relayStuck: 1, drift: 1, aging: 1 },
 
-  call: { ringTime: 6, spamRing: 15 },
+  call: { spamRing: 15 },
 
   generator: { duration: 240, magnet: 0.012, batteryMul: 1.2 },
 

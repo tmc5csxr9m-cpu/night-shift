@@ -4,7 +4,9 @@
 //   xvfb-run -a -s "-screen 0 1280x720x24" node tools/smoke.mjs <script.mjs> [-- <program> args...]
 // <script.mjs> default-exports async (app) => { ... } using the helpers below.
 import { spawn } from 'node:child_process';
-import { writeFileSync, mkdirSync } from 'node:fs';
+import { writeFileSync, mkdirSync, mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { setTimeout as sleep } from 'node:timers/promises';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -24,6 +26,9 @@ let args;
 let env = { ...process.env };
 delete env.WAYLAND_DISPLAY;
 env.ELECTRON_OZONE_PLATFORM_HINT = 'x11';
+// never touch the player's real save: a throwaway profile unless one is given
+const profile = process.env.NIGHTSHIFT_USER_DATA ? null : mkdtempSync(join(tmpdir(), 'ns-smoke-profile-'));
+if (profile) env.NIGHTSHIFT_USER_DATA = profile;
 if (program) {
   [cmd, ...args] = program;
 } else {
@@ -39,10 +44,33 @@ if (program) {
 const child = spawn(cmd, [...args, `--remote-debugging-port=${PORT}`, '--no-sandbox', '--ozone-platform=x11'], { env, stdio: ['ignore', 'pipe', 'pipe'], detached: true });
 let exited = null;
 child.on('exit', (c) => (exited = c ?? 0));
+child.on('error', (e) => {
+  console.error('SMOKE FAIL: cannot start', e.message);
+  exited = -1;
+});
+
+async function cleanup() {
+  if (exited === null) {
+    try {
+      process.kill(-child.pid, 'SIGTERM');
+    } catch { /* already gone */ }
+  }
+  await devServer?.close();
+  if (profile) {
+    // Electron may still be flushing its profile for a moment
+    await new Promise((r) => setTimeout(r, 500));
+    try {
+      rmSync(profile, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 });
+    } catch (e) {
+      console.warn('could not remove test profile', profile, e.code);
+    }
+  }
+}
 child.stderr.on('data', (d) => process.env.SMOKE_VERBOSE && process.stderr.write(d));
 
 async function target() {
   for (let i = 0; i < 600; i++) {
+    if (exited !== null) throw new Error(`program exited (${exited}) before its page came up`);
     try {
       const list = await (await fetch(`http://127.0.0.1:${PORT}/json/list`)).json();
       const t = list.find((x) => x.type === 'page' && !x.url.startsWith('devtools'));
@@ -53,12 +81,19 @@ async function target() {
   throw new Error('no page target');
 }
 
-const t = await target();
-const ws = new WebSocket(t.webSocketDebuggerUrl);
-await new Promise((ok, no) => {
-  ws.onopen = ok;
-  ws.onerror = no;
-});
+let ws;
+try {
+  const t = await target();
+  ws = new WebSocket(t.webSocketDebuggerUrl);
+  await new Promise((ok, no) => {
+    ws.onopen = ok;
+    ws.onerror = no;
+  });
+} catch (e) {
+  console.error('SMOKE FAIL:', e.message);
+  await cleanup();
+  process.exit(1);
+}
 let id = 0;
 const pending = new Map();
 const logs = [];
@@ -126,9 +161,11 @@ const app = {
   async key(type, key, code, vk) {
     await send('Input.dispatchKeyEvent', { type, key, code, windowsVirtualKeyCode: vk, nativeVirtualKeyCode: vk });
   },
-  async shot(name) {
-    const r = await send('Page.captureScreenshot', { format: 'png' });
-    const file = `${OUT}/${name}.png`;
+  // raw DevTools protocol (e.g. Emulation.setDeviceMetricsOverride for a fixed render size)
+  cdp: send,
+  async shot(name, { format = 'png', quality } = {}) {
+    const r = await send('Page.captureScreenshot', { format, quality });
+    const file = `${OUT}/${name}.${format === 'jpeg' ? 'jpg' : format}`;
     writeFileSync(file, Buffer.from(r.data, 'base64'));
     return file;
   },
@@ -143,14 +180,13 @@ try {
   code = 1;
 }
 if (logs.length) console.log('page log:\n  ' + logs.join('\n  '));
+// an uncaught exception in the page fails the run
+if (logs.some((l) => l.startsWith('EXCEPTION'))) {
+  console.error('SMOKE FAIL: uncaught exception in the page');
+  code = 1;
+}
 try {
   ws.close();
 } catch { /* closed */ }
-// kill the whole process group (an AppImage launcher does not pass signals on)
-if (exited === null) {
-  try {
-    process.kill(-child.pid, 'SIGTERM');
-  } catch { /* already gone */ }
-}
-await devServer?.close();
+await cleanup();
 process.exit(code);

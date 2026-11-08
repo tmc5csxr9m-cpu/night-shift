@@ -50,6 +50,9 @@ function summarize(rs) {
   const deaths = rs.filter((r) => r.outcome === 'death');
   const causes = {};
   for (const r of rs) if (r.outcome !== 'win') causes[r.cause || r.outcome] = (causes[r.cause || r.outcome] || 0) + 1;
+  // deaths only (no 'fired' / 'timeout'): for the single-cause gate
+  const deathCauses = {};
+  for (const r of rs) if (r.outcome === 'death') deathCauses[r.cause] = (deathCauses[r.cause] || 0) + 1;
   const median = (a) => (a.length ? a.slice().sort((x, y) => x - y)[Math.floor(a.length / 2)] : null);
   const early = deaths.filter((r) => r.t < 90).length;
   const bins = new Array(7).fill(0);
@@ -63,7 +66,7 @@ function summarize(rs) {
     win: wins.length / n,
     ci: wilson(wins.length, n),
     causes,
-    overtime: rs.filter((r) => r.overtime).length / n,
+    deathCauses,
     fired: rs.filter((r) => r.outcome === 'fired').length / n,
     medianPowerWin: median(wins.map((r) => r.power)),
     earlyDeathShare: deaths.length ? early / deaths.length : 0,
@@ -103,12 +106,13 @@ async function main() {
       if (tgt && !(b === 'B1')) gate(s.ci[0] >= tgt[0] - 1e-9 && s.ci[1] <= tgt[1] + 1e-9, `N${night} ${b} 胜率 ${pct(s.win)} (CI ${pct(s.ci[0])}–${pct(s.ci[1])}) ∈ [${pct(tgt[0])}, ${pct(tgt[1])}]`);
       if (['B2', 'B3', 'B4', 'B5'].includes(b)) gate(s.unfair === 0, `N${night} ${b} 不公平死亡 = ${s.unfair} ${s.unfairSeeds.join(' ')}`);
       if (b === 'B3') {
-        const deaths = Object.values(s.causes).reduce((a, x) => a + x, 0);
-        const maxCause = Math.max(0, ...Object.values(s.causes));
+        const deaths = Object.values(s.deathCauses).reduce((a, x) => a + x, 0);
+        const maxCause = Math.max(0, ...Object.values(s.deathCauses));
         const capCause = night === 3 ? 0.6 : night === 2 ? 0.7 : 0.55;
         if (deaths >= 30 && night >= 2) gate(maxCause / deaths <= capCause, `N${night} B3 单一死因占比 ${pct(maxCause / Math.max(1, deaths))} ≤ ${pct(capCause)}`);
         gate(s.earlyDeathShare < 0.1, `N${night} B3 00–01 点死亡占比 ${pct(s.earlyDeathShare)} < 10%`);
-        gate(s.overtime <= 0.2, `N${night} B3 加班比例 ${pct(s.overtime)} ≤ 20%`);
+        // no overtime any more: an unfinished checklist at 06:00 fails the shift
+        gate(s.fired <= 0.05, `N${night} B3 交班清单未完成 ${pct(s.fired)} ≤ 5%`);
         gate(s.burnedAvg <= 1, `N${night} B3 平均烧坏灯管 ${s.burnedAvg.toFixed(2)} ≤ 1`);
         const pw = s.medianPowerWin;
         const range = night === 1 ? [30, 50] : night <= 3 ? [15, 30] : [5, 20];
@@ -152,9 +156,9 @@ function writeReport(r) {
   md += `## 门槛：${failed.length ? `❌ ${failed.length} 项未通过` : '✅ 全部通过'}\n\n`;
   for (const g of r.gates) md += `- ${g.ok ? '✅' : '❌'} ${g.label}\n`;
   for (const [n, N] of Object.entries(r.nights)) {
-    md += `\n## 第 ${n} 夜\n\n| 机器人 | 胜率 | 95% CI | 加班 | 解雇 | 获胜电量中位 | 烧灯 | APM | 不公平 | 死因 |\n|---|---|---|---|---|---|---|---|---|---|\n`;
+    md += `\n## 第 ${n} 夜\n\n| 机器人 | 胜率 | 95% CI | 考核失败 | 获胜电量中位 | 烧灯 | APM | 不公平 | 死因 |\n|---|---|---|---|---|---|---|---|---|\n`;
     for (const [b, s] of Object.entries(N.bots)) {
-      md += `| ${b} | ${pct(s.win)} | ${pct(s.ci[0])}–${pct(s.ci[1])} | ${pct(s.overtime)} | ${pct(s.fired)} | ${s.medianPowerWin === null ? '—' : s.medianPowerWin.toFixed(1) + '%'} | ${s.burnedAvg.toFixed(2)} | ${s.apm.toFixed(1)} | ${s.unfair} | ${Object.entries(s.causes).map(([k, v]) => `${k} ${v}`).join(', ')} |\n`;
+      md += `| ${b} | ${pct(s.win)} | ${pct(s.ci[0])}–${pct(s.ci[1])} | ${pct(s.fired)} | ${s.medianPowerWin === null ? '—' : s.medianPowerWin.toFixed(1) + '%'} | ${s.burnedAvg.toFixed(2)} | ${s.apm.toFixed(1)} | ${s.unfair} | ${Object.entries(s.causes).map(([k, v]) => `${k} ${v}`).join(', ')} |\n`;
     }
     const b3 = N.bots.B3;
     if (b3) md += `\nB3 死亡时间分布（每小时）：${b3.deathHourBins.join(' / ')}\n\nB3 平均每局操作：${Object.entries(b3.usage).map(([k, v]) => `${k} ${v}`).join(', ')}\n`;

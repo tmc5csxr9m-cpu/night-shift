@@ -7,7 +7,6 @@ let selected = '02';
 // fading acoustic "footprints" per room, purely visual
 const heat = {};
 
-const SPARK = '▁▂▃▄▅▆▇█';
 const ACTOR_MARK = { sunny: 'S', pip: 'P', tootie: 'T', back: 'B', chef: 'C', ribbon: 'R' };
 
 export const mapPage = {
@@ -123,9 +122,6 @@ export const mapPage = {
       row(6, '状态', s.scanT > 0 ? '扫描中...' : '在线', s.scanT > 0 ? C.yel : C.ok);
       if (s.offline) row(7, '声学', '节点离线', C.red);
       else row(7, '声学', `${s.reading.toFixed(0)} dB${r.id === '12' && !w.calibrated.radio ? ' ?' : ''}`, s.reading > 42 ? C.yel : C.fg);
-      let sp = '';
-      for (const v of s.hist) sp += SPARK[Math.max(0, Math.min(7, Math.floor((v - 22) / 4)))];
-      ui.text(X + 14, 7, sp.slice(-7), C.cy);
       row(8, '照明', s.light ? '开启 0.3kW' : '关闭', s.light ? C.yel : C.fg);
       const other = Object.entries(w.rooms).find(([id, x]) => x.sealed && id !== r.id);
       row(9, '卷帘', s.sealed ? `落下 ${s.sealT.toFixed(0)}s` : other ? `泵忙(${other[0]})` : w.shutterCd > 0 ? `复位 ${w.shutterCd.toFixed(0)}s` : '升起', s.sealed ? C.yel : C.fg);

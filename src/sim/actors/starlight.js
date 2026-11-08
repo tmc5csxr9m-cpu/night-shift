@@ -25,7 +25,6 @@ export class Starlight extends Actor {
     this.ventT = 30;
     this.paT = 12;
     this.attackT2 = 10;
-    this.otLevel = 0;
   }
 
   baseA() {
@@ -34,7 +33,7 @@ export class Starlight extends Actor {
 
   phaseAt(t) {
     const H = this.w.P.hourSeconds;
-    if (this.w.overtime) return 4;
+    if (this.w.stuck) return 4;
     if (t < H) return 0;
     if (t < 2.5 * H) return 1;
     if (t < 4 * H) return 2;
@@ -129,7 +128,7 @@ export class Starlight extends Actor {
         if (this.paPending <= 0) {
           w.paJam = P.paJam;
           w.log('>> STARLIGHT 占用了分区广播 — 诱饵不可用.', 'err');
-          w.emit('paJam', { t: P.paJam });
+          w.emit('paJam', { dur: P.paJam });
         }
       } else if (this.paT <= 0) {
         this.paT = w.rng.range(P.paGap[0], P.paGap[1]);
@@ -146,9 +145,9 @@ export class Starlight extends Actor {
     }
     // ---- P4: hide and seek
     if (ph === 4) {
+      // the same pace as at 05:30 — also while the clock is held at 05:59
       this.attackT2 -= dt;
-      if (w.overtime) this.otLevel += dt / 30;
-      const gap = Math.max(4, P.attackGap - this.otLevel * 1.5);
+      const gap = P.attackGap;
       if (this.attackT2 <= 0) {
         this.attackT2 = w.rng.range(gap * 0.8, gap * 1.2);
         this.launch();

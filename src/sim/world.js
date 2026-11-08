@@ -3,8 +3,8 @@
 // tools run exactly this code.
 import { Rng } from './rng.js';
 import { DEFAULT_PARAMS, mergeParams } from './params.js';
-import { NIGHTS, CALL_LENGTH } from './nights.js';
-import { sensorRoom, nodesInRoom, DOOR_NODES, NEAR_DOOR, NODE_SIDE } from './graph.js';
+import { NIGHTS, GRACE } from './nights.js';
+import { sensorRoom, nodesInRoom, DOOR_NODES, NODE_SIDE } from './graph.js';
 import { Sunny } from './actors/sunny.js';
 import { Pip } from './actors/pip.js';
 import { Tootie } from './actors/tootie.js';
@@ -19,7 +19,7 @@ const HOME_DOOR = { sunny: 'DOOR_L', pip: 'DOOR_R', back: 'DOOR_B', ribbon: 'VEN
 const CMD_PAGES = {
   scan: 'map', lure: 'map', roomLight: 'map', seal: 'map', rebootNode: 'map',
   breaker: 'power', resetMain: 'power', lockBreaker: 'power', generator: 'power',
-  officeLight: 'facility', fan: 'facility', vent: 'facility', wind: 'facility', replaceBulb: 'facility', oscillate: 'facility',
+  officeLight: 'facility', fan: 'facility', vent: 'facility', replaceBulb: 'facility', oscillate: 'facility',
   taskComplete: 'tasks',
 };
 
@@ -27,7 +27,7 @@ export const ROOM_IDS = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '
 export const CIRCUITS = ['C1', 'C2', 'C3', 'C4', 'C5', 'C6', 'C7', 'C8', 'C9', 'C0'];
 export const ACTOR_NAMES = { sunny: '桑尼熊', pip: '皮普兔', tootie: '嘟嘟鸟', chef: '高迪大厨', back: '后门之物', ribbon: '丝带', starlight: 'STARLIGHT', power: '断电' };
 
-// tonight's brand-new threats are held back while the tutorial call plays
+// tonight's brand-new threats stay quiet for the first minute (GRACE)
 const NEW_TONIGHT = { 1: ['sunny', 'pip'], 3: ['back'], 5: ['ribbon'], 6: ['starlight'] };
 
 const BREAKER_NOTES = {
@@ -47,13 +47,15 @@ export class World {
     this.t = 0;
     this.tickN = 0;
     this.result = null;
-    this.overtime = false;
+    // Night 6 only: 06:00 came with the takeback unfinished — the clock
+    // stays at 05:59 (nothing escalates) until the last task is done
+    this.stuck = false;
     this.events = [];          // drained by the client each frame
     this.timeline = [];        // debug history
     this.commands = [];        // replay log
     this.listeners = [];
     this.logLines = [];
-    this.callGate = CALL_LENGTH[night] || 0;
+    this.callGate = GRACE[night] || 0;
     this.debug = { god: false, infinitePower: false, freeze: false, noEvents: false, disabled: {}, ...debug };
 
     const n = this.night;
@@ -68,8 +70,12 @@ export class World {
     this.spares = n.spares;
     this.temp = { out: n.outside, room: n.outside + 1.5, eff: 0, rebootT: 0, fanCool: this.P.temp.fan };
     this.noise = { db: 30, parts: {}, degaussT: 0 };
-    this.emi = { L: 0, R: 0, B: 0, T: 0, magnet: 0, cooldown: 0 };
-    this.musicBox = { wind: 1, auto: n.autoWind };
+    // the tube slowly magnetises (blotches, slower work) — degauss clears it
+    this.emi = { magnet: 0, cooldown: 0 };
+    // handWind (Night 6): STARLIGHT holds the remote winder, the box on the
+    // shelf has to be wound by hand
+    this.musicBox = { wind: 1, auto: n.autoWind, hand: !!n.handWind };
+    // nuisance calls only (no tutorial voicemail): answered / hung up on the terminal
     this.phone = { state: 'idle', t: 0, kind: null };
     this.player = { look: 'F', focused: false, page: null };
     // n.broken: which module T-02 has to repair tonight ('lure' | 'seal')
@@ -96,10 +102,9 @@ export class World {
 
     this.rooms = {};
     for (const id of ROOM_IDS) {
-      this.rooms[id] = { light: false, sealed: false, sealT: 0, sealCd: 0, noise: 26 + this.rng.float() * 6, spike: 0, drift: 0, scanT: 0, scanCd: 0, result: null, hist: [] };
+      this.rooms[id] = { light: false, sealed: false, sealT: 0, sealCd: 0, noise: 26 + this.rng.float() * 6, spike: 0, drift: 0, scanT: 0, scanCd: 0, result: null };
     }
     this.actors = n.actors.map((id) => new ACTORS[id](this));
-    this.phone.state = n.call ? 'pending' : 'idle';
     this.computeLoad();
   }
 
@@ -109,17 +114,18 @@ export class World {
   }
 
   get gameMinutes() {
-    return Math.min(360 + (this.overtime ? 30 : 0), (this.t / this.P.nightSeconds) * 360);
+    return Math.min(360, (this.t / this.P.nightSeconds) * 360);
   }
 
   // Night 6 does not end at 06:00 while the takeback is unfinished: the
   // clock freezes at 05:59 (shown red) until the last task is done
   get clockStuck() {
-    return !!(this.night.boss && this.overtime);
+    return this.stuck;
   }
 
   clock() {
-    if (this.clockStuck) return '05:59';
+    if (this.result && this.result.outcome !== 'death') return '06:00';
+    if (this.stuck || (this.night.boss && this.t >= this.P.nightSeconds)) return '05:59';
     const m = Math.floor(this.gameMinutes);
     return `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
   }
@@ -137,7 +143,7 @@ export class World {
   }
 
   emit(type, data = {}) {
-    const ev = { type, t: this.t, ...data };
+    const ev = { type, ...data, t: this.t };
     this.events.push(ev);
     if (type !== 'cue') {
       this.timeline.push(ev);
@@ -150,13 +156,19 @@ export class World {
     const line = { t: this.clock(), msg, level };
     this.logLines.push(line);
     if (this.logLines.length > 80) this.logLines.shift();
-    this.emit('log', line);
+    this.emit('log', { clock: line.t, msg, level });
   }
 
   // a system is live if the main breaker is in, there is power, and its circuit is closed
   powered(c) {
     if (this.power.out || this.power.tripped) return false;
     return c ? this.circuits[c] : true;
+  }
+
+  // a room's area light only works on a powered, online sensor node
+  roomLit(id) {
+    const r = this.rooms[id];
+    return !!(r && r.light && !r.offline && this.powered('C6'));
   }
 
   doorWorking(side) {
@@ -214,10 +226,13 @@ export class World {
   }
 
   // starting the generator again needs the ignition sequence again
+  // (round counts activations, so the client restarts that task's minigame)
   restartGenTask() {
     const t6 = this.tasks.find((x) => x.id === 'T-06');
-    if (t6) t6.done = false;
-    else this.tasks.push({ id: 'T-06', open: 0, done: false, doneAt: null, optional: true });
+    if (t6) {
+      t6.done = false;
+      t6.round = (t6.round || 0) + 1;
+    } else this.tasks.push({ id: 'T-06', open: 0, done: false, doneAt: null, optional: true, round: 1 });
   }
 
   tickBoss(dt) {
@@ -497,8 +512,10 @@ export class World {
   c_roomLight({ room, on }) {
     const r = this.rooms[room];
     if (!r || room === 'OF') return { ok: false };
-    if (on && r.offline) return { ok: false, msg: `节点 ${room} 离线` };
-    r.light = on === undefined ? !r.light : !!on;
+    const want = on === undefined ? !r.light : !!on;
+    if (want && r.offline) return { ok: false, msg: `节点 ${room} 离线` };
+    if (want && !this.powered('C6')) return { ok: false, msg: '传感网络离线' };
+    r.light = want;
   }
 
   c_seal({ room, on }) {
@@ -529,11 +546,20 @@ export class World {
     o.maglock = want;
   }
 
-  // the music box is on the shelf: you have to leave the terminal to wind it
-  c_wind({ dt }) {
-    if (this.player.focused || this.player.look !== 'F') return { ok: false, msg: '音乐盒在架子上' };
-    if (!this.powered('C7')) return { ok: false, msg: '无供电' };
-    this.musicBox.wind = Math.min(1, this.musicBox.wind + this.P.musicBox.windRate * Math.min(dt, 0.5));
+  // winding: the remote winder on the facility page (hold), or — on Night 6,
+  // when STARLIGHT has taken the winder — by hand at the box on the shelf
+  c_wind({ dt, hand = false } = {}) {
+    const mb = this.musicBox;
+    if (mb.auto) return { ok: false, msg: '自动上发条' };
+    if (hand) {
+      if (!mb.hand) return { ok: false, msg: '用终端上的遥控绞盘上发条' };
+      if (this.player.focused || this.player.look !== 'F') return { ok: false, msg: '音乐盒在架子上' };
+    } else {
+      if (mb.hand) return { ok: false, msg: '遥控绞盘被 STARLIGHT 占用 — 到架子上手动上发条' };
+      if (this.pageLock && this.pageLock.t > 0 && this.pageLock.page === 'facility') return { ok: false, msg: 'ACCESS DENIED — STARLIGHT' };
+    }
+    if (!this.powered('C7')) return { ok: false, msg: '广播回路无供电' };
+    mb.wind = Math.min(1, mb.wind + this.P.musicBox.windRate * Math.max(0, Math.min(dt || 0, 1)));
   }
 
   c_degauss() {
@@ -544,22 +570,17 @@ export class World {
     this.emit('degauss');
   }
 
+  // the phone line comes in through the terminal (status bar ☎): a nuisance
+  // call is ended by picking it up or hanging up
   c_answerPhone() {
-    if (this.phone.state !== 'ringing') return;
-    if (this.player.focused) return { ok: false, msg: '电话在桌上' };
-    // a nuisance call: picking up just ends it (no message to play)
-    if (this.phone.kind === 'spam') return this.c_hangUp();
-    this.startCall();
+    return this.c_hangUp();
   }
 
-  // the phone is on the desk: a ringing nuisance call has to be picked up
-  // there (the client closes a finished voicemail itself: auto)
-  c_hangUp({ auto } = {}) {
-    if (!auto && this.player.focused) return { ok: false, msg: '电话在桌上' };
-    if (this.phone.state === 'ringing' || this.phone.state === 'call') {
-      this.phone.state = 'idle';
-      this.emit('phone', { state: 'idle' });
-    }
+  c_hangUp() {
+    if (this.phone.state !== 'ringing') return { ok: false };
+    this.phone.state = 'idle';
+    this.phone.kind = null;
+    this.emit('phone', { state: 'idle' });
   }
 
   requiredDone() {
@@ -601,7 +622,7 @@ export class World {
       for (const d of Object.values(this.doors)) d.stuckT = 0;
     }
     this.emit('task', { id });
-    if (this.overtime && this.requiredDone()) this.finish('win');
+    if (this.stuck && this.requiredDone()) this.finish('win');
   }
 
   c_rebootNode({ room }) {
@@ -653,6 +674,8 @@ export class World {
         break;
       case 'setTime':
         this.t = args.t;
+        // rewinding before 06:00 releases a held Night 6 clock
+        if (this.t < this.P.nightSeconds) this.stuck = false;
         break;
       default:
     }
@@ -665,6 +688,9 @@ export class World {
     const dt = this.P.tick;
     this.t += dt;
     this.tickN++;
+    // 06:00 first: once the shift is over nothing can still reach you
+    this.tickClock();
+    if (this.result) return;
 
     this.tickPhone(dt);
     this.tickGenerator(dt);
@@ -686,7 +712,6 @@ export class World {
     }
     this.tickEmi(dt);
     this.tickEvents(dt);
-    this.tickClock();
     this.stats.minPower = Math.min(this.stats.minPower, this.powerPct());
   }
 
@@ -694,6 +719,9 @@ export class World {
     return (this.power.reserve / this.power.max) * 100;
   }
 
+  // 06:00. Nights 1-5 always end here: with the checklist done it is a
+  // pass, without it the shift is failed ('fired'). Night 6 holds the clock
+  // at 05:59 until the takeback is finished.
   tickClock() {
     const P = this.P;
     const h = Math.floor(this.t / P.hourSeconds);
@@ -701,53 +729,30 @@ export class World {
       if (this.lastHour !== undefined && h <= 5) this.emit('hour', { hour: h });
       this.lastHour = h;
     }
-    if (!this.overtime && this.t >= P.nightSeconds) {
-      if (this.requiredDone()) this.finish('win');
-      else {
-        this.overtime = true;
-        if (this.night.boss) this.log('>> STARLIGHT: 时间停在这里. 直到你做完为止.', 'err');
-        else this.log('交班清单未完成 — 进入加班!', 'warn');
-        this.emit('overtime');
-      }
-    }
-    if (this.overtime && !this.night.boss && this.t >= P.nightSeconds + P.overtimeSeconds) this.finish('fired');
+    if (this.stuck || this.t < P.nightSeconds - 1e-6) return;
+    if (this.requiredDone()) this.finish('win');
+    else if (this.night.boss) {
+      this.stuck = true;
+      this.log('>> STARLIGHT: 时间停在这里. 直到你做完为止.', 'err');
+      this.emit('clockStuck');
+    } else this.finish('fired');
   }
 
   finish(outcome) {
     if (this.result) return;
-    this.result = { outcome, t: this.t, clock: this.clock(), overtime: this.overtime };
+    this.result = { outcome, t: this.t, clock: '06:00', stuck: this.stuck };
     this.emit(outcome);
   }
 
   tickPhone(dt) {
     const ph = this.phone;
-    if (ph.state === 'pending' && this.t >= 3) {
-      ph.state = 'ringing';
-      ph.t = 0;
-      ph.kind = 'tutorial';
-      this.emit('phone', { state: 'ringing' });
-    } else if (ph.state === 'ringing') {
-      ph.t += dt;
-      if (ph.t >= (ph.kind === 'spam' ? this.P.call.spamRing : this.P.call.ringTime)) {
-        if (ph.kind === 'tutorial') this.startCall();
-        else {
-          ph.state = 'idle';
-          this.emit('phone', { state: 'idle' });
-        }
-      }
-    } else if (ph.state === 'call') {
-      ph.t += dt;
-      if (ph.t >= (CALL_LENGTH[this.nightIndex] || 0)) {
-        ph.state = 'idle';
-        this.emit('phone', { state: 'idle' });
-      }
+    if (ph.state !== 'ringing') return;
+    ph.t += dt;
+    if (ph.t >= this.P.call.spamRing) {
+      ph.state = 'idle';
+      ph.kind = null;
+      this.emit('phone', { state: 'idle' });
     }
-  }
-
-  startCall() {
-    this.phone.state = 'call';
-    this.phone.t = 0;
-    this.emit('phone', { state: 'call', night: this.nightIndex });
   }
 
   computeLoad() {
@@ -768,8 +773,8 @@ export class World {
       if (on('C5') && this.office.fan) parts.fan = P.fan;
       let lights = 0;
       let seals = 0;
-      for (const r of Object.values(this.rooms)) {
-        if (r.light) lights++;
+      for (const [id, r] of Object.entries(this.rooms)) {
+        if (this.roomLit(id)) lights++;
         if (r.sealed) seals++;
       }
       if (lights) parts.roomLights = lights * P.roomLight;
@@ -929,12 +934,6 @@ export class World {
         r.reading = r.lagged + (this.rng.float() - 0.5) * 16;
       } else r.reading = r.noise;
       if (r.offline) r.reading = null;
-      r.histT = (r.histT || 0) + dt;
-      if (r.histT >= 0.5) {
-        r.histT = 0;
-        r.hist.push(r.noise);
-        if (r.hist.length > 16) r.hist.shift();
-      }
       if (r.sealed) {
         r.sealT -= dt;
         if (r.sealT <= 0 || !this.powered('C6')) {
@@ -985,21 +984,12 @@ export class World {
     return { count, text, real, falsePos };
   }
 
+  // the picture tube magnetises slowly on its own (faster near the running
+  // generator, see tickGenerator). It says nothing about where anything is:
+  // nothing on the screen gives away an animatronic at a door.
   tickEmi(dt) {
-    const E = this.P.emi;
     const em = this.emi;
-    const s = { L: 0, R: 0, B: 0, T: 0 };
-    for (const a of this.actors) {
-      // motors draw unevenly: interference pulses instead of a steady signal
-      const k = (E.strength[a.id] ?? 1) * (1 - E.pulse * (0.5 + 0.5 * Math.sin(this.t * (2.1 + a.id.length * 0.37) + a.id.length)));
-      const door = DOOR_NODES[a.node];
-      if (door) s[door] = Math.max(s[door], E.door * k);
-      const near = NEAR_DOOR[a.node];
-      if (near) s[near] = Math.max(s[near], E.adjacent * k);
-    }
-    // smooth so it ramps visibly
-    for (const k of ['L', 'R', 'B', 'T']) em[k] += (s[k] - em[k]) * Math.min(1, dt * 3);
-    em.magnet = Math.min(1, em.magnet + (s.L + s.R + s.B + s.T) * E.magnetRate * dt);
+    if (!this.power.out && !this.power.tripped) em.magnet = Math.min(1, em.magnet + this.P.emi.magnetRate * dt);
     if (em.cooldown > 0) em.cooldown -= dt;
   }
 
@@ -1053,8 +1043,10 @@ export class World {
       this.log('冷库压缩机故障! (E-3: 完成 T-07 压缩机重启)', 'err');
       this.addEmergency('E-3');
       const t7 = this.tasks.find((x) => x.id === 'T-07');
-      if (t7) t7.done = false;
-      else this.tasks.push({ id: 'T-07', open: 0, done: false, doneAt: null, optional: true });
+      if (t7) {
+        t7.done = false;
+        t7.round = (t7.round || 0) + 1;
+      } else this.tasks.push({ id: 'T-07', open: 0, done: false, doneAt: null, optional: true, round: 1 });
       this.emit('compressor');
       return;
     }

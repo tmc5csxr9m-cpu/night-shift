@@ -14,6 +14,7 @@ import { resultPage } from './pages/result.js';
 import { manualPage } from './pages/manual.js';
 
 const LINE_MS = 11;
+const END_LINE = 0.17;     // seconds per line of the 06:00 printout
 const CONTENT_TOP = 2;
 const BOOT_TIME = 3.4;
 
@@ -61,7 +62,7 @@ export class Terminal {
     this.pageKey = null;
     this.revealStart = 0;
     this.time = 0;
-    this.mode = 'off';        // off | menu | boot | ui | result | dead
+    this.mode = 'off';        // off | menu | boot | ui | shiftEnd | result | dead
     this.bootT = 0;
     this.focused = false;
     this.glitch = 0;
@@ -88,7 +89,23 @@ export class Terminal {
     this.sfx.post();
   }
 
+  // 06:00: the shift-end printout (the camera has just moved back in)
+  showShiftEnd(lines) {
+    this.mode = 'shiftEnd';
+    this.pageKey = null;
+    this.endLines = lines || [];
+    this.endT = 0;
+    this.endShown = 0;
+    this.focused = false;
+  }
+
+  shiftEndDuration() {
+    return 0.5 + (this.endLines?.length || 0) * END_LINE;
+  }
+
   showResult() {
+    this.glitch = 0;
+    this.glitchRows = null;
     this.mode = 'result';
     this.pageKey = null;
     this.go('result');
@@ -160,6 +177,14 @@ export class Terminal {
     this.time += dt;
     this.spin += dt;
     const w = this.world;
+    if (this.mode === 'shiftEnd') {
+      this.endT += dt;
+      const n = Math.min(this.endLines.length, Math.floor((this.endT - 0.4) / END_LINE) + 1);
+      if (n > this.endShown) {
+        this.endShown = n;
+        if (this.endLines[n - 1]?.[0]) this.sfx.tick();
+      }
+    }
     if (this.mode === 'boot') {
       this.bootT += dt;
       if (this.bootT > BOOT_TIME) {
@@ -167,18 +192,22 @@ export class Terminal {
         this.go('home');
       }
     }
-    // overheat reboot
-    if (w && this.mode === 'ui' && w.temp.rebootT > 0) {
+    // overheat reboot (not once the night is over: the sim is frozen then)
+    if (w && !w.result && this.mode === 'ui' && w.temp.rebootT > 0) {
       this.mode = 'boot';
       this.bootT = -w.temp.rebootT + 1.5;
     }
     if (['ui', 'menu', 'result'].includes(this.mode)) {
-      for (const p of Object.values(this.pages)) if (w) p.tick?.(this, dt);
-      this.page?.update?.(this, dt);
-      if (this.ui.down && this.ui.mouse && !this.revealing()) this.ui.hold(this.ui.mouse, dt);
+      // gameplay work (minigames, held buttons) runs on sim time: it stops
+      // while the night is paused and speeds up with the debug time scale
+      const play = w && this.mode === 'ui' ? (game.paused ? 0 : dt * (game.timeScale || 1)) : dt;
+      for (const p of Object.values(this.pages)) if (w) p.tick?.(this, play);
+      this.page?.update?.(this, play);
+      if (this.ui.down && this.ui.mouse && !this.revealing()) this.ui.hold(this.ui.mouse, play);
     }
     let g = this.glitch;
-    if (w && w.temp.eff >= w.P.temp.fault && Math.random() < dt * 0.6) this.glitch = Math.max(this.glitch, 0.12);
+    // a hot tube garbles rows — only while the night is running
+    if (w && !w.result && this.mode === 'ui' && w.temp.eff >= w.P.temp.fault && Math.random() < dt * 0.6) this.glitch = Math.max(this.glitch, 0.12);
     if (g > 0 || this.glitch > 0) {
       this.glitch -= dt;
       this.glitchRows = {};
@@ -196,6 +225,10 @@ export class Terminal {
     }
     if (this.mode === 'boot') {
       this.drawBoot();
+      return;
+    }
+    if (this.mode === 'shiftEnd') {
+      this.drawShiftEnd();
       return;
     }
     s.clear(C.bg, C.fg);
@@ -231,6 +264,16 @@ export class Terminal {
     this.ui.center(12, ' ACCESS DENIED ', C.hi, '#8a0c0c');
     this.ui.center(14, `该页面已被 STARLIGHT 锁定 · ${Math.ceil(t)}s`, '#ff9090');
     this.ui.center(16, '用快捷栏撑过去.', '#a06060');
+  }
+
+  drawShiftEnd() {
+    const s = this.screen;
+    s.clear(C.bg, C.fg);
+    s.fill(0, 0, COLS, 1, ' ', C.ink, C.inv);
+    s.text(1, 0, '★ STARLIGHT SEC-OS 2.31', C.ink, C.inv);
+    this.endLines.slice(0, this.endShown).forEach(([txt, col], i) => s.text(3, 3 + i, txt, col || C.fg, C.bg));
+    if (Math.floor(this.time * 3) % 2 === 0) s.text(3, 3 + this.endShown, '_', C.hi, C.bg);
+    s.render({ persistence: 0.5, glitchRows: this.glitchRows });
   }
 
   drawBoot() {
@@ -275,19 +318,19 @@ export class Terminal {
     x += ui.text(x, 0, ` ${w.power.load.toFixed(1)}kW `, w.power.tripped ? '#c01010' : C.ink, C.inv);
     sep();
     const colon = Math.floor(this.time * 2) % 2 ? ':' : ' ';
-    const clk = w.overtime && !w.clockStuck ? `${w.clock().replace(':', colon)} OT` : `${w.clock().replace(':', colon)} AM`;
-    x += ui.text(x, 0, ` ◷ ${clk} `, w.overtime ? '#c01010' : C.bg, C.inv);
+    const clk = `${w.clock().replace(':', w.clockStuck ? ':' : colon)} AM`;
+    x += ui.text(x, 0, ` ◷ ${clk} `, w.clockStuck ? '#c01010' : C.bg, C.inv);
     sep();
     const te = w.temp.eff;
     x += ui.text(x, 0, ` ${w.temp.room.toFixed(1)}°C `, te >= w.P.temp.fault ? '#c01010' : C.ink, C.inv);
     sep();
     x += ui.text(x, 0, ` ♪${w.noise.db.toFixed(0)}dB `, w.noise.db > 38 ? '#a06000' : C.ink, C.inv);
-    if (w.phone.state === 'call' || w.phone.state === 'ringing') {
+    if (w.phone.state === 'ringing') {
       sep();
-      const ring = w.phone.state === 'ringing';
-      // the phone is on the desk: pick it up there (leave the terminal)
-      const label = ring ? (Math.floor(this.time * 4) % 2 ? ' ☎ 来电·桌上 ' : ' ☎          ') : ' ☎ 通话 ';
-      x += ui.text(x, 0, label, '#a01010', C.inv);
+      // the phone line runs through the terminal: end a nuisance call here
+      x += ui.text(x, 0, Math.floor(this.time * 4) % 2 ? ' ☎ 来电 ' : ' ☎      ', '#a01010', C.inv);
+      const hov = ui.hit('hangup', x, 0, 6, 1, () => this.cmd('hangUp', {}, 'blip'));
+      x += ui.text(x, 0, '[挂断]', hov ? C.hi : C.bg, hov ? C.ink : C.inv);
     }
     const right = game.debug ? ' DEBUG ' : `HDD${Math.random() < 0.15 ? '■' : '□'} `;
     ui.text(COLS - strWidth(right), 0, right, game.debug ? C.hi : C.dim2, game.debug ? '#a01010' : C.inv);

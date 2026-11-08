@@ -160,11 +160,26 @@ export const facilityPage = {
         if (mb.auto) {
           ui.text(x + 2, y + 6, '自动上发条', C.ok, bg);
           ui.text(x + 2, y + 8, fit('别断开 C7!', W - 3), C.dim, bg);
+        } else if (mb.hand) {
+          // Night 6: STARLIGHT holds the remote winder — the box on the shelf
+          ui.text(x + 2, y + 6, play ? `${Math.round(mb.wind * 100)}% 播放中` : '已停止!', play ? C.fg : C.red, bg);
+          ui.text(x + 2, y + 8, fit('遥控绞盘被占用!', W - 3), C.red, bg);
+          ui.text(x + 2, y + 9, fit('离开终端, 按住', W - 3), low ? C.yel : C.dim, bg);
+          ui.text(x + 2, y + 10, fit('架子上的音乐盒', W - 3), low ? C.yel : C.dim, bg);
         } else {
           ui.text(x + 2, y + 6, play ? `${Math.round(mb.wind * 100)}% 播放中` : '已停止!', play ? C.fg : C.red, bg);
-          // the box itself is on the shelf in front of you: leave the terminal
-          ui.text(x + 2, y + 8, fit('离开终端,', W - 3), C.dim, bg);
-          ui.text(x + 2, y + 9, fit('按住架子上的盒子', W - 3), low ? C.yel : C.dim, bg);
+          // the remote winder: hold the button
+          const hov = ui.pushButton('mb-wind', x + 2, y + 8, 13, '↻上发条(按住)', null, {
+            onHold: (dt) => {
+              const r = game.cmd('wind', { dt });
+              this._windT = (this._windT || 0) + dt;
+              if (r.ok !== false && this._windT > 0.12) {
+                this._windT = 0;
+                term.sfx.tick();
+              }
+            },
+          });
+          if (hov && ui.down) ui.text(x + 2, y + 10, '咔哒 咔哒...', C.dim, bg);
         }
       }
     }

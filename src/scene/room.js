@@ -434,26 +434,7 @@ export function buildRoom(scene) {
     const loose = plane(0.21, 0.29, std({ map: T.paperTexture(8), roughness: 0.9 }), -0.42, TOP + 0.003, -0.55);
     loose.rotation.set(-Math.PI / 2, 0, 0.5);
     root.add(loose);
-    // phone
-    const phone = new THREE.Group();
-    const pm = std({ color: 0x2a1c1c, roughness: 0.4 });
-    phone.add(box(0.2, 0.06, 0.16, pm, 0, 0.03, 0));
-    const hs = box(0.22, 0.035, 0.05, pm, 0, 0.08, -0.04);
-    phone.add(hs);
-    phone.add(box(0.1, 0.004, 0.06, std({ color: 0xc8c0a8 }), 0, 0.061, 0.035));
-    const pled = std({ color: 0x220000, emissive: 0xff2020, emissiveIntensity: 0 });
-    const pl = new THREE.Mesh(new THREE.SphereGeometry(0.005, 6, 6), pled);
-    pl.position.set(0.08, 0.062, 0.06);
-    phone.add(pl);
-    phone.position.set(0.72, TOP, -0.95);
-    phone.rotation.y = -0.4;
-    root.add(shadowed(phone));
-    refs.phoneLed = pled;
-    refs.phone = phone;
-    const pAnchor = new THREE.Object3D();
-    pAnchor.position.set(0, 0.08, 0);
-    phone.add(pAnchor);
-    refs.anchors.phone = pAnchor;
+    // the phone line comes in through the terminal: its ringer sits by the monitor
     // party hat
     const hat = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.16, 16, 1, true), std({ map: stripeTex('#2a6cff', '#ffd23a'), side: THREE.DoubleSide }));
     hat.position.set(-1.0, TOP + 0.04, -0.52);

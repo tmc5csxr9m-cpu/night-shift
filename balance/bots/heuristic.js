@@ -1,5 +1,5 @@
 // Rule-based player. Beliefs come from what the agent perceived (heard
-// cues, door glances, CRT edge interference); the oracle variant reads the
+// cues, door glances, the vent); the oracle variant reads the
 // true world state instead but keeps the same human timing.
 //
 // Profiles describe how much of the toolbox a player of that level uses.
@@ -7,19 +7,19 @@
 const PROFILES = {
   novice: {
     lockBreakers: false, genAt: 20, preVent: false, windAt: 0.2, hangUp: 0.5, preLock: false, backQuiet: false, lockHold: 6,
-    quietChance: 0.4, checkEvery: 0, useEmi: true, chunk: 7, careBulbs: false,
+    quietChance: 0.4, checkEvery: 0, chunk: 7, careBulbs: false,
     sealNear: false, sealFallback: false, heatMgmt: false, dim: false, degauss: false, roomFreeze: false,
     stageCut: false, preLure: false, chefBellEarly: false,
   },
   average: {
     lockBreakers: false, genAt: 30, preVent: false, windAt: 0.4, hangUp: 1, preLock: false, backQuiet: false, lockHold: 5.5,
-    quietChance: 1, checkEvery: 30, useEmi: true, chunk: 4.5, careBulbs: true,
+    quietChance: 1, checkEvery: 30, chunk: 4.5, careBulbs: true,
     sealNear: true, sealFallback: true, heatMgmt: true, dim: false, degauss: true, roomFreeze: false,
     stageCut: true, stageAt: 180, preLure: false, chefBellEarly: false,
   },
   expert: {
     lockBreakers: true, genAt: 40, genProjection: true, preVent: true, windAt: 0.5, hangUp: 1, preLock: true, backQuiet: true, lockHold: 5,
-    quietChance: 1, checkEvery: 22, useEmi: true, chunk: 3, careBulbs: true,
+    quietChance: 1, checkEvery: 22, chunk: 3, careBulbs: true,
     sealNear: true, sealFallback: true, heatMgmt: true, dim: true, degauss: true, roomFreeze: true,
     stageCut: true, stageAt: 90, preLure: false, chefBellEarly: true,
   },
@@ -131,16 +131,6 @@ export function heuristicBot(level = 'average', { oracle = false, disable = {} }
           m.handled.pip = Math.max(m.handled.pip || 0, t);
         }
       }
-      if (K.useEmi && o.emi && !disable.emi) {
-        if (o.emi.L > 0.5 && !b.chefDoor) b.sunnyDoor = true;
-        else if (o.emi.L > 0) b.sunnyNear = true;
-        if (o.emi.R > 0.4 && b.chefDoor !== 'R') b.pipDoor = true;
-        else if (o.emi.R > 0) b.pipNear = true;
-        if (o.emi.B > 0.45) b.backDoor = true;
-        else if (o.emi.B > 0) b.backNear = true;
-        if (o.emi.T > 0.35) b.ribbonVent = true;
-        else if (o.emi.T > 0) b.ribbonNear = true;
-      }
       if (!o.musicPlaying) b.tootie = true;
       return b;
     },
@@ -167,6 +157,13 @@ export function heuristicBot(level = 'average', { oracle = false, disable = {} }
       return PIP_LURES_DOOR.every((r) => (uses[r] || 0) >= 2);
     },
 
+    // winding: the remote winder on the facility page, or by hand at the
+    // shelf on Night 6 (STARLIGHT holds the winder)
+    wind(o, dur) {
+      if (o.handWind) return { type: 'phys', name: 'wind', dir: 'F', dur };
+      return { type: 'hold', name: 'wind', dur };
+    },
+
     // a door light: the hotbar from the terminal, the fixture itself when
     // you are already looking at that door
     light(o, side, on) {
@@ -182,6 +179,11 @@ export function heuristicBot(level = 'average', { oracle = false, disable = {} }
       // away from the terminal you remember what the screen last said
       const last = o.focused ? o : m.lastFocusObs || {};
       const canLure = o.calibrated.lure && o.circuits.C7 && !last.paJam && !disable.lure && t >= (m.lureReady || 0);
+      // no overtime: an unfinished checklist at 06:00 fails the shift. When
+      // the work left gets close to the time left, chores wait and tasks run
+      // in longer stretches.
+      const work = o.tasks.filter((x) => !x.done && !x.optional).reduce((a, x) => a + Math.max(0, (x.need || 0) - (x.progress || 0)), 0);
+      const rush = !o.stuck && work > 0 && 540 - t < work * 3 + 30;
       const doorBusy = b.pipDoor || b.sunnyDoor || b.backDoor || !!b.chefDoor || b.ribbonVent;
 
       if (o.tripped) return { type: 'cmd', name: 'resetMain' };
@@ -270,7 +272,7 @@ export function heuristicBot(level = 'average', { oracle = false, disable = {} }
       // ---- 5. music box
       if (b.tootie) {
         if (!o.circuits.C7) return { type: 'cmd', name: 'breaker', args: { id: 'C7', on: true } };
-        if (o.manualWind && !disable.wind) return { type: 'phys', name: 'wind', dir: 'F', dur: 2 };
+        if (o.manualWind && !disable.wind) return this.wind(o, 2);
       }
       // both doors busy: freeze Sunny in its corridor for a few seconds
       if (K.roomFreeze && b.pipDoor && b.sunnyNear && !disable.roomLight && t >= m.freezeUntil) {
@@ -323,7 +325,7 @@ export function heuristicBot(level = 'average', { oracle = false, disable = {} }
       if (o.wind !== undefined) m.windSeen = { v: o.wind, t };
       const windEst = m.windSeen ? m.windSeen.v - (t - m.windSeen.t) * (o.night >= 6 ? 0.011 : 0.01) : 1;
       if (o.manualWind && windEst < K.windAt && !doorBusy && !disable.wind) {
-        return { type: 'phys', name: 'wind', dir: 'F', dur: Math.min(3, Math.max(1, (0.95 - Math.max(0, windEst)) / 0.25)) };
+        return this.wind(o, Math.min(3, Math.max(1, (0.95 - Math.max(0, windEst)) / 0.25)));
       }
       if (!o.circuits.C0 && !disable.freezer) return { type: 'cmd', name: 'breaker', args: { id: 'C0', on: true } };
       for (const id of ['C1', 'C2', 'C3', 'C4', 'C5', 'C6', 'C7', 'C8']) {
@@ -334,14 +336,14 @@ export function heuristicBot(level = 'average', { oracle = false, disable = {} }
       }
       if (o.phone === 'ringing' && o.phoneSpam && t - (m.hangAt || -99) > 3) {
         m.hangAt = t;
-        if (agent.rng.chance(K.hangUp)) return { type: 'phys', name: 'hangUp', dir: 'F' };
+        if (agent.rng.chance(K.hangUp)) return { type: 'cmd', name: 'hangUp' };
       }
       if (o.emergencies) {
         const e = o.emergencies.find((x) => x.id === 'E-1');
         if (e && o.spares > 0) return { type: 'hold', name: 'replaceBulb', args: { side: e.side }, dur: 4 };
       }
       if (doorBusy) return { type: 'wait', dur: 0.2 };
-      if (o.offline && o.offline.length && !disable.reboot) return { type: 'hold', name: 'rebootNode', args: { room: o.offline[0] }, dur: 3 };
+      if (o.offline && o.offline.length && !disable.reboot && !rush) return { type: 'hold', name: 'rebootNode', args: { room: o.offline[0] }, dur: 3 };
 
       // ---- 8. environment: noise vs heat, light vs heat
       if (disable.heat && o.office.fan) return { type: 'cmd', name: 'fan', args: { on: false } };
@@ -359,7 +361,7 @@ export function heuristicBot(level = 'average', { oracle = false, disable = {} }
         return { type: 'cmd', name: 'fan', args: { on: true } };
       }
       // dim to save heat/power, except when the vent puppet is around (it hates a bright office)
-      if (K.dim && !disable.dim && o.office.light === 2 && o.night >= 2 && o.night < 5) return { type: 'cmd', name: 'officeLight', args: { level: 1 } };
+      if (K.dim && !disable.dim && !rush && o.office.light === 2 && o.night >= 2 && o.night < 5) return { type: 'cmd', name: 'officeLight', args: { level: 1 } };
       if (o.night >= 5 && o.office.light < 2 && !disable.bright) return { type: 'cmd', name: 'officeLight', args: { level: 2 } };
       if (o.night >= 5 && o.office.light === 2 && disable.bright) return { type: 'cmd', name: 'officeLight', args: { level: 1 } };
       if (K.degauss && !disable.degauss && o.magnet !== undefined && o.magnet > 0.6 && !b.pipNear) return { type: 'cmd', name: 'degauss' };
@@ -373,7 +375,7 @@ export function heuristicBot(level = 'average', { oracle = false, disable = {} }
       }
 
       // ---- 10. periodic glance at the left door when nothing has been heard
-      if (K.checkEvery && t - m.lastCheck > K.checkEvery && !disable.doorLight) {
+      if (K.checkEvery && t - m.lastCheck > K.checkEvery && !disable.doorLight && !rush) {
         m.lastCheck = t;
         if (!o.doors.L.lit && !o.doors.L.broken && !o.doors.L.hot) {
           m.lightOffAt.L = t + 1.2;
@@ -393,7 +395,7 @@ export function heuristicBot(level = 'average', { oracle = false, disable = {} }
       const short = o.power && (K.genProjection ? o.power.eta < Math.max(0, 540 - t) + 25 : o.power.pct < K.genAt);
       const wantGen = (x) => x.id !== 'T-06' || (!disable.generator && o.power && (short || o.power.load > 8.2));
       const task = o.tasks.find((x) => !x.done && x.open && x.optional && wantGen(x)) || o.tasks.find((x) => !x.done && x.open && !x.optional);
-      if (task) return { type: 'task', id: task.id, dur: Math.min(K.chunk, task.need - task.progress + 0.05) };
+      if (task) return { type: 'task', id: task.id, dur: Math.min(rush ? K.chunk * 2 : K.chunk, task.need - task.progress + 0.05) };
       return { type: 'wait', dur: 0.5 };
     },
   };

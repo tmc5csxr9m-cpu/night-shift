@@ -6,16 +6,28 @@ const path = require('node:path');
 const fs = require('node:fs');
 const { pathToFileURL } = require('node:url');
 
-const DEV_URL = process.env.NS_DEV_URL || null;      // set by tools/dev.mjs
-// debug mode is a tester's tool: shown in the Linux (AppImage) build and in
-// development, hidden from the Windows release build
-const DEBUG_BUILD = !app.isPackaged || process.platform === 'linux';
+// set by tools/dev.mjs; only honoured when running from source (a packaged
+// build never loads anything but its own files)
+const DEV_URL = !app.isPackaged && /^http:\/\/(localhost|127\.0\.0\.1):\d+\/$/.test(process.env.NS_DEV_URL || '') ? process.env.NS_DEV_URL : null;
+// build channel, baked into the packaged package.json by tools/build.mjs:
+// 'dev' builds have debug mode (F1 panel) and DevTools (F12), 'release'
+// builds have neither. Running from source is always dev.
+const CHANNEL = (() => {
+  if (!app.isPackaged) return 'dev';
+  try {
+    return require('../package.json').channel === 'dev' ? 'dev' : 'release';
+  } catch {
+    return 'release';
+  }
+})();
+const DEBUG_BUILD = CHANNEL === 'dev';
 const ESC_HOLD = 1.2;                                 // seconds (in a night: back to the menu; in the menu: quit)
 const DIST = path.join(__dirname, '..', 'dist');
 
 // one stable folder for saves, whatever the executable is called or where
-// a portable build unpacks itself (%APPDATA%\NightShift, ~/.config/NightShift)
-app.setPath('userData', path.join(app.getPath('appData'), 'NightShift'));
+// a portable build unpacks itself (%APPDATA%\NightShift, ~/.config/NightShift).
+// NIGHTSHIFT_USER_DATA points it elsewhere (automated tests use a throwaway folder).
+app.setPath('userData', process.env.NIGHTSHIFT_USER_DATA ? path.resolve(process.env.NIGHTSHIFT_USER_DATA) : path.join(app.getPath('appData'), 'NightShift'));
 app.commandLine.appendSwitch('ignore-gpu-blocklist');   // old GPUs: still try WebGL
 app.commandLine.appendSwitch('disable-renderer-backgrounding');
 
@@ -45,7 +57,7 @@ function sleepSync(ms) {
 
 // write to a temp file, flush, keep the previous save as .bak, then swap in.
 // Windows antivirus / indexers can hold the file for a moment: retry.
-function writeSave(text) {
+function writeSave(text, { keepBackup = false } = {}) {
   const file = SAVE();
   const tmp = file + '.tmp';
   try {
@@ -54,7 +66,8 @@ function writeSave(text) {
     fs.writeSync(fd, text);
     fs.fsyncSync(fd);
     fs.closeSync(fd);
-    if (fs.existsSync(file)) {
+    // (recovering from the backup: the broken main file must not replace it)
+    if (!keepBackup && fs.existsSync(file)) {
       try {
         fs.copyFileSync(file, file + '.bak');
       } catch { /* a missing backup is not fatal */ }
@@ -69,13 +82,13 @@ function writeSave(text) {
       }
     }
   } catch (e) {
+    // no direct overwrite as a fallback: a half-written file could take the
+    // last good save with it. The game shows a "could not save" warning.
+    console.error('save failed', e);
     try {
-      fs.writeFileSync(file, text);   // last resort: direct write
-      return true;
-    } catch {
-      console.error('save failed', e);
-      return false;
-    }
+      fs.rmSync(tmp, { force: true });
+    } catch { /* nothing to clean */ }
+    return false;
   }
   return false;
 }
@@ -125,7 +138,7 @@ function createWindow() {
     fullscreen: mode === 'fullscreen',
     backgroundColor: '#000000',
     show: false,
-    title: 'Night Shift',
+    title: DEBUG_BUILD ? 'Night Shift [DEV]' : 'Night Shift',
     icon: path.join(__dirname, 'icon.png'),
     autoHideMenuBar: true,
     webPreferences: {
@@ -146,12 +159,16 @@ function createWindow() {
   wc.on('will-navigate', (e, url) => {
     if (url !== wc.getURL()) e.preventDefault();
   });
+  wc.on('will-redirect', (e, url) => {
+    if (!url.startsWith('app://game/') && !(DEV_URL && url.startsWith(DEV_URL))) e.preventDefault();
+  });
 
   // hold ESC. Watched here, not in the page, so pointer lock and the page's
   // own ESC handling cannot swallow it. The page decides what a long press
   // means (leave the night / quit).
   let escAt = 0;
   let escTimer = null;
+  let escUsed = false;      // one long press = one action, until ESC is released
   const stopEsc = () => {
     if (!escTimer) return;
     clearInterval(escTimer);
@@ -160,21 +177,28 @@ function createWindow() {
   };
   wc.on('before-input-event', (e, input) => {
     if (input.key === 'Escape') {
-      if (input.type === 'keyDown' && !escTimer) {
+      if (input.type === 'keyDown' && !escTimer && !escUsed) {
         escAt = Date.now();
         escTimer = setInterval(() => {
           const p = (Date.now() - escAt) / 1000 / ESC_HOLD;
           if (!wc.isDestroyed()) wc.send('esc-hold', Math.min(1, p));
           if (p >= 1) {
+            escUsed = true;
             stopEsc();
             if (!wc.isDestroyed()) wc.send('esc-long');
           }
         }, 40);
-      } else if (input.type === 'keyUp') stopEsc();
+      } else if (input.type === 'keyUp') {
+        escUsed = false;
+        stopEsc();
+      }
     }
     if (DEBUG_BUILD && input.type === 'keyDown' && input.key === 'F12') wc.toggleDevTools();
   });
-  win.on('blur', stopEsc);
+  win.on('blur', () => {
+    escUsed = false;
+    stopEsc();
+  });
 
   if (DEV_URL) win.loadURL(DEV_URL);
   else win.loadURL('app://game/index.html');
@@ -200,18 +224,27 @@ app.whenReady().then(() => {
     return new Response(res.body, { status: 200, headers: type ? { 'content-type': type } : {} });
   });
 
+  // only the game's own page may talk to the shell
+  const trusted = (e) => {
+    const url = e.senderFrame?.url || '';
+    return url.startsWith('app://game/') || (DEV_URL && url.startsWith(DEV_URL));
+  };
   ipcMain.on('app:info', (e) => {
-    e.returnValue = { debugBuild: DEBUG_BUILD, platform: process.platform, version: app.getVersion() };
+    e.returnValue = { debugBuild: DEBUG_BUILD, channel: CHANNEL, platform: process.platform, version: app.getVersion() };
   });
   ipcMain.on('save:read', (e) => {
+    if (!trusted(e)) {
+      e.returnValue = { main: null, bak: null, path: null };
+      return;
+    }
     const file = SAVE();
     e.returnValue = { main: readFile(file), bak: readFile(file + '.bak'), path: file };
   });
-  ipcMain.on('save:write', (e, text) => {
-    e.returnValue = typeof text === 'string' ? writeSave(text) : false;
+  ipcMain.on('save:write', (e, text, opts) => {
+    e.returnValue = trusted(e) && typeof text === 'string' && text.length < 4e6 ? writeSave(text, { keepBackup: !!opts?.keepBackup }) : false;
   });
-  ipcMain.handle('display:set', (e, mode) => applyMode(BrowserWindow.fromWebContents(e.sender), mode));
-  ipcMain.on('app:quit', () => app.quit());
+  ipcMain.handle('display:set', (e, mode) => (trusted(e) ? applyMode(BrowserWindow.fromWebContents(e.sender), mode) : undefined));
+  ipcMain.on('app:quit', (e) => trusted(e) && app.quit());
 
   createWindow();
 });

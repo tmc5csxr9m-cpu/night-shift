@@ -15,8 +15,10 @@ export const game = {
   stepOnce: false,
   realTime: 0,
 
-  start(night, { seed, debug = false } = {}) {
+  start(night, { seed, debug = false, replay = null } = {}) {
     this.night = night;
+    // a replay only ever drives the night it was loaded for
+    this.replay = replay ? replay.slice() : null;
     this.debug = debug;
     this.world = new World({ night, seed: seed ?? (Date.now() & 0x7fffffff) });
     this.mode = 'night';
@@ -29,7 +31,9 @@ export const game = {
   },
 
   toMenu() {
+    this.finalize();
     this.world = null;
+    this.replay = null;
     this.mode = 'menu';
     emit('menu');
   },
@@ -38,6 +42,8 @@ export const game = {
     if (!this.world) return { ok: false };
     const r = this.world.cmd(name, args);
     this.flush();
+    // a command can end the night (the last Night 6 task): record it now
+    this.finalize();
     return r;
   },
 
@@ -53,14 +59,25 @@ export const game = {
     let guard = 2000;
     while (this.acc >= w.P.tick && !w.result && guard--) {
       this.acc -= w.P.tick;
+      // replayed commands go in at exactly the tick they were recorded at
+      while (this.replay && this.replay.length && this.replay[0].tick <= w.tickN) {
+        const c = this.replay.shift();
+        w.cmd(c.name, c.args);
+      }
       w.tick();
     }
     this.flush();
-    if (w.result && this.mode === 'night') {
-      this.mode = 'result';
-      if (!this.debug) save.recordNight(this.night, w.result, w);
-      emit('nightEnd', { result: w.result, world: w });
-    }
+    this.finalize();
+  },
+
+  // record the finished night once and announce it (from a tick or a command)
+  finalize() {
+    const w = this.world;
+    if (!w || !w.result || this.mode !== 'night') return;
+    this.mode = 'result';
+    this.replay = null;
+    if (!this.debug) save.recordNight(this.night, w.result, w);
+    emit('nightEnd', { result: w.result, world: w });
   },
 
   flush() {

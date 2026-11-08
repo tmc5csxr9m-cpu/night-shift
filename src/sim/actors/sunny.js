@@ -42,7 +42,8 @@ export class Sunny extends Actor {
     // frozen by a lit room — but only for so long: then it tears free,
     // angry, and the light no longer holds it until it is switched off
     const r = w.rooms[this.room()];
-    if (r && r.light && !this.broke) {
+    const lit = r && w.roomLit(this.room());
+    if (lit && !this.broke) {
       this.rage += this.p.rageRate * dt;
       this.frozen = true;
       if (this.rage >= this.p.freezeMax) {
@@ -54,7 +55,7 @@ export class Sunny extends Actor {
       }
       return;
     }
-    if (r && !r.light) this.broke = false;
+    if (r && !lit) this.broke = false;
     if (this.frozen) {
       this.frozen = false;
       if (this.rage > 0) this.rageT = this.p.rageTime;

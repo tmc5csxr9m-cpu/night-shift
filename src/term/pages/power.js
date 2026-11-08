@@ -49,7 +49,8 @@ export const powerPage = {
     ui.box(2, 3, 36, 8, { title: '用电储备 RESERVE', titleAlign: 'left' });
     const col = pct < 15 ? C.red : pct < 35 ? C.yel : C.hi;
     ui.bigText(5, 5, `${Math.floor(pct)}%`, col);
-    const rate = (pw.load / 60) / pw.max * 100; // % per real second
+    // on the battery (grid down) every kW costs more — same rule as the sim
+    const rate = (Math.max(0, pw.load) / 60) * (w.generator.gridDown ? w.P.generator.batteryMul : 1) / pw.max * 100; // % per real second
     ui.text(24, 5, `-${rate.toFixed(2)}%/s`, C.fg);
     const eta = rate > 0 ? pct / rate : Infinity;
     ui.text(24, 6, eta === Infinity ? '可用 ∞' : `可用 ${Math.floor(eta / 60)}:${String(Math.floor(eta % 60)).padStart(2, '0')}`, C.dim);
@@ -74,7 +75,7 @@ export const powerPage = {
     ui.text(20, 19, `跳闸 ${top.toFixed(1)}kW`, pw.load > top * 0.85 ? C.yel : C.dim);
 
     // ------------------------------------------------- grid / generator
-    if (w.night.gridFail !== undefined) {
+    if (w.night.gridFail !== undefined || w.tasks.some((t) => t.id === 'T-06') || w.generator.running) {
       const g = w.generator;
       ui.text(3, 21, g.gridDown ? '电网:故障' : '电网:正常', g.gridDown ? C.red : C.dim);
       ui.text(13, 21, g.running ? '发电机:运转' : '发电机:待机', g.running ? C.ok : C.dim);
@@ -115,7 +116,8 @@ export const powerPage = {
       ui.text(42, y, id, on ? C.cy : C.dim, bg);
       ui.text(46, y, fit(name, 10), on ? C.hi : C.dim, bg);
       ui.text(46, y + 1, fit(en, 10), C.dim2, bg);
-      const load = { C1: 0.42, C2: 0.65, C3: 0.65, C4: 1.08, C5: 0.08, C6: 0.55, C7: 0.3, C8: 0.35, C9: 2.4, C0: 1.3 }[id];
+      const P = w.P.power;
+      const load = { C1: P.officeLight[2], C2: P.doorLight, C3: P.doorLight, C4: P.vent * 3, C5: P.fan, C6: P.C6, C7: P.C7play, C8: P.C8, C9: P.C9, C0: P.C0 }[id];
       ui.text(57, y, `${load.toFixed(2)}kW`, C.fg, bg);
       ui.segments(57, y + 1, 6, on ? Math.ceil((load / 2.4) * 6) : 0, C.cy, C.dim2);
       if (on) ui.text(68, y, '▐ON ▌', C.ink, pw.tripped ? C.dim : C.cy);

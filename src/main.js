@@ -4,13 +4,13 @@ import { makeComposer } from './scene/post.js';
 import { crtCurve } from './scene/crt.js';
 import { AudioSys, Buzzer, Phone } from './audio.js';
 import { Terminal } from './term/terminal.js';
-import { COLS, ROWS } from './term/screen.js';
+import { COLS, ROWS, C as TERM_COLORS, strWidth } from './term/screen.js';
+import { taskName } from './term/pages/tasks.js';
 import { Director } from './director.js';
 import { game } from './game.js';
 import { save } from './save.js';
 import { on } from './bus.js';
 import { debugPanel } from './debug/panel.js';
-import { CALLS } from './data/calls.js';
 import { ActorViews, NODE_POS } from './scene/actors.js';
 import { ROOMS, roomWorldPos } from './rooms.js';
 import { native, DEBUG_ALLOWED } from './native.js';
@@ -53,7 +53,8 @@ save.load();
 // ------------------------------------------------------------------ audio + terminal
 const audio = new AudioSys(camera);
 const buzzer = new Buzzer(audio, room.anchors.monitor);
-const phone = new Phone(audio, room.anchors.phone);
+// the phone line comes in through the terminal: it rings at the monitor
+const phone = new Phone(audio, room.anchors.monitor);
 const term = new Terminal(buzzer);
 const termTex = new THREE.CanvasTexture(term.screen.canvas);
 termTex.colorSpace = THREE.SRGBColorSpace;
@@ -80,8 +81,7 @@ const YAW_MAX = 1.78;
 const ray = new THREE.Raycaster();
 let started = false;
 let hoverMonitor = false;
-let hoverPhone = false;
-let hoverBox = false;        // the music box on the shelf (hold to wind)
+let hoverBox = false;        // the music box on the shelf (Night 6: hold to wind by hand)
 let hoverSwitch = null;      // 'L' | 'R': a door light switch
 let winding = false;
 let windTick = 0;
@@ -169,6 +169,8 @@ canvas.addEventListener('mousedown', (e) => {
     return;
   }
   if (!started || e.button !== 0) return;
+  // 06:00 / death scenes play out without the player
+  if (ending && !ending.done) return;
   if (view.focused) {
     const cell = screenCell();
     if (cell) term.mouseDown(cell);
@@ -176,11 +178,6 @@ canvas.addEventListener('mousedown', (e) => {
   } else if (hoverMonitor) enterFocus();
   else if (hoverSwitch && game.world) game.cmd('doorLight', { side: hoverSwitch });
   else if (hoverBox && game.world) winding = true;
-  else if (hoverPhone && game.world) {
-    const st = game.world.phone.state;
-    if (st === 'ringing') game.cmd('answerPhone');
-    else if (st === 'call') game.cmd('hangUp');
-  }
 });
 window.addEventListener('mouseup', () => {
   winding = false;
@@ -222,8 +219,8 @@ function updateCamera(dt, t) {
   view.focus += (target - view.focus) * Math.min(1, dt * 5.5);
   if (Math.abs(target - view.focus) < 0.001) view.focus = target;
   if (view.cinematic) {
-    view.yaw += (view.cinematic.yaw - view.yaw) * Math.min(1, dt * 14);
-    view.pitch += (0.02 - view.pitch) * Math.min(1, dt * 14);
+    view.yaw += (view.cinematic.yaw - view.yaw) * Math.min(1, dt * (ending && ending.kind !== 'death' ? 2.5 : 14));
+    view.pitch += ((view.cinematic.pitch ?? 0.02) - view.pitch) * Math.min(1, dt * (ending && ending.kind !== 'death' ? 2.5 : 14));
     view.yawVel = 0;
   } else if (!view.focused && view.focus < 0.5 && view.hasMouse) {
     const mx = view.mouse.x;
@@ -260,7 +257,7 @@ function updateCamera(dt, t) {
   const e = view.focus * view.focus * (3 - 2 * view.focus);
   camera.position.lerpVectors(freePos, focusPos, e);
   camera.quaternion.slerpQuaternions(freeQuat, focusQuat, e);
-  const fov = FOV + (FOCUS_FOV - FOV) * e;
+  const fov = (FOV + (FOCUS_FOV - FOV) * e) * fovScale;
   if (Math.abs(camera.fov - fov) > 0.01) {
     camera.fov = fov;
     camera.updateProjectionMatrix();
@@ -282,6 +279,14 @@ function lockFocus() {
   term.focused = true;
 }
 
+function clearEnding() {
+  ending = null;
+  blackout = false;
+  grade.uniforms.dark.value = 0;
+  intro.classList.remove('show', 'boss');
+  subtitle.classList.remove('show', 'starlight');
+}
+
 function showMenu() {
   view.cinematic = null;
   actors.clearJumpscare();
@@ -289,9 +294,9 @@ function showMenu() {
   game.toMenu();
   lockFocus();
   phone.stop();
-  subtitle.classList.remove('show');
+  clearEnding();
+  hint.classList.add('hidden');
   term.showMenu();
-  ending = null;
 }
 
 let ending = null; // { kind, t }
@@ -330,13 +335,15 @@ function tinnitus() {
   o.stop(ctx.currentTime + 3.3);
 }
 
-function startNight(n, debug) {
+let introTimer = null;
+let hintTimers = [];
+function startNight(n, debug, replay) {
   debug = debug && DEBUG_ALLOWED;
   phone.stop();
-  subtitle.classList.remove('show');
-  game.start(n, { debug });
+  clearEnding();
+  game.start(n, { debug, seed: replay?.seed, replay: replay?.commands });
   lastLook = 'F';
-  ending = null;
+  winding = false;
   view.locked = false;
   view.focused = false;
   term.focused = false;
@@ -349,10 +356,18 @@ function startNight(n, debug) {
   intro.querySelector('.t').textContent = n === 0 ? 'TEST' : '12:00 AM';
   intro.querySelector('.n').textContent = game.nightName(n);
   intro.classList.add('show');
-  setTimeout(() => intro.classList.remove('show'), 3200);
+  clearTimeout(introTimer);
+  introTimer = setTimeout(() => {
+    // (unless a 06:00 scene has taken the overlay over)
+    if (!(ending && ending.shown)) intro.classList.remove('show');
+  }, 3200);
+  hint.classList.add('hidden');
+  for (const h of hintTimers) clearTimeout(h);
+  hintTimers = [];
   if (n === 1 && !game.debug) {
-    setTimeout(() => hint.classList.remove('hidden'), 3600);
-    setTimeout(() => hint.classList.add('hidden'), 14000);
+    const night = game.world;
+    hintTimers.push(setTimeout(() => game.world === night && !night.result && hint.classList.remove('hidden'), 3600));
+    hintTimers.push(setTimeout(() => hint.classList.add('hidden'), 14000));
   }
 }
 
@@ -363,35 +378,15 @@ term.actions = {
 };
 
 // replays exported from the debug panel (or the balance tools)
-debugPanel.onReplay = (data) => {
-  startNight(data.night, true);
-  game.replay = data.commands.slice();
-};
+debugPanel.onReplay = (data) => startNight(data.night, true, data);
 
 // ------------------------------------------------------------------ sim events -> presentation
+// nuisance calls ring at the terminal; the ☎ button on the status bar ends them
 on('sim:phone', (e) => {
   if (e.state === 'ringing') {
     phone.ring(2);
     ringTimer = 3;
-  } else if (e.state === 'call') {
-    const lines = CALLS[e.night] || [];
-    const voice = e.night === 6 ? { pitch: 96, rate: 0.13, warble: 0.6 } : { pitch: 128, rate: 0.1 };
-    phone.speak(lines, (i, text) => {
-      subtitle.textContent = text;
-      subtitle.classList.add('show');
-    }, () => {
-      subtitle.classList.remove('show');
-      // message finished by itself: close the line so the [挂断] button goes away
-      if (game.world && game.world.phone.state === 'call') game.cmd('hangUp', { auto: true });
-    }, voice);
-    if (!save.data.seen.calls.includes(e.night)) {
-      save.data.seen.calls.push(e.night);
-      save.write();
-    }
-  } else {
-    phone.stop();
-    subtitle.classList.remove('show');
-  }
+  } else phone.stop();
 });
 let ringTimer = 0;
 
@@ -426,9 +421,12 @@ on('sim:emergency', () => {
   buzzer.tone(1400, 0.08, 0.6, null, 0.3);
 });
 on('sim:hour', () => buzzer.tone(2000, 0.05, 0.4));
-on('sim:overtime', () => {
+// Night 6, 06:00 with the takeback unfinished: the clock stops at 05:59
+on('sim:clockStuck', () => {
   buzzer.error();
-  shake.amp = 0.2;
+  shake.amp = 0.25;
+  term.triggerGlitch(0.5);
+  audio.shot('bell6', room.anchors.monitor.position, { scene, volume: 0.8, ref: 2, rate: 0.5 });
 });
 // --- animatronic sounds, positioned where the sim says they are
 const CUE_SOUND = {
@@ -459,7 +457,8 @@ on('sim:repel', (e) => {
   actors.event(e);
   const side = e.side === 'L' ? NODE_POS.DOOR_L : NODE_POS.DOOR_R;
   audio.shot('servo', new THREE.Vector3(...side), { scene, volume: 0.8, ref: 1.5, rate: 0.8 });
-  if (e.actor === 'sunny') setTimeout(() => audio.shot('step_heavy', new THREE.Vector3(-6, 1, 0), { scene, volume: 0.8, ref: 2 }), 900);
+  const w0 = game.world;
+  if (e.actor === 'sunny') setTimeout(() => game.world === w0 && !w0.result && audio.shot('step_heavy', new THREE.Vector3(-6, 1, 0), { scene, volume: 0.8, ref: 2 }), 900);
 });
 on('sim:telegraph', (e) => {
   if (e.kind === 'pose') audio.shot('servo', new THREE.Vector3(...NODE_POS.DOOR_R), { scene, volume: 0.7, ref: 1.5, rate: 1.3 });
@@ -496,7 +495,8 @@ on('sim:bossTelegraph', (e) => {
     for (const n of ['07F', '08F']) audio.shot('zap', new THREE.Vector3(...NODE_POS[n]), { scene, volume: 1.0, ref: 3, lowpass: 2000, rate: 0.6 });
     buzzer.tone(660, 0.2, 0.35, 440);
   } else if (e.kind === 'breaker') {
-    for (let i = 0; i < 6; i++) setTimeout(() => audio.shot('relay', new THREE.Vector3(...NODE_POS['10']), { scene, volume: 0.9, ref: 2, rate: 0.8 + Math.random() * 0.6 }), i * 300);
+    const w0 = game.world;
+    for (let i = 0; i < 6; i++) setTimeout(() => game.world === w0 && !w0.result && audio.shot('relay', new THREE.Vector3(...NODE_POS['10']), { scene, volume: 0.9, ref: 2, rate: 0.8 + Math.random() * 0.6 }), i * 300);
     buzzer.tone(330, 0.3, 0.5, 220);
   } else if (e.kind === 'attack') {
     const p = e.side === 'L' ? NODE_POS['07N'] : e.side === 'R' ? NODE_POS['08N'] : NODE_POS['12'];
@@ -518,8 +518,57 @@ on('sim:powerOut', () => {
   audio.shot('thud', room.anchors.lamp.position, { scene, volume: 1.2, ref: 2, rate: 0.7 });
 });
 
+// where the free camera has to turn to look at an object in the room
+function aimAt(obj) {
+  const p = obj.getWorldPosition(new THREE.Vector3());
+  const dx = p.x - EYE.x;
+  const dz = p.z - EYE.z;
+  return { yaw: Math.atan2(-dx, -dz), pitch: Math.atan2(p.y - EYE.y, Math.hypot(dx, dz)) };
+}
+
+function ringBell(rate = 1, volume = 1) {
+  audio.shot('bell6', room.anchors.monitor.position, { scene, volume, ref: 2, rate });
+}
+
+// what the terminal prints when the camera moves back in at 06:00. This is
+// the only place the endings differ (passed / checklist unfinished / Night 6).
+function shiftEndLines(w, kind, outcome) {
+  const C = TERM_COLORS;
+  if (kind === 'bossWin') {
+    return [
+      ['STARLIGHT SYSTEMS BIOS  v1.07   (C) 1989-1993', C.hi],
+      ['', 0],
+      ['SECOS> 扫描进程表 ...', C.fg],
+      ['  STARLIGHT.EXE ............ 未授权进程', C.red],
+      ['SECOS> 正在删除 STARLIGHT.EXE', C.fg],
+      ['  ████████████████████████ 100%', C.cy],
+      ['  STARLIGHT.EXE 已删除.', C.ok],
+      ['', 0],
+      [`06:00 AM    班次结束 · ${game.nightName(6)}`, C.yel],
+      ['>> 所有系统已归还. 天亮了.', C.ok],
+    ];
+  }
+  const lines = [
+    ['C:\\SEC> SHIFTEND.EXE', C.hi],
+    ['', 0],
+    [`06:00 AM    班次结束 · ${game.nightName(game.night)}`, C.yel],
+    ['核对交班清单 ...', C.fg],
+  ];
+  for (const t of w.tasks.filter((x) => !x.optional)) {
+    const label = `  ${t.id} ${taskName(t.id)}`;
+    lines.push([`${label} ${'.'.repeat(Math.max(2, 32 - strWidth(label)))} ${t.done ? '√ 完成' : '× 未完成'}`, t.done ? C.ok : C.red]);
+  }
+  if (!w.tasks.some((x) => !x.optional)) lines.push(['  (今晚没有任务)', C.dim]);
+  lines.push(['', 0]);
+  if (outcome === 'win') lines.push(['>> 交班清单完成. 白班已到岗, 辛苦了.', C.ok]);
+  else lines.push(['>> 交班清单未完成 — 本夜考核未通过.', C.red], ['>> 这一夜需要重新值班.', C.red]);
+  return lines;
+}
+
 on('nightEnd', ({ result }) => {
   phone.stop();
+  winding = false;
+  hint.classList.add('hidden');
   subtitle.classList.remove('show');
   ending = { kind: result.outcome, t: 0 };
   if (result.outcome === 'death' && result.cause === 'back') {
@@ -527,7 +576,10 @@ on('nightEnd', ({ result }) => {
     ending.backDeath = true;
     audio.shot('creak', new THREE.Vector3(0, 1.2, 2.3), { scene, volume: 2.2, ref: 1, rate: 0.7 });
     audio.shot('wind_gust', new THREE.Vector3(0, 1.2, 2.0), { scene, volume: 1.6, ref: 1.5 });
-    setTimeout(() => audio.shot('back_breath', new THREE.Vector3(0.1, 1.25, 0.75), { scene, volume: 2.5, ref: 0.6 }), 700);
+    const end0 = ending;
+    setTimeout(() => {
+      if (ending === end0) audio.shot('back_breath', new THREE.Vector3(0.1, 1.25, 0.75), { scene, volume: 2.5, ref: 0.6 });
+    }, 700);
     shake.amp = 0.4;
   } else if (result.outcome === 'death') {
     const who = actors.views[result.cause] ? result.cause : 'sunny';
@@ -539,17 +591,162 @@ on('nightEnd', ({ result }) => {
     view.cinematic = { yaw: side === 'L' ? 1.5 : -1.5 };
     ending.scareAt = 0.35;
     ending.who = who;
-  } else if (result.outcome === 'win') {
-    for (let i = 0; i < 6; i++) setTimeout(() => audio.shot('bell6', room.anchors.monitor.position, { scene, volume: 1.0, ref: 2 }), 300 + i * 950);
   } else {
-    buzzer.error();
+    // 06:00: the shift is over. Nights 1-5 share one short scene (the
+    // terminal says whether the checklist passed); Night 6 has its own.
+    const boss = game.night === 6 && result.outcome === 'win';
+    ending.kind = boss ? 'bossWin' : 'dawn';
+    ending.outcome = result.outcome;
+    ending.bells = 0;
+    ending.lines = shiftEndLines(game.world, ending.kind, result.outcome);
+    const lamp = game.world.powered('C1') && !game.world.power.out ? [0, 0.35, 1][game.world.office.light] : 0;
+    ending.lights = { lamp, L: 0, R: 0, dawn: 0, duck: 1 };
+    // the player lets go: out of the terminal, the camera is driven from here
+    view.locked = true;
+    view.focused = false;
+    term.focused = false;
+    term.setMouse(null);
+    term.mouseUp();
+    view.cinematic = boss ? aimAt(room.head) : { yaw: 0, pitch: 0.06 };
+    if (boss) {
+      // STARLIGHT does not go quietly
+      term.triggerGlitch(2.6);
+      shake.amp = 0.6;
+      buzzer.tone(440, 1.2, 0.5, 55);
+      audio.shot('thud', room.anchors.monitor.position, { scene, volume: 1.4, ref: 1, rate: 0.4 });
+    }
   }
 });
+
+function setIntro(t, n, boss = false) {
+  intro.querySelector('.t').textContent = t;
+  intro.querySelector('.n').textContent = n;
+  intro.classList.toggle('boss', boss);
+  intro.classList.add('show');
+}
+
+function zoomToTerminal() {
+  intro.classList.remove('show');
+  view.cinematic = null;
+  lockFocus();
+  term.showShiftEnd(ending.lines);
+  ending.zoomAt = ending.t;
+}
+
+const ramp = (t, a, b) => Math.max(0, Math.min(1, (t - a) / (b - a)));
+
+// Nights 1-5 at 06:00: six bells, the clock rolls over, the lights come up,
+// the camera goes back to the terminal for the verdict (about 8 s)
+function updateDawn(dt) {
+  const T = ending.t;
+  const L = ending.lights;
+  while (ending.bells < 6 && T >= 0.3 + ending.bells * 0.6) {
+    ringBell();
+    ending.bells++;
+  }
+  if (!ending.shown && T >= 0.15) {
+    ending.shown = true;
+    setIntro('5:59 AM', game.nightName(game.night));
+  }
+  if (!ending.flipped && T >= 0.9) {
+    ending.flipped = true;
+    setIntro('6:00 AM', game.nightName(game.night));
+    buzzer.tone(2000, 0.05, 0.4);
+  }
+  L.lamp = Math.max(L.lamp, ramp(T, 0.8, 2.2));
+  L.dawn = ramp(T, 0.5, 4);
+  if (!ending.zoomAt && T >= 3.6) zoomToTerminal();
+  if (ending.zoomAt && T >= ending.zoomAt + term.shiftEndDuration() + 1.4) finishEnding();
+}
+
+// Night 6 won: STARLIGHT's last moment, a dead silent blackout, the music
+// box on the shelf plays on its own, 05:59 rolls to 06:00, the lights come
+// back one by one and the terminal boots clean (about 15 s)
+function updateBossWin(dt) {
+  const T = ending.t;
+  const L = ending.lights;
+  const CUT = 2.8;
+  if (T < CUT) {
+    term.triggerGlitch(0.2);
+    director.flicker = 0.3;
+    if (!ending.said1 && T >= 0.4) {
+      ending.said1 = true;
+      subtitle.textContent = '…… 不.';
+      subtitle.classList.add('show', 'starlight');
+    }
+    if (!ending.said2 && T >= 1.5) {
+      ending.said2 = true;
+      subtitle.textContent = '你 关 不 掉 我 ……';
+    }
+  } else if (!ending.cut) {
+    // everything dies at once
+    ending.cut = true;
+    subtitle.classList.remove('show', 'starlight');
+    blackout = true;
+    term.mode = 'dead';
+    L.lamp = 0;
+    L.duck = 0.08;
+    director.flicker = 0;
+    shake.amp = 0.8;
+    audio.shot('thud', room.anchors.lamp.position, { scene, volume: 1.6, ref: 2, rate: 0.6 });
+    audio.shot('zap', room.anchors.monitor.position, { scene, volume: 1.2, ref: 1, rate: 0.5 });
+  }
+  if (!ending.boxOn && T >= 4.4) {
+    ending.boxOn = true;
+    view.cinematic = aimAt(room.musicBox.group);
+  }
+  if (!ending.shown && T >= 5.0) {
+    ending.shown = true;
+    setIntro('05:59', '', true);
+  }
+  if (!ending.flipped && T >= 6.6) {
+    ending.flipped = true;
+    setIntro('6:00 AM', game.nightName(6));
+    shake.amp = 0.2;
+  }
+  while (ending.flipped && ending.bells < 6 && T >= 6.6 + ending.bells * 0.8) {
+    ringBell(ending.bells === 0 ? 0.9 : 1);
+    ending.bells++;
+  }
+  // the lights come back one by one
+  const relay = (key, at, pos) => {
+    if (ending[key] || T < at) return false;
+    ending[key] = true;
+    audio.shot('relay', pos, { scene, volume: 1, ref: 1 });
+    return true;
+  };
+  if (relay('lit1', 7.2, room.doorLights.L.anchor.position)) L.L = 1;
+  if (relay('lit2', 7.8, room.doorLights.R.anchor.position)) L.R = 1;
+  if (relay('lit3', 8.5, room.anchors.lamp.position)) blackout = false;
+  if (ending.lit3) L.lamp = ramp(T, 8.5, 9.4);
+  if (T >= 9.6) {
+    L.L = Math.max(0, 1 - ramp(T, 9.6, 10.6));
+    L.R = L.L;
+  }
+  L.dawn = ramp(T, 8.5, 12);
+  L.duck = T < 6.6 ? L.duck : Math.min(1, 0.08 + ramp(T, 6.6, 10));
+  if (!ending.zoomAt && T >= 10.8) zoomToTerminal();
+  if (ending.zoomAt && T >= ending.zoomAt + term.shiftEndDuration() + 1.8) finishEnding();
+}
+
+function finishEnding() {
+  ending.done = true;
+  grade.uniforms.dark.value = 0;
+  view.cinematic = null;
+  actors.clearJumpscare();
+  scare = null;
+  intro.classList.remove('show', 'boss');
+  subtitle.classList.remove('show', 'starlight');
+  lockFocus();
+  term.showResult();
+}
 
 function updateEnding(dt) {
   if (!ending || ending.done) return;
   ending.t += dt;
   const k = ending.kind;
+  if (k === 'dawn') return updateDawn(dt);
+  if (k === 'bossWin') return updateBossWin(dt);
   if (k === 'death' && ending.backDeath) {
     // the lamp sputters out, then nothing
     director.flicker = ending.t < 1.2 ? 1 : 0;
@@ -565,20 +762,17 @@ function updateEnding(dt) {
     actors.updateJumpscare(dt, scare);
     grade.uniforms.dark.value = ending.t > 1.4 ? Math.min(1, (ending.t - 1.4) * 4) : 0;
   }
-  if (ending.t > (k === 'death' ? 2.6 : k === 'win' ? 5.5 : 1.5) && term.mode !== 'result') {
-    grade.uniforms.dark.value = 0;
+  if (ending.t > 2.6 && term.mode !== 'result') {
     blackout = false;
-    ending.done = true;
-    view.cinematic = null;
-    actors.clearJumpscare();
-    scare = null;
-    lockFocus();
-    term.showResult();
+    finishEnding();
   }
 }
 
 // ------------------------------------------------------------------ world -> 3D / audio
 const loops = {};
+const headGlow = new THREE.PointLight(0xff2010, 0, 2.6, 1.6);
+headGlow.position.set(0, 0.05, 0.25);
+room.head.add(headGlow);
 const doorStrike = { L: 0, R: 0 };
 const sparks = { L: 0, R: 0 };
 let degauss = 0;
@@ -602,11 +796,11 @@ function startAudio() {
   outAnchor.position.set(-3.6, 1.6, 0.1);
   scene.add(outAnchor);
   loops.outTune = audio.loop('musicbox', { parent: outAnchor, volume: 0, ref: 2, lowpass: 1600, rate: 0.66 });
-  loops.emi = audio.loop('buzz', { parent: room.anchors.monitor, volume: 0, ref: 0.5, rate: 1.5 });
   const mbAnchor = new THREE.Object3D();
   mbAnchor.position.set(11, 1.4, 5);
   scene.add(mbAnchor);
   loops.music = audio.loop('musicbox', { parent: mbAnchor, volume: 0, ref: 3.5, rolloff: 0.9, lowpass: 2400, offset: 0 });
+  loops.boxLocal = audio.loop('musicbox', { parent: room.musicBox.group, volume: 0, ref: 0.8, offset: 0 });
 }
 
 function updateWorld(dt, t) {
@@ -627,7 +821,9 @@ function updateWorld(dt, t) {
 
   // fan
   const f = room.fan;
-  f.speed += ((st.fan ? 26 : 0) - f.speed) * dt * (st.fan ? 0.9 : 0.35);
+  // (Night 6 won: the power dies for a moment and the fan winds down)
+  const fanOn = st.fan && !(ending && ending.kind === 'bossWin' && ending.cut && !ending.lit3);
+  f.speed += ((fanOn ? 26 : 0) - f.speed) * dt * (fanOn ? 0.9 : 0.35);
   f.blades.rotation.z -= f.speed * dt;
   if (st.osc && f.speed > 1) f.osc = (f.osc || 0) + dt * 0.45 * (f.speed / 26);
   f.head.rotation.y = Math.sin(f.osc || 0) * 0.65;
@@ -637,7 +833,8 @@ function updateWorld(dt, t) {
   }
 
   // office lamp
-  const lv = blackout ? 0 : [0, 0.35, 1][st.light];
+  const EL = ending && ending.lights;
+  const lv = EL ? (blackout ? 0 : EL.lamp) : blackout ? 0 : [0, 0.35, 1][st.light];
   // reduced flashing: a steady dip instead of a strobe
   const fl = calm() ? (director.flicker > 0 ? 0.8 : 1) : director.lampFlicker(t);
   const L = room.lamp;
@@ -652,7 +849,8 @@ function updateWorld(dt, t) {
   for (const k of ['L', 'R']) {
     const D = room.doorLights[k];
     let lvl = 0;
-    if (st.doors[k]) {
+    if (EL) lvl = EL[k];
+    else if (st.doors[k]) {
       if (doorStrike[k] > 0) {
         doorStrike[k] -= dt;
         lvl = calm() ? 0.7 : Math.random() < 0.5 ? 0 : 0.7;
@@ -671,13 +869,19 @@ function updateWorld(dt, t) {
       D.spill.intensity = calm() ? 1.5 : Math.random() < 0.5 ? 3 : 0;
       D.spill.color.setHex(0xffc070);
     } else D.spill.color.setHex(0xd8e4ff);
-    room.panelLeds[k].emissive.setHex(st.doors[k] ? 0x30ff60 : 0xff3020);
+    room.panelLeds[k].emissive.setHex(st.doors[k] || lvl > 0.5 ? 0x30ff60 : 0xff3020);
     const sw = room.doorSwitches[k].btnMat;
     sw.emissive.setHex(st.doors[k] ? 0x30ff60 : 0xff3020);
     sw.emissiveIntensity = st.doors[k] ? 0.9 : hoverSwitch === k ? 0.7 : 0.3;
     room.panelLeds[k].emissiveIntensity = st.doors[k] ? 2.2 : 0.6;
     const lp = k === 'L' ? loops.doorL : loops.doorR;
-    if (lp) lp.setVolume(st.doors[k] ? 0.3 * Math.max(0.3, lvl) : 0);
+    if (lp) lp.setVolume(st.doors[k] || lvl > 0 ? 0.3 * Math.max(0.3, lvl) : 0);
+  }
+  // 06:00: grey morning light creeps in
+  {
+    const dawn = EL ? EL.dawn : 0;
+    room.hemi.intensity = 0.16 + dawn * 0.9 * (blackout ? 0.1 : 1);
+    room.hemi.color.setRGB(0.165 + dawn * 0.75, 0.21 + dawn * 0.62, 0.31 + dawn * 0.45);
   }
 
   // animatronics in the corridors; dust in the beams
@@ -710,21 +914,18 @@ function updateWorld(dt, t) {
     loops.heart.setVolume(hv + (atDoor * 0.55 - hv) * Math.min(1, dt * 2));
     loops.heart.setPlaybackRate(1 + view.tension * 0.5);
   }
-  grade.uniforms.vignette.value = 1.15 + view.tension * 0.6;
+  // (the picture never reacts to what is out there: no tension vignette)
+  grade.uniforms.vignette.value = 1.15;
 
   // CRT: power, EMI, magnetisation, degauss, heat
-  const termOn = started && (!w || !w.power.out) && term.mode !== 'dead';
+  // the result screens run on the backup line even after a blackout
+  const termOn = started && term.mode !== 'dead' && (!w || !w.power.out || ['result', 'shiftEnd', 'menu'].includes(term.mode));
   const pu = crt.uniforms.power;
   pu.value = termOn ? Math.min(1, pu.value + dt * 0.8) : Math.max(0, pu.value - dt * 1.6);
   if (w && !w.result) {
-    // interference shows faintly: your ears are the main sense
-    const ev = w.P.emi.visual ?? 1;
-    crt.uniforms.emi.value.set(w.emi.L * ev, w.emi.R * ev, w.emi.B * ev, w.emi.T * ev);
     crt.uniforms.magnet.value = w.emi.magnet * 0.8;
     crt.uniforms.heat.value = Math.max(0, w.temp.eff - 30) / 6;
-    if (loops.emi) loops.emi.setVolume(Math.min(0.5, (w.emi.L + w.emi.R + w.emi.B + w.emi.T) * 0.25));
   } else {
-    crt.uniforms.emi.value.set(0, 0, 0, 0);
     crt.uniforms.magnet.value = 0;
     crt.uniforms.heat.value = 0;
   }
@@ -734,29 +935,41 @@ function updateWorld(dt, t) {
   room.screenLight.intensity = 9 * pu.value * (0.95 + Math.random() * 0.05) * (term.glitch > 0 ? 0.6 + Math.random() * 0.6 : 1);
   room.monitorLed.emissiveIntensity = termOn ? 2 : 0;
 
-  // phone: ringing bursts + LED
-  if (w && w.phone.state === 'ringing') {
+  // a nuisance call rings in bursts until it is ended on the terminal
+  if (w && !w.result && w.phone.state === 'ringing') {
     ringTimer -= dt;
     if (ringTimer <= 0) {
       phone.ring(1.6);
       ringTimer = 3;
     }
-    room.phoneLed.emissiveIntensity = Math.floor(t * 6) % 2 ? 3 : 0;
-  } else room.phoneLed.emissiveIntensity = Math.floor(t * 0.8) % 2 ? 1.2 : 0;
+  }
 
   room.clockSecond.rotation.z = -(Math.floor(t) % 2 ? 0.105 : 0);
 
   // N6: the terminal turns red phase by phase; the head on the shelf wakes up
   const boss = w && w.actor('starlight');
   const ph = boss ? boss.phase : 0;
-  const red = boss && !w.result ? [0, 0.2, 0.4, 0.65, 0.9][ph] : 0;
+  const bossEnd = ending && ending.kind === 'bossWin' ? ending : null;
+  let red = boss && !w.result ? [0, 0.2, 0.4, 0.65, 0.9][ph] : 0;
+  // its last seconds: the screen burns red, then it is gone
+  if (bossEnd && !bossEnd.cut) red = calm() ? 0.9 : 0.75 + Math.random() * 0.25;
   crt.uniforms.tint.value.set(1 + red * 0.5, 1 - red * 0.55, 1 - red * 0.6);
   room.screenLight.color.setRGB(0.36 + red * 0.6, 0.49 - red * 0.35, 1 - red * 0.75);
-  if (room.headPupil) room.headPupil.emissiveIntensity = boss ? 0.15 + ph * 0.8 + (ph === 4 && !calm() ? Math.sin(t * 9) * 0.6 : 0) : 0.15;
-  if (room.head && boss) {
-    const want = ph === 4 ? (view.yaw > 0.8 ? 0.4 : view.yaw < -0.8 ? -1.6 : -0.6) : -0.6;
-    room.head.rotation.y += (want - room.head.rotation.y) * Math.min(1, dt * 2);
+  // its eyes light the shelf red in its last seconds
+  headGlow.intensity = bossEnd && !bossEnd.cut ? (calm() ? 2.2 : 1.6 + Math.random() * 1.6) : 0;
+  if (room.headPupil) {
+    let pupil = boss ? 0.15 + ph * 0.8 + (ph === 4 && !calm() ? Math.sin(t * 9) * 0.6 : 0) : 0.15;
+    if (bossEnd) pupil = bossEnd.cut ? 0 : 3.5 + (calm() ? 0 : Math.random() * 3);
+    room.headPupil.emissiveIntensity = pupil;
   }
+  if (room.head && boss) {
+    let want = ph === 4 ? (view.yaw > 0.8 ? 0.4 : view.yaw < -0.8 ? -1.6 : -0.6) : -0.6;
+    // at the end it stares straight at you, then sags on the shelf
+    if (bossEnd) want = 0.2;
+    room.head.rotation.y += (want - room.head.rotation.y) * Math.min(1, dt * 2);
+    const droop = bossEnd && bossEnd.cut ? 0.35 : 0;
+    room.head.rotation.x += (droop - room.head.rotation.x) * Math.min(1, dt * 1.5);
+  } else if (room.head) room.head.rotation.x = 0;
 
   // power out: the tune, then eyes in the left doorway
   const outNow = !!(w && w.power.out && !w.result);
@@ -771,20 +984,31 @@ function updateWorld(dt, t) {
   outEyes.visible = outEyes.material.opacity > 0.01;
 
   // music box
+  // Night 6 won: the box plays on its own in the dark, clean and at full speed
+  const boxSolo = bossEnd && bossEnd.boxOn;
   if (room.musicBox) {
     const mb = room.musicBox;
-    const speed = st.music ? 0.82 + 0.18 * Math.min(1, st.wind * 3) : 0;
+    const speed = boxSolo ? 1 : bossEnd ? 0.3 : st.music ? 0.82 + 0.18 * Math.min(1, st.wind * 3) : 0;
     mb.dancer.rotation.y += dt * 2.2 * speed;
     // the key turns with the spring: winding spins it one way, playing lets it creep back
     mb.key.rotation.x = (st.wind ?? 1) * 40;
   }
   if (loops.music) {
-    const vol = st.music ? 0.55 : 0;
+    const vol = bossEnd ? 0 : st.music ? 0.55 : 0;
     const cur = loops.music.getVolume();
     loops.music.setVolume(cur + (vol - cur) * Math.min(1, dt * 3));
     loops.music.setPlaybackRate(0.82 + 0.18 * Math.min(1, st.wind * 3));
   }
-  if (loops.room) loops.room.setVolume(0.12 + st.vent * 0.07);
+  // the box right in front of you (Night 6: wound by hand, and its solo)
+  if (loops.boxLocal) {
+    const hand = w && !w.result && w.musicBox.hand && st.music;
+    const vol = boxSolo ? 0.9 : bossEnd && !bossEnd.cut ? 0.35 : hand ? 0.1 : 0;
+    const cur = loops.boxLocal.getVolume();
+    loops.boxLocal.setVolume(cur + (vol - cur) * Math.min(1, dt * (boxSolo ? 0.7 : 3)));
+    loops.boxLocal.setPlaybackRate(boxSolo ? 1 : bossEnd ? 0.45 + Math.sin(t * 3) * 0.08 : 0.82 + 0.18 * Math.min(1, st.wind * 3));
+  }
+  if (loops.ambience) loops.ambience.setVolume(0.24 * (EL ? EL.duck : 1));
+  if (loops.room) loops.room.setVolume((0.12 + st.vent * 0.07) * (EL ? EL.duck : 1));
   if (loops.gen) {
     const on = w && w.generator && w.generator.running;
     loops.gen.setVolume(on ? 2.2 : 0);
@@ -795,13 +1019,13 @@ function updateWorld(dt, t) {
   audio.listener.setMasterVolume(save.data.settings.masterVol ?? 0.9);
   crt.uniforms.calm.value = calm() ? 1 : 0;
   actors.calm = calm();
-  renderer.toneMappingExposure = 1.15 * (save.data.settings.brightness ?? 1);
+  renderer.toneMappingExposure = 1.15 * (save.data.settings.brightness ?? 1) * (1 + (EL && !blackout ? EL.dawn * 0.3 : 0));
 }
 
 function setCursor() {
   let c = 'default';
   if (view.focused || view.focus > 0.5) c = 'none';
-  else if (hoverMonitor || hoverPhone || hoverBox || hoverSwitch) c = 'pointer';
+  else if (hoverMonitor || hoverBox || hoverSwitch) c = 'pointer';
   // the system pointer stays hidden: the drawn cursor replaces it
   const sys = started && !debugPanel.open ? 'none' : c;
   if (canvas.style.cursor !== sys) canvas.style.cursor = sys;
@@ -838,43 +1062,43 @@ const timer = new THREE.Timer();
 let time = 0;
 let termAcc = 0;
 
-function applyReplay() {
-  const w = game.world;
-  if (!game.replay || !w) return;
-  while (game.replay.length && game.replay[0].tick <= w.tickN) {
-    const c = game.replay.shift();
-    w.cmd(c.name, c.args);
-  }
-}
+// dev capture mode (trailer footage): frames are stepped by hand with a fixed dt
+let manualFrames = false;
+let fovScale = 1;            // dev capture: close-ups
 
 function frame() {
   requestAnimationFrame(frame);
   timer.update();
-  const dt = Math.min(timer.getDelta(), 0.05);
+  const real = timer.getDelta();
+  if (manualFrames) return;
+  tickFrame(Math.min(real, 0.05));
+}
+
+function tickFrame(dt) {
   time += dt;
 
   updateCamera(dt, time);
   camera.updateMatrixWorld();
 
   hoverMonitor = false;
-  hoverPhone = false;
   hoverBox = false;
   hoverSwitch = null;
   let cell = null;
-  if (started && view.hasMouse) {
+  const gw = game.world;
+  if (started && view.hasMouse && !(ending && !ending.done)) {
     if (view.focused) cell = screenCell();
     else if (view.focus < 0.05) {
       ray.setFromCamera(view.mouse, camera);
       hoverMonitor = ray.intersectObject(room.monitor, true).length > 0;
-      hoverPhone = !hoverMonitor && ray.intersectObject(room.phone, true).length > 0;
-      hoverBox = !hoverMonitor && !hoverPhone && ray.intersectObject(room.musicBox.group, true).length > 0;
+      // only Night 6 needs the box on the shelf (STARLIGHT has the remote winder)
+      hoverBox = !hoverMonitor && !!gw && !gw.result && gw.musicBox.hand && ray.intersectObject(room.musicBox.group, true).length > 0;
       for (const k of ['L', 'R']) if (ray.intersectObject(room.doorSwitches[k].group, true).length) hoverSwitch = k;
     }
   }
   // winding: hold the mouse on the box
-  if (winding && (!hoverBox || !game.world)) winding = false;
+  if (winding && (!hoverBox || !gw)) winding = false;
   if (winding) {
-    const r = game.cmd('wind', { dt });
+    const r = game.cmd('wind', { dt: game.paused ? 0 : dt * game.timeScale, hand: true });
     windTick += dt;
     if (r.ok !== false && windTick > 0.14) {
       windTick = 0;
@@ -884,7 +1108,6 @@ function frame() {
   term.setMouse(view.focused ? cell : null);
   setCursor();
 
-  applyReplay();
   game.update(dt);
   updateEnding(dt);
   term.update(dt);
@@ -944,5 +1167,16 @@ if (import.meta.env.DEV) {
     }
     return best && { x: ((best.ndc.x + 1) / 2) * window.innerWidth, y: ((1 - best.ndc.y) / 2) * window.innerHeight };
   };
-  window.__game = { game, term, view, enterFocus, exitFocus, director, room, camera, save, startNight, showMenu, grade, bloom, actors, renderer, scene, cellPx, captured: () => captured };
+  window.__game = { game, term, view, enterFocus, exitFocus, director, room, camera, save, startNight, showMenu, grade, bloom, actors, renderer, scene, cellPx, captured: () => captured, ending: () => ending,
+    // capture: freeze the loop, then render exact frames on request
+    capture(on) {
+      manualFrames = !!on;
+    },
+    zoom(k = 1) {
+      fovScale = k;
+    },
+    step(n = 1, dt = 1 / 30) {
+      for (let i = 0; i < n; i++) tickFrame(dt);
+    },
+  };
 }

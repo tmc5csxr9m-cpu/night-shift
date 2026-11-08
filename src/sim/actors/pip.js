@@ -121,7 +121,8 @@ export class Pip extends Actor {
     // a lit room: it poses instead of moving, getting impatient; after
     // poseMax seconds it ignores that light until it is switched off
     const lr = w.rooms[sensorRoom(this.node)];
-    if (lr && lr.light && !this.poseBroke && this.node !== 'DOOR_R') {
+    const lit = lr && w.roomLit(sensorRoom(this.node));
+    if (lit && !this.poseBroke && this.node !== 'DOOR_R') {
       this.poseT = (this.poseT || 0) + dt;
       this.impatience += dt;
       this.posingRoom = true;
@@ -132,7 +133,7 @@ export class Pip extends Actor {
       }
       return;
     }
-    if (lr && !lr.light) this.poseBroke = false;
+    if (lr && !lit) this.poseBroke = false;
     if (this.posingRoom) {
       this.posingRoom = false;
       this.poseT = 0;

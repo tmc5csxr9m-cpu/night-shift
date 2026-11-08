@@ -30,7 +30,7 @@ export const ABLATIONS = {
   3: [['B3', 'maglock', 'counter'], ['B4', 'heat', 'used'], ['B4', 'seal', 'used']],
   4: [['B4', 'wind', 'counter'], ['B4', 'heat', 'used'], ['B4', 'degauss', 'used'], ['B4', 'seal', 'used']],
   5: [['B4', 'vent', 'counter'], ['B4', 'generator', 'used'], ['B4', 'degauss', 'used'], ['B4', 'heat', 'used'], ['B4', 'bright', 'used'], ['B4', 'seal', 'used'], ['B4', 'stageCut', 'used']],
-  6: [['B4', 'vent', 'counter'], ['B4', 'stageCut', 'used'], ['B4', 'generator', 'used'], ['B4', 'degauss', 'used'], ['B4', 'lockBreaker', 'used'],
+  6: [['B4', 'wind', 'counter'], ['B4', 'vent', 'counter'], ['B4', 'stageCut', 'used'], ['B4', 'generator', 'used'], ['B4', 'degauss', 'used'], ['B4', 'lockBreaker', 'used'],
     ['B4', 'relure', 'used'], ['B4', 'heat', 'used']],
   // measured but not required (situational, within ±2pp for the bots):
   //   v4: emi (screen interference, deliberately faint), pipLight (staring
